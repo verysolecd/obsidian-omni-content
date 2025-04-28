@@ -58,111 +58,111 @@ type CalloutInfo = {icon: string, style: string}
 const CalloutTypes = new Map<string, CalloutInfo>(Object.entries({
     note: {
         icon: icon_note,
-        style: 'note-callout-note',
+        style: 'ad-note',
     },
     abstract: {
         icon: icon_abstract,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     summary: {
         icon: icon_abstract,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     tldr: {
         icon: icon_abstract,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     info: {
         icon: icon_info,
-        style: 'note-callout-note',
+        style: 'ad-note',
     },
     todo: {
         icon: icon_todo,
-        style: 'note-callout-note',
+        style: 'ad-note',
     },
     tip: {
         icon: icon_tip,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     hint: {
         icon: icon_tip,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     important: {
         icon: icon_tip,
-        style: 'note-callout-abstract',
+        style: 'ad-abstract',
     },
     success: {
         icon: icon_success,
-        style: 'note-callout-success',
+        style: 'ad-success',
     },
     check: {
         icon: icon_success,
-        style: 'note-callout-success',
+        style: 'ad-success',
     },
     done: {
         icon: icon_success,
-        style: 'note-callout-success',
+        style: 'ad-success',
     },
     question: {
         icon: icon_question,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     help: {
         icon: icon_question,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     faq: {
         icon: icon_question,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     warning: {
         icon: icon_warning,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     caution: {
         icon: icon_warning,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     attention: {
         icon: icon_warning,
-        style: 'note-callout-question',
+        style: 'ad-question',
     },
     failure: {
         icon: icon_failure,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     fail: {
         icon: icon_failure,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     missing: {
         icon: icon_failure,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     danger: {
         icon: icon_danger,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     error: {
         icon: icon_danger,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     bug: {
         icon: icon_bug,
-        style: 'note-callout-failure',
+        style: 'ad-failure',
     },
     example: {
         icon: icon_example,
-        style: 'note-callout-example',
+        style: 'ad-example',
     },
     quote: {
         icon: icon_quote,
-        style: 'note-callout-quote',
+        style: 'ad-quote',
     },
     cite: {
         icon: icon_quote,
-        style: 'note-callout-quote',
+        style: 'ad-quote',
     }
 }));
 
@@ -208,7 +208,7 @@ export class CalloutRenderer extends Extension {
         if (info == null) {
             const svg = await this.assetsManager.loadIcon(callout);
             if (svg) {
-                info = {icon: svg, style: 'note-callout-note'}
+                info = {icon: svg, style: 'ad-note'}
             }
             else {
                 info = GetCallout('note');
@@ -221,7 +221,7 @@ export class CalloutRenderer extends Extension {
             body = await this.marked.parse(token.text);
         } 
         
-        return `<section class="note-callout ${info?.style}"><section class="note-callout-title-wrap"><span class="note-callout-icon">${info?.icon}</span><span class="note-callout-title">${title}<span></section><section class="note-callout-content">${body}</section></section>`;
+        return `<section class="ad ${info?.style}"><section class="ad-title-wrap"><span class="ad-icon">${info?.icon}</span><span class="ad-title">${title}<span></section><section class="ad-content">${body}</section></section>`;
      }
 
     markedExtension(): MarkedExtension {

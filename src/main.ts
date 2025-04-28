@@ -25,6 +25,7 @@ import { NotePreview, VIEW_TYPE_NOTE_PREVIEW } from './note-preview';
 import { NMPSettings } from './settings';
 import { NoteToMpSettingTab } from './setting-tab';
 import AssetsManager from './assets';
+import TemplateManager from './template-manager';
 import { setVersion, uevent } from './utils';
 
 
@@ -43,6 +44,11 @@ export default class NoteToMpPlugin extends Plugin {
 		uevent('load');
 		await this.loadSettings();
 		await this.assetsManager.loadAssets();
+		
+		// 初始化模板管理器
+		const templateManager = TemplateManager.getInstance();
+		templateManager.setup(this.app);
+		await templateManager.loadTemplates();
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
 			(leaf) => new NotePreview(leaf)

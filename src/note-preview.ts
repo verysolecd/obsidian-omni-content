@@ -21,10 +21,11 @@
  */
 
 import { EventRef, ItemView, Workspace, WorkspaceLeaf, Notice, sanitizeHTMLToDom, apiVersion, TFile, Platform } from 'obsidian';
-import { applyCSS, uevent } from './utils';
+import { applyCSS, uevent, logger } from './utils';
 import { wxUploadImage } from './weixin-api';
 import { LinkFootnoteMode, NMPSettings } from './settings';
 import AssetsManager from './assets';
+import TemplateManager from './template-manager';
 import InlineCSS from './inline-css';
 import { wxGetToken, wxAddDraft, wxBatchGetMaterial, DraftArticle } from './weixin-api';
 import { MDRendererCallback } from './markdown/extension';
@@ -158,7 +159,23 @@ export class NotePreview extends ItemView implements MDRendererCallback {
         if (this.isOldTheme()) {
             className = this.currentTheme;
         }
-        const html = `<section class="${className}" id="article-section">${article}</section>`;
+
+        let html = `<section class="${className}" id="article-section">${article}</section>`;
+
+
+                // 检查是否需要应用模板
+                if (this.settings.useTemplate) {
+                    logger.info('应用模板：', this.settings.defaultTemplate);
+                    try {
+                        const templateManager = TemplateManager.getInstance();
+                        html = templateManager.applyTemplate(html, this.settings.defaultTemplate);
+                    } catch (error) {
+                        logger.error('应用模板失败', error);
+                        new Notice('应用模板失败，请检查模板设置！');
+                    }
+                }
+        
+
         const doc = sanitizeHTMLToDom(html);
         if (doc.firstChild) {
             this.articleDiv.appendChild(doc.firstChild);
@@ -175,9 +192,11 @@ export class NotePreview extends ItemView implements MDRendererCallback {
     }
 
     getArticleContent() {
+        // 获取渲染后的内容
         const content = this.articleDiv.innerHTML;
         const html = applyCSS(content, this.getCSS());
-        return CardDataManager.getInstance().restoreCard(html);
+        const processedHtml = CardDataManager.getInstance().restoreCard(html);
+        return processedHtml;
     }
 
     getCSS() {

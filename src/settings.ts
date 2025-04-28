@@ -47,6 +47,9 @@ export class NMPSettings {
     useCustomCss: boolean;
     wxInfo: {name:string, appid:string, secret:string}[];
     math: string;
+    // 模板相关设置
+    useTemplate: boolean;
+    defaultTemplate: string;
     expireat: Date | null = null;
 
     private static instance: NMPSettings;
@@ -71,6 +74,8 @@ export class NMPSettings {
         this.authKey = '';
         this.wxInfo = [];
         this.math = 'latex';
+        this.useTemplate = false; // 默认不使用模板
+        this.defaultTemplate = 'default'; // 默认模板名称
     }
 
     resetStyelAndHighlight() {
@@ -95,6 +100,8 @@ export class NMPSettings {
             wxInfo,
             math,
             useCustomCss,
+            useTemplate,
+            defaultTemplate,
         } = data;
 
         const settings = NMPSettings.getInstance();
@@ -131,6 +138,12 @@ export class NMPSettings {
         if (useCustomCss !== undefined) {
             settings.useCustomCss = useCustomCss;
         }
+        if (useTemplate !== undefined) {
+            settings.useTemplate = useTemplate;
+        }
+        if (defaultTemplate) {
+            settings.defaultTemplate = defaultTemplate;
+        }
         settings.getExpiredDate();
     }
 
@@ -148,6 +161,8 @@ export class NMPSettings {
             'wxInfo': settings.wxInfo,
             'math': settings.math,
             'useCustomCss': settings.useCustomCss,
+            'useTemplate': settings.useTemplate,
+            'defaultTemplate': settings.defaultTemplate,
         }
     }
 

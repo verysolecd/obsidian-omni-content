@@ -1,0 +1,153 @@
+/*
+ * Copyright (c) 2024 Sun Booshi
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+import { App, Notice } from "obsidian";
+import { logger } from "./utils";
+
+export interface Template {
+    name: string;
+    path: string;
+    content: string;
+}
+
+export default class TemplateManager {
+    private static instance: TemplateManager;
+    private app: App;
+    private templates: Map<string, Template> = new Map();
+    private templateDir: string;
+
+    private constructor() {}
+
+    public static getInstance(): TemplateManager {
+        if (!TemplateManager.instance) {
+            TemplateManager.instance = new TemplateManager();
+        }
+        return TemplateManager.instance;
+    }
+
+    public setup(app: App): void {
+        this.app = app;
+        this.templateDir = `${this.app.vault.configDir}/plugins/note-to-mp/templates/`;
+    }
+
+    // 加载所有模板
+    public async loadTemplates(): Promise<void> {
+        try {
+            const adapter = this.app.vault.adapter;
+            const templateExists = await adapter.exists(this.templateDir);
+            
+            if (!templateExists) throw new Error('模板目录不存在');
+            
+            const files = await adapter.list(this.templateDir);
+            this.templates.clear();
+            
+            // 检查并确保默认模板存在
+            let hasDefaultTemplate = false;
+            
+            for (const file of files.files) {
+                if (file.endsWith('.html')) {
+                    const fileName = file.split('/').pop()?.replace('.html', '') || '';
+                    const content = await adapter.read(file);
+                    
+                    this.templates.set(fileName, {
+                        name: fileName,
+                        path: file,
+                        content: content
+                    });
+                    
+                    if (fileName === 'default') {
+                        hasDefaultTemplate = true;
+                    }
+                }
+            }
+            
+            // 如果没有默认模板，创建一个
+            if (!hasDefaultTemplate) throw new Error('默认模板不存在');
+            
+            logger.info('模板加载完成，共加载', this.templates.size, '个模板');
+        } catch (error) {
+            console.error('Error loading templates:', error);
+            new Notice('加载模板失败！');
+        }
+    }
+
+    // 获取模板列表
+    public getTemplateNames(): string[] {
+        return Array.from(this.templates.keys());
+    }
+
+    // 获取指定模板
+    public getTemplate(name: string): Template | undefined {
+        return this.templates.get(name);
+    }
+
+    // 应用模板到内容
+    public applyTemplate(content: string, templateName: string): string {
+        const template = this.templates.get(templateName);
+        if (!template) {
+            logger.warn(`未找到模板 ${templateName}`);
+            return content;
+        }
+        
+        return template.content.replace('{content}', content);
+    }
+    
+    // 创建新模板
+    public async createTemplate(name: string, content: string): Promise<void> {
+        try {
+            const fileName = `${name}.html`;
+            const filePath = `${this.templateDir}${fileName}`;
+            
+            await this.app.vault.adapter.write(filePath, content);
+            
+            this.templates.set(name, {
+                name: name,
+                path: filePath,
+                content: content
+            });
+            
+            new Notice(`模板 ${name} 创建成功！`);
+        } catch (error) {
+            console.error('Error creating template:', error);
+            new Notice('创建模板失败！');
+        }
+    }
+
+    // 删除模板
+    public async deleteTemplate(name: string): Promise<void> {
+        try {
+            const template = this.templates.get(name);
+            if (!template) {
+                new Notice(`模板 ${name} 不存在！`);
+                return;
+            }
+            
+            await this.app.vault.adapter.remove(template.path);
+            this.templates.delete(name);
+            
+            new Notice(`模板 ${name} 删除成功！`);
+        } catch (error) {
+            console.error('Error deleting template:', error);
+            new Notice('删除模板失败！');
+        }
+    }
+}

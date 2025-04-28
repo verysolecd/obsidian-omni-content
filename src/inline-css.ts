@@ -25,7 +25,7 @@ export default `
 /* --------------------------------------- */
 /* callout */
 /* --------------------------------------- */
-section .note-callout {
+section .ad {
   border: none;
   padding: 1em 1em 1em 1.5em;
   display: flex;
@@ -34,7 +34,7 @@ section .note-callout {
   border-radius: 4px;
 }
 
-section .note-callout-title-wrap {
+section .ad-title-wrap {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -42,54 +42,54 @@ section .note-callout-title-wrap {
   font-weight: 600;
 }
 
-.note-callout-icon {
+.ad-icon {
   display: inline-block;
   width: 18px;
   height: 18px;  
 }
 
-.note-callout-icon svg {
+.ad-icon svg {
   width: 100%;
   height: 100%;
 }
 
-section .note-callout-title {
+section .ad-title {
   margin-left: 0.25em;
 }
 
-section .note-callout-content {
+section .ad-content {
   color: rgb(34,34,34);
 }
 
 /* note info todo */
-section .note-callout-note { 
+section .ad-note { 
   color: rgb(8, 109, 221);
   background-color: rgba(8, 109, 221, 0.1);
 }
 /* abstract tip hint */
-section .note-callout-abstract {
+section .ad-abstract {
   color: rgb(0, 191, 188);
   background-color: rgba(0, 191, 188, 0.1);
 }
-section .note-callout-success {
+section .ad-success {
   color: rgb(8, 185, 78);
   background-color: rgba(8, 185, 78, 0.1);
 }
 /* question  help, faq, warning, caution, attention */
-section .note-callout-question {
+section .ad-question {
   color: rgb(236, 117, 0);
   background-color: rgba(236, 117, 0, 0.1);
 }
 /* failure, fail, missing, danger, error, bug */
-section .note-callout-failure {
+section .ad-failure {
   color: rgb(233, 49, 71);
   background-color: rgba(233, 49, 71, 0.1);
 }
-section .note-callout-example {
+section .ad-example {
   color: rgb(120, 82, 238);
   background-color: rgba(120, 82, 238, 0.1);
 }
-section .note-callout-quote {
+section .ad-quote {
   color: rgb(158, 158, 158);
   background-color: rgba(158, 158, 158, 0.1);
 }
