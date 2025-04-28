@@ -20,8 +20,17 @@
  * THE SOFTWARE.
  */
 
-import { App, Notice } from "obsidian";
+import { App, Notice } from 'obsidian';
+import Handlebars from 'handlebars';
 import { logger } from "./utils";
+
+// 定义模板数据类型
+export interface TemplateData {
+    // 注意：索引类型必须包含所有特定属性类型
+    [key: string]: string | string[] | number | boolean | object | undefined;
+    epigraph?: string[];
+    content?: string;
+}
 
 export interface Template {
     name: string;
@@ -101,14 +110,49 @@ export default class TemplateManager {
     }
 
     // 应用模板到内容
-    public applyTemplate(content: string, templateName: string): string {
+    public applyTemplate(content: string, templateName: string, meta: TemplateData = {}): string {
         const template = this.templates.get(templateName);
         if (!template) {
             logger.warn(`未找到模板 ${templateName}`);
             return content;
         }
         
-        return template.content.replace('{content}', content);
+        // 确保 meta 中有 epigraph，默认为 ["这篇文章写地贼累！"]
+        if (!meta.epigraph) {
+            meta.epigraph = ["这篇文章写地贼累！"];
+        } else if (!Array.isArray(meta.epigraph)) {
+            // 如果 epigraph 不是数组，转换为数组
+            meta.epigraph = [meta.epigraph];
+        }
+        
+        // 使用 Handlebars 渲染模板
+        
+        // 在传递数据时，要确保 content 不会被 meta 中的同名属性覆盖
+        const templateData = {
+            ...meta,  // 先展开 meta
+            content   // 再设置 content，优先级更高
+        };
+        
+        // 预编译模板，可提高性能
+        const compiledTemplate = Handlebars.compile(template.content, { noEscape: true }); // noEscape 参数避免 HTML 转义
+        
+        // 注册一些常用的辅助函数
+        Handlebars.registerHelper('isFirst', function(options) {
+            return options.data.first ? options.fn(this) : options.inverse(this);
+        });
+        
+        Handlebars.registerHelper('isLast', function(options) {
+            return options.data.last ? options.fn(this) : options.inverse(this);
+        });
+        
+        const data = compiledTemplate(templateData, {
+            data: {  // 这里可以传递一些额外的上下文数据
+                root: templateData
+            }
+        });
+        
+        logger.debug('使用模板数据渲染:', { templateName, templateData });
+        return data;
     }
     
     // 创建新模板

@@ -181,9 +181,32 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			logger.info("应用模板：", this.settings.defaultTemplate);
 			try {
 				const templateManager = TemplateManager.getInstance();
+				// 获取文档元数据
+				const file = this.app.workspace.getActiveFile();
+				const meta: Record<string, string | string[] | number | boolean | object | undefined> = {};
+				if (file) {
+					const metadata = this.app.metadataCache.getFileCache(file);
+					if (metadata?.frontmatter) {
+						// 将全部前置元数据复制到 meta 对象
+						Object.assign(meta, metadata.frontmatter);
+						
+						// 特殊处理 epigraph 属性
+						if (metadata.frontmatter.epigraph) {
+							if (typeof metadata.frontmatter.epigraph === 'string') {
+								meta.epigraph = [metadata.frontmatter.epigraph];
+							} else if (Array.isArray(metadata.frontmatter.epigraph)) {
+								meta.epigraph = metadata.frontmatter.epigraph;
+							}
+						}
+					}
+				}
+				
+				logger.debug('传递至模板的元数据:', meta);
+				
 				html = templateManager.applyTemplate(
 					html,
-					this.settings.defaultTemplate
+					this.settings.defaultTemplate,
+					meta
 				);
 			} catch (error) {
 				logger.error("应用模板失败", error);
@@ -282,7 +305,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 公众号
 		if (this.settings.wxInfo.length > 1 || Platform.isDesktop) {
 			lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
-			lineDiv.createDiv({ cls: "style-label" }).innerText = "公众号:";
+			lineDiv.createDiv({ cls: "style-label" }).innerText = "手工川专用排版器:";
 			const wxSelect = lineDiv.createEl("select", {
 				cls: "style-select",
 			});
