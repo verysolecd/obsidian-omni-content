@@ -22,13 +22,17 @@
 
 import { Tokens, MarkedExtension } from "marked";
 import { Extension } from "./extension";
+import { LinkDescriptionMode } from "src/settings";
 
 export class LinkRenderer extends Extension {
     // 存储链接信息：URL和描述文本
     allLinks: {href: string, text: string}[] = [];
+    // 存储需要转换为脚注的链接
+    footnoteLinks: {href: string, text: string}[] = [];
     
     async prepare() {
        this.allLinks = [];
+       this.footnoteLinks = [];
     }
 
     // 检查是否为微信链接
@@ -55,20 +59,18 @@ export class LinkRenderer extends Extension {
     }
 
     async postprocess(html: string) {
-        if (this.settings.linkStyle !== 'footnote'
-            || this.allLinks.length == 0) {
+        // 如果没有脚注链接，直接返回原始 HTML
+        if (this.footnoteLinks.length === 0) {
             return html;
         }
         
-        const links = this.allLinks.map((link, i) => {
-            // 根据设置决定是否显示链接描述
-            if (this.settings.linkDescriptionMode === 'description' && link.text && link.text !== link.href) {
-                return `<li>${link.href} - ${link.text}</li>`;
-            } else {
-                return `<li>${link.href}</li>`;
-            }
+        // 生成脚注列表
+        const links = this.footnoteLinks.map((link, i) => {
+            return `<li>${link.text}, ${link.href}</li>`;
         });
-        return `${html}<seciton class="footnotes"><hr><ol>${links.join('')}</ol></section>`;
+        
+        // 添加脚注部分
+        return `${html}<section class="footnotes"><hr><ol>${links.join('')}</ol></section>`;
     }
 
     markedExtension(): MarkedExtension {
@@ -77,25 +79,23 @@ export class LinkRenderer extends Extension {
                 name: 'link',
                 level: 'inline',
                 renderer: (token: Tokens.Link) => {
-                    // 如果链接文本就是链接本身，或者是微信链接并且不应该转换
-                    const isWxLink = this.isWechatLink(token.href);
+                    // 保存所有链接
+                    this.allLinks.push({href: token.href, text: token.text});
+                    
+                    // 判断是否需要转换为脚注
                     const shouldFootnote = this.shouldConvertToFootnote(token.href);
                     
-                    // 链接文本就是链接本身，或者是不需要转换的微信链接
-                    if (token.text.indexOf(token.href) === 0 || 
-                        (isWxLink && !shouldFootnote)) {
+                    // 如果不需要转换为脚注，直接返回普通链接
+                    if (!shouldFootnote) {
                         return `<a href="${token.href}">${token.text}</a>`;
                     }
                     
-                    // 保存链接信息
-                    this.allLinks.push({href: token.href, text: token.text});
+                    // 需要转换为脚注，添加到脚注链接列表
+                    this.footnoteLinks.push({href: token.href, text: token.text});
                     
-                    // 根据链接样式决定展示方式
-                    if (this.settings.linkStyle === 'footnote') {
-                        return `<a>${token.text}<sup>[${this.allLinks.length}]</sup></a>`;
-                    } else {
-                        return `<a>${token.text}[${token.href}]</a>`;
-                    }
+                    // 返回脚注形式的链接
+                    const text = this.settings.linkDescriptionMode === LinkDescriptionMode.Empty ? "" : token.text;
+                    return `<a>${text}<sup>[${this.footnoteLinks.length}]</sup></a>`;
                 }
             }]
         }

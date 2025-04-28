@@ -24,7 +24,7 @@ import { App, TextAreaComponent, PluginSettingTab, Setting, Notice, sanitizeHTML
 import NoteToMpPlugin from './main';
 import { wxGetToken,wxEncrypt } from './weixin-api';
 import { cleanMathCache } from './markdown/math';
-import { NMPSettings } from './settings';
+import { LinkDescriptionMode, LinkFootnoteMode, NMPSettings } from './settings';
 
 export class NoteToMpSettingTab extends PluginSettingTab {
 	plugin: NoteToMpPlugin;
@@ -202,17 +202,7 @@ export class NoteToMpSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
-			.setName('链接展示样式')
-			.addDropdown(dropdown => {
-				dropdown.addOption('inline', '内嵌');
-			    dropdown.addOption('footnote', '脚注');
-				dropdown.setValue(this.settings.linkStyle);
-				dropdown.onChange(async (value) => {
-				    this.settings.linkStyle = value;
-					await this.plugin.saveSettings();
-				});
-			});
+
 
 		new Setting(containerEl)
 			.setName('链接转换脚注模式')
@@ -223,7 +213,7 @@ export class NoteToMpSettingTab extends PluginSettingTab {
 				dropdown.addOption('non-wx', '仅非微信链接转换');
 				dropdown.setValue(this.settings.linkFootnoteMode);
 				dropdown.onChange(async (value) => {
-					this.settings.linkFootnoteMode = value;
+					this.settings.linkFootnoteMode = value as LinkFootnoteMode;
 					await this.plugin.saveSettings();
 				});
 			});
@@ -236,7 +226,7 @@ export class NoteToMpSettingTab extends PluginSettingTab {
 				dropdown.addOption('description', '显示链接描述');
 				dropdown.setValue(this.settings.linkDescriptionMode);
 				dropdown.onChange(async (value) => {
-					this.settings.linkDescriptionMode = value;
+					this.settings.linkDescriptionMode = value as LinkDescriptionMode;
 					await this.plugin.saveSettings();
 				});
 			});
