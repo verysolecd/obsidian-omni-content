@@ -27,6 +27,10 @@ export class NMPSettings {
     defaultHighlight: string;
     showStyleUI: boolean;
     linkStyle: string;
+    // 控制哪些链接转为脚注：none-都不转，all-都转，non-wx-非微信文章转
+    linkFootnoteMode: string;
+    // 控制脚注中链接的展示形式：empty-为空，description-为链接的描述
+    linkDescriptionMode: string;
     embedStyle: string;
     lineNumber: boolean;
     authKey: string;
@@ -50,6 +54,8 @@ export class NMPSettings {
         this.defaultHighlight = '默认';
         this.showStyleUI = true;
         this.linkStyle = 'inline';
+        this.linkFootnoteMode = 'non-wx'; // 默认只转换非微信文章链接
+        this.linkDescriptionMode = 'empty'; // 默认脚注中不显示描述
         this.embedStyle = 'quote';
         this.lineNumber = true;
         this.useCustomCss = false;
@@ -70,6 +76,8 @@ export class NMPSettings {
         const {
             defaultStyle,
             linkStyle,
+            linkFootnoteMode,
+            linkDescriptionMode,
             embedStyle,
             showStyleUI,
             lineNumber,
@@ -92,6 +100,12 @@ export class NMPSettings {
         }
         if (linkStyle) {
             settings.linkStyle = linkStyle;
+        }
+        if (linkFootnoteMode) {
+            settings.linkFootnoteMode = linkFootnoteMode;
+        }
+        if (linkDescriptionMode) {
+            settings.linkDescriptionMode = linkDescriptionMode;
         }
         if (embedStyle) {
             settings.embedStyle = embedStyle;
@@ -121,6 +135,8 @@ export class NMPSettings {
             'defaultHighlight': settings.defaultHighlight,
             'showStyleUI': settings.showStyleUI,
             'linkStyle': settings.linkStyle,
+            'linkFootnoteMode': settings.linkFootnoteMode,
+            'linkDescriptionMode': settings.linkDescriptionMode,
             'embedStyle': settings.embedStyle,
             'lineNumber': settings.lineNumber,
             'authKey': settings.authKey,

@@ -24,9 +24,34 @@ import { Tokens, MarkedExtension } from "marked";
 import { Extension } from "./extension";
 
 export class LinkRenderer extends Extension {
-    allLinks:string[] = [];
+    // 存储链接信息：URL和描述文本
+    allLinks: {href: string, text: string}[] = [];
+    
     async prepare() {
        this.allLinks = [];
+    }
+
+    // 检查是否为微信链接
+    isWechatLink(href: string): boolean {
+        return href.indexOf('https://mp.weixin.qq.com/mp') === 0 ||
+               href.indexOf('https://mp.weixin.qq.com/s') === 0;
+    }
+
+    // 检查链接是否应该转为脚注
+    shouldConvertToFootnote(href: string): boolean {
+        const mode = this.settings.linkFootnoteMode;
+        
+        // 根据设置决定是否应该转换为脚注
+        if (mode === 'none') {
+            return false;
+        } else if (mode === 'all') {
+            return true;
+        } else if (mode === 'non-wx') {
+            // 只有非微信链接才转为脚注
+            return !this.isWechatLink(href);
+        }
+        
+        return false;
     }
 
     async postprocess(html: string) {
@@ -35,8 +60,13 @@ export class LinkRenderer extends Extension {
             return html;
         }
         
-        const links = this.allLinks.map((href, i) => {
-            return `<li>${href}</li>`;
+        const links = this.allLinks.map((link, i) => {
+            // 根据设置决定是否显示链接描述
+            if (this.settings.linkDescriptionMode === 'description' && link.text && link.text !== link.href) {
+                return `<li>${link.href} - ${link.text}</li>`;
+            } else {
+                return `<li>${link.href}</li>`;
+            }
         });
         return `${html}<seciton class="footnotes"><hr><ol>${links.join('')}</ol></section>`;
     }
@@ -47,16 +77,23 @@ export class LinkRenderer extends Extension {
                 name: 'link',
                 level: 'inline',
                 renderer: (token: Tokens.Link) => {
-                    if (token.text.indexOf(token.href) === 0
-                        || (token.href.indexOf('https://mp.weixin.qq.com/mp') === 0)
-                        || (token.href.indexOf('https://mp.weixin.qq.com/s') === 0)) {
+                    // 如果链接文本就是链接本身，或者是微信链接并且不应该转换
+                    const isWxLink = this.isWechatLink(token.href);
+                    const shouldFootnote = this.shouldConvertToFootnote(token.href);
+                    
+                    // 链接文本就是链接本身，或者是不需要转换的微信链接
+                    if (token.text.indexOf(token.href) === 0 || 
+                        (isWxLink && !shouldFootnote)) {
                         return `<a href="${token.href}">${token.text}</a>`;
                     }
-                    this.allLinks.push(token.href);
-                    if (this.settings.linkStyle == 'footnote') {
+                    
+                    // 保存链接信息
+                    this.allLinks.push({href: token.href, text: token.text});
+                    
+                    // 根据链接样式决定展示方式
+                    if (this.settings.linkStyle === 'footnote') {
                         return `<a>${token.text}<sup>[${this.allLinks.length}]</sup></a>`;
-                    }
-                    else {
+                    } else {
                         return `<a>${token.text}[${token.href}]</a>`;
                     }
                 }
