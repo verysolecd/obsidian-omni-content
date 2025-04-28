@@ -26,7 +26,8 @@ import { NMPSettings } from './settings';
 import { NoteToMpSettingTab } from './setting-tab';
 import AssetsManager from './assets';
 import TemplateManager from './template-manager';
-import { setVersion, uevent } from './utils';
+import { setVersion, uevent, logger } from './utils';
+import { DistributionService } from './distribution';
 
 
 export default class NoteToMpPlugin extends Plugin {
@@ -49,6 +50,18 @@ export default class NoteToMpPlugin extends Plugin {
 		const templateManager = TemplateManager.getInstance();
 		templateManager.setup(this.app);
 		await templateManager.loadTemplates();
+		
+		// 初始化分发服务
+		const distributionService = DistributionService.getInstance();
+		distributionService.setup(this.app);
+		
+		// 加载分发服务配置
+		const distributionConfig = this.settings ? this.settings.distributionConfig : null;
+		if (distributionConfig) {
+			distributionService.loadConfig(distributionConfig);
+			logger.info('分发服务配置已加载');
+		}
+		
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
 			(leaf) => new NotePreview(leaf)
@@ -79,6 +92,11 @@ export default class NoteToMpPlugin extends Plugin {
 	}
 
 	async saveSettings() {
+		// 保存分发服务配置
+		const distributionService = DistributionService.getInstance();
+		const distributionConfig = distributionService.saveConfig();
+		this.settings.distributionConfig = distributionConfig;
+		
 		await this.saveData(NMPSettings.allSettings());
 	}
 

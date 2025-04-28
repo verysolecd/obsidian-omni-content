@@ -30,6 +30,9 @@ import {
 	apiVersion,
 	TFile,
 	Platform,
+	Modal,
+	Setting,
+	App,
 } from "obsidian";
 import { applyCSS, uevent, logger } from "./utils";
 import { wxUploadImage } from "./weixin-api";
@@ -37,6 +40,13 @@ import { LinkFootnoteMode, NMPSettings } from "./settings";
 import AssetsManager from "./assets";
 import TemplateManager from "./template-manager";
 import InlineCSS from "./inline-css";
+import {
+	DistributionService,
+	PlatformAdapter,
+	PlatformType,
+	ArticleContent,
+} from "./distribution";
+
 import {
 	wxGetToken,
 	wxAddDraft,
@@ -49,6 +59,409 @@ import { LocalImageManager } from "./markdown/local-file";
 import { CardDataManager, CodeRenderer } from "./markdown/code";
 
 export const VIEW_TYPE_NOTE_PREVIEW = "note-preview";
+
+/**
+ * 分发对话框
+ */
+class DistributionModal extends Modal {
+	private article: string;
+	private title: string;
+	private platforms: PlatformAdapter[] = [];
+	private selectedPlatforms: PlatformType[] = [];
+	private distributionService: DistributionService;
+	private platformCheckboxes: Map<PlatformType, HTMLInputElement> = new Map();
+	private statusContainer: HTMLElement;
+
+	constructor(app: App, article: string) {
+		super(app);
+		this.article = article;
+		this.title = document.title || "无标题文档";
+		this.distributionService = DistributionService.getInstance();
+		this.platforms = this.distributionService.getAdapters();
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("distribution-modal");
+
+		// 标题
+		const headerDiv = contentEl.createDiv({
+			cls: "distribution-modal-header",
+		});
+		const titleEl = headerDiv.createEl("h2");
+		titleEl.setText("内容分发");
+		titleEl.addClass("distribution-modal-title");
+
+		// 平台选择区域
+		const selectContainer = contentEl.createDiv({
+			cls: "platform-select-container",
+		});
+		const selectTitle = selectContainer.createEl("h3", {
+			text: "选择发布平台",
+		});
+
+		// 平台列表
+		const platformsContainer = selectContainer.createDiv({
+			cls: "platforms-container",
+		});
+		this.renderPlatformsList(platformsContainer);
+
+		// 分发状态和结果
+		this.statusContainer = contentEl.createDiv({
+			cls: "distribution-status",
+		});
+
+		// 按钮区
+		const buttonContainer = contentEl.createDiv({
+			cls: "distribution-buttons",
+		});
+
+		// 发布按钮
+		const publishButton = buttonContainer.createEl("button", {
+			cls: "mod-cta distribution-publish-button",
+			text: "发布",
+		});
+
+		publishButton.addEventListener("click", async () => {
+			await this.publishToSelectedPlatforms();
+		});
+
+		// 保存草稿按钮
+		const draftButton = buttonContainer.createEl("button", {
+			cls: "distribution-draft-button",
+			text: "保存草稿",
+		});
+
+		draftButton.addEventListener("click", async () => {
+			await this.saveDraftToSelectedPlatforms();
+		});
+
+		// 取消按钮
+		const cancelButton = buttonContainer.createEl("button", {
+			cls: "distribution-cancel-button",
+			text: "取消",
+		});
+
+		cancelButton.addEventListener("click", () => {
+			this.close();
+		});
+	}
+
+	/**
+	 * 渲染平台列表
+	 */
+	renderPlatformsList(container: HTMLElement) {
+		container.empty();
+		this.platformCheckboxes.clear();
+
+		// 可用平台列表
+		const platformsList = container.createDiv({ cls: "platforms-list" });
+
+		const configuredPlatforms = this.distributionService
+			.getConfiguredPlatforms()
+			.map((auth) => auth.type);
+
+		// 如果没有配置平台，显示提示
+		if (configuredPlatforms.length === 0) {
+			const emptyDiv = platformsList.createDiv({
+				cls: "empty-platforms",
+			});
+			emptyDiv.setText("请在设置中配置平台认证信息");
+			return;
+		}
+
+		// 添加平台选择项
+		for (const platform of this.platforms) {
+			// 检查是否配置了此平台
+			if (!configuredPlatforms.includes(platform.type)) {
+				continue;
+			}
+
+			// 创建平台选择项
+			const platformItem = platformsList.createDiv({
+				cls: "platform-item",
+			});
+
+			// 复选框
+			const checkbox = platformItem.createEl("input");
+			checkbox.type = "checkbox";
+			checkbox.id = `platform-${platform.type}`;
+			checkbox.dataset.platform = platform.type;
+
+			// 存储复选框引用
+			this.platformCheckboxes.set(platform.type, checkbox);
+
+			// 处理选择变更
+			checkbox.addEventListener("change", () => {
+				if (checkbox.checked) {
+					this.selectedPlatforms.push(platform.type);
+				} else {
+					this.selectedPlatforms = this.selectedPlatforms.filter(
+						(p) => p !== platform.type
+					);
+				}
+			});
+
+			// 平台图标和名称
+			const label = platformItem.createEl("label");
+			label.htmlFor = checkbox.id;
+			label.addClass("platform-label");
+
+			const iconSpan = label.createSpan({ cls: "platform-icon" });
+			iconSpan.innerHTML = platform.icon;
+
+			const nameSpan = label.createSpan({ cls: "platform-name" });
+			nameSpan.setText(platform.name);
+
+			// 初始选中第一个平台
+			if (this.selectedPlatforms.length === 0) {
+				checkbox.checked = true;
+				this.selectedPlatforms.push(platform.type);
+			}
+		}
+	}
+
+	/**
+	 * 发布到所选平台
+	 */
+	async publishToSelectedPlatforms() {
+		if (this.selectedPlatforms.length === 0) {
+			new Notice("请选择至少一个发布平台");
+			return;
+		}
+
+		// 准备文章内容
+		const content: ArticleContent = {
+			title: this.title,
+			content: this.article,
+			summary: this.extractSummary(this.article),
+		};
+
+		// 显示加载状态
+		this.statusContainer.empty();
+		this.statusContainer.addClass("active");
+
+		const statusTitle = this.statusContainer.createEl("h3", {
+			text: "发布进度",
+		});
+		const statusList = this.statusContainer.createDiv({
+			cls: "status-list",
+		});
+
+		// 创建平台状态项
+		const statusItems = new Map<PlatformType, HTMLElement>();
+
+		for (const platformType of this.selectedPlatforms) {
+			const adapter = this.distributionService.getAdapter(platformType);
+			if (!adapter) continue;
+
+			const statusItem = statusList.createDiv({ cls: "status-item" });
+			statusItem.addClass("status-pending");
+
+			const nameSpan = statusItem.createSpan({ cls: "platform-name" });
+			nameSpan.innerHTML = `${adapter.icon} <span>${adapter.name}</span>`;
+
+			const statusSpan = statusItem.createSpan({ cls: "status-text" });
+			statusSpan.setText("准备中...");
+
+			statusItems.set(platformType, statusItem);
+		}
+
+		// 逐个平台发布
+		for (const platformType of this.selectedPlatforms) {
+			const statusItem = statusItems.get(platformType);
+			if (!statusItem) continue;
+
+			statusItem.removeClass("status-pending");
+			statusItem.addClass("status-processing");
+			statusItem.querySelector(".status-text")!.textContent = "发布中...";
+
+			try {
+				// 发布到平台
+				const result = await this.distributionService.publishToPlatform(
+					content,
+					platformType
+				);
+
+				// 更新状态
+				statusItem.removeClass("status-processing");
+
+				if (result.success) {
+					statusItem.addClass("status-success");
+					statusItem.querySelector(".status-text")!.textContent =
+						result.message || "发布成功";
+
+					// 添加链接（如果有）
+					if (result.url) {
+						const linkEl = statusItem.createEl("a", {
+							cls: "result-link",
+							text: "查看",
+							href: result.url,
+						});
+						linkEl.target = "_blank";
+					}
+				} else {
+					statusItem.addClass("status-error");
+					statusItem.querySelector(".status-text")!.textContent =
+						result.message || "发布失败";
+				}
+			} catch (error) {
+				statusItem.removeClass("status-processing");
+				statusItem.addClass("status-error");
+				statusItem.querySelector(
+					".status-text"
+				)!.textContent = `发布失败: ${
+					error instanceof Error ? error.message : "未知错误"
+				}`;
+			}
+		}
+
+		// 添加完成消息
+		const completeDiv = this.statusContainer.createDiv({
+			cls: "status-complete",
+		});
+		completeDiv.setText("发布流程已完成");
+	}
+
+	/**
+	 * 保存草稿到所选平台
+	 */
+	async saveDraftToSelectedPlatforms() {
+		if (this.selectedPlatforms.length === 0) {
+			new Notice("请选择至少一个平台");
+			return;
+		}
+
+		// 准备文章内容
+		const content: ArticleContent = {
+			title: this.title,
+			content: this.article,
+			summary: this.extractSummary(this.article),
+		};
+
+		// 显示加载状态
+		this.statusContainer.empty();
+		this.statusContainer.addClass("active");
+
+		const statusTitle = this.statusContainer.createEl("h3", {
+			text: "保存草稿进度",
+		});
+		const statusList = this.statusContainer.createDiv({
+			cls: "status-list",
+		});
+
+		// 创建平台状态项
+		const statusItems = new Map<PlatformType, HTMLElement>();
+
+		for (const platformType of this.selectedPlatforms) {
+			const adapter = this.distributionService.getAdapter(platformType);
+			if (!adapter) continue;
+
+			const statusItem = statusList.createDiv({ cls: "status-item" });
+			statusItem.addClass("status-pending");
+
+			const nameSpan = statusItem.createSpan({ cls: "platform-name" });
+			nameSpan.innerHTML = `${adapter.icon} <span>${adapter.name}</span>`;
+
+			const statusSpan = statusItem.createSpan({ cls: "status-text" });
+			statusSpan.setText("准备中...");
+
+			statusItems.set(platformType, statusItem);
+		}
+
+		// 逐个平台保存草稿
+		for (const platformType of this.selectedPlatforms) {
+			const statusItem = statusItems.get(platformType);
+			if (!statusItem) continue;
+
+			statusItem.removeClass("status-pending");
+			statusItem.addClass("status-processing");
+			statusItem.querySelector(".status-text")!.textContent = "保存中...";
+
+			try {
+				const adapter =
+					this.distributionService.getAdapter(platformType);
+
+				// 检查平台是否支持草稿功能
+				if (!adapter || !adapter.saveDraft) {
+					statusItem.removeClass("status-processing");
+					statusItem.addClass("status-error");
+					statusItem.querySelector(".status-text")!.textContent =
+						"不支持草稿功能";
+					continue;
+				}
+
+				// 保存草稿
+				const result = await this.distributionService.saveDraft(
+					content,
+					platformType
+				);
+
+				// 更新状态
+				statusItem.removeClass("status-processing");
+
+				if (result.success) {
+					statusItem.addClass("status-success");
+					statusItem.querySelector(".status-text")!.textContent =
+						result.message || "保存成功";
+
+					// 添加链接（如果有）
+					if (result.url) {
+						const linkEl = statusItem.createEl("a", {
+							cls: "result-link",
+							text: "查看",
+							href: result.url,
+						});
+						linkEl.target = "_blank";
+					}
+				} else {
+					statusItem.addClass("status-error");
+					statusItem.querySelector(".status-text")!.textContent =
+						result.message || "保存失败";
+				}
+			} catch (error) {
+				statusItem.removeClass("status-processing");
+				statusItem.addClass("status-error");
+				statusItem.querySelector(
+					".status-text"
+				)!.textContent = `保存失败: ${
+					error instanceof Error ? error.message : "未知错误"
+				}`;
+			}
+		}
+
+		// 添加完成消息
+		const completeDiv = this.statusContainer.createDiv({
+			cls: "status-complete",
+		});
+		completeDiv.setText("草稿保存流程已完成");
+	}
+
+	/**
+	 * 从HTML中提取摘要
+	 */
+	private extractSummary(html: string): string {
+		// 创建临时元素解析HTML
+		const tempElement = document.createElement("div");
+		tempElement.innerHTML = html;
+
+		// 提取纯文本
+		const textContent =
+			tempElement.textContent || tempElement.innerText || "";
+
+		// 返回前200个字符作为摘要
+		return (
+			textContent.substring(0, 200).trim() +
+			(textContent.length > 200 ? "..." : "")
+		);
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
 
 const FRONT_MATTER_REGEX = /^(---)$.+?^(---)$.+?/ims;
 
@@ -183,26 +596,34 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				const templateManager = TemplateManager.getInstance();
 				// 获取文档元数据
 				const file = this.app.workspace.getActiveFile();
-				const meta: Record<string, string | string[] | number | boolean | object | undefined> = {};
+				const meta: Record<
+					string,
+					string | string[] | number | boolean | object | undefined
+				> = {};
 				if (file) {
 					const metadata = this.app.metadataCache.getFileCache(file);
 					if (metadata?.frontmatter) {
 						// 将全部前置元数据复制到 meta 对象
 						Object.assign(meta, metadata.frontmatter);
-						
+
 						// 特殊处理 epigraph 属性
 						if (metadata.frontmatter.epigraph) {
-							if (typeof metadata.frontmatter.epigraph === 'string') {
+							if (
+								typeof metadata.frontmatter.epigraph ===
+								"string"
+							) {
 								meta.epigraph = [metadata.frontmatter.epigraph];
-							} else if (Array.isArray(metadata.frontmatter.epigraph)) {
+							} else if (
+								Array.isArray(metadata.frontmatter.epigraph)
+							) {
 								meta.epigraph = metadata.frontmatter.epigraph;
 							}
 						}
 					}
 				}
-				
-				logger.debug('传递至模板的元数据:', meta);
-				
+
+				logger.debug("传递至模板的元数据:", meta);
+
 				html = templateManager.applyTemplate(
 					html,
 					this.settings.defaultTemplate,
@@ -214,13 +635,13 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			}
 		}
 
-        // logger.info(`Sanitize input HTML: `, html)
-        this.articleDiv.innerHTML = html;
+		// logger.info(`Sanitize input HTML: `, html)
+		this.articleDiv.innerHTML = html;
 		// const doc = sanitizeHTMLToDom(html);
 		// if (doc.firstChild) {
-        //     const article = doc.firstChild;
-        //     logger.info(`Sanitize output article: `, article)
-        //     this.articleDiv.appendChild(article);
+		//     const article = doc.firstChild;
+		//     logger.info(`Sanitize output article: `, article)
+		//     this.articleDiv.appendChild(article);
 		// }
 	}
 
@@ -302,10 +723,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 创建专业化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
-		
+
 		// 添加工具栏顶部品牌区域
 		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
-		
+
 		// 品牌Logo和名称
 		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
 		brandLogo.innerHTML = `
@@ -315,44 +736,57 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				<path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 			</svg>
 		`;
-		
+
 		const brandName = brandSection.createDiv({ cls: "brand-name" });
 		brandName.innerHTML = "手工川智能创作平台";
-		
+
 		// 创建主工具栏容器
-		const toolbarContainer = this.toolbar.createDiv({ cls: "toolbar-container" });
-		
+		const toolbarContainer = this.toolbar.createDiv({
+			cls: "toolbar-container",
+		});
+
 		// 创建工具栏内容区域
-		const toolbarContent = toolbarContainer.createDiv({ cls: "toolbar-content" });
-		
+		const toolbarContent = toolbarContainer.createDiv({
+			cls: "toolbar-content",
+		});
+
 		// 1. 创建左侧区域 - 主要设置
-		const leftSection = toolbarContent.createDiv({ cls: "toolbar-section toolbar-section-left" });
-		
+		const leftSection = toolbarContent.createDiv({
+			cls: "toolbar-section toolbar-section-left toolbar-vertical",
+		});
+
 		// 1.1 模板设置组
 		const templateGroup = leftSection.createDiv({ cls: "toolbar-group" });
 		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
-		templateLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
-		
+		templateLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
-		
-		const templateWrapper = templateGroup.createDiv({ cls: "select-wrapper" });
-		const templateSelect = templateWrapper.createEl("select", { cls: "toolbar-select" });
-		
+
+		const templateWrapper = templateGroup.createDiv({
+			cls: "select-wrapper",
+		});
+		const templateSelect = templateWrapper.createEl("select", {
+			cls: "toolbar-select",
+		});
+
 		// 添加"不使用模板"选项
 		const emptyOption = templateSelect.createEl("option");
 		emptyOption.value = "";
 		emptyOption.text = "不使用模板";
 		emptyOption.selected = !this.settings.useTemplate;
-		
+
 		// 添加模板选项
-		templates.forEach(template => {
+		templates.forEach((template) => {
 			const op = templateSelect.createEl("option");
 			op.value = template;
 			op.text = template;
-			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
+			op.selected =
+				this.settings.useTemplate &&
+				template === this.settings.defaultTemplate;
 		});
-		
+
 		templateSelect.onchange = async () => {
 			if (templateSelect.value === "") {
 				this.settings.useTemplate = false;
@@ -360,10 +794,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				this.settings.useTemplate = true;
 				this.settings.defaultTemplate = templateSelect.value;
 			}
-			
+
 			// 通过更新静态实例保存设置
 			NMPSettings.getInstance();
-			
+
 			// 重新渲染以应用模板
 			await this.renderMarkdown();
 		};
@@ -371,12 +805,17 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
 			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
-			
+
 			const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
-			styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
-			
-			const selectWrapper = styleGroup.createDiv({ cls: "select-wrapper" });
-			const selectBtn = selectWrapper.createEl("select", { cls: "toolbar-select" });
+			styleLabel.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
+
+			const selectWrapper = styleGroup.createDiv({
+				cls: "select-wrapper",
+			});
+			const selectBtn = selectWrapper.createEl("select", {
+				cls: "toolbar-select",
+			});
 
 			selectBtn.onchange = async () => {
 				this.updateStyle(selectBtn.value);
@@ -388,15 +827,24 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				op.text = s.name;
 				op.selected = s.className == this.settings.defaultStyle;
 			}
-			
+
 			// 代码高亮设置
-			const highlightGroup = leftSection.createDiv({ cls: "toolbar-group" });
-			
-			const highlightLabel = highlightGroup.createDiv({ cls: "toolbar-label" });
-			highlightLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
-			
-			const highlightWrapper = highlightGroup.createDiv({ cls: "select-wrapper" });
-			const highlightStyleBtn = highlightWrapper.createEl("select", { cls: "toolbar-select" });
+			const highlightGroup = leftSection.createDiv({
+				cls: "toolbar-group",
+			});
+
+			const highlightLabel = highlightGroup.createDiv({
+				cls: "toolbar-label",
+			});
+			highlightLabel.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
+
+			const highlightWrapper = highlightGroup.createDiv({
+				cls: "select-wrapper",
+			});
+			const highlightStyleBtn = highlightWrapper.createEl("select", {
+				cls: "toolbar-select",
+			});
 
 			highlightStyleBtn.onchange = async () => {
 				this.updateHighLight(highlightStyleBtn.value);
@@ -411,33 +859,53 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		}
 
 		// 2. 创建右侧区域 - 操作按钮
-		const rightSection = toolbarContent.createDiv({ cls: "toolbar-section toolbar-section-right" });
-		
+		const rightSection = toolbarContent.createDiv({
+			cls: "toolbar-section toolbar-section-right",
+		});
+
 		// 操作按钮组
 		const actionGroup = rightSection.createDiv({ cls: "toolbar-group" });
-		
+
+		// 刷新按钮
+		const refreshBtn = actionGroup.createEl("button", {
+			cls: "toolbar-button refresh-button",
+		});
+		refreshBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
+
+		refreshBtn.onclick = async () => {
+			this.setStyle(this.getCSS());
+			await this.renderMarkdown();
+			uevent("refresh");
+		};
+
 		// 复制按钮
 		if (Platform.isDesktop) {
-			const copyBtn = actionGroup.createEl("button", { cls: "toolbar-button copy-button" });
-			copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
-			
+			const copyBtn = actionGroup.createEl("button", {
+				cls: "toolbar-button copy-button",
+			});
+			copyBtn.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
+
 			copyBtn.onclick = async () => {
 				await this.copyArticle();
 				new Notice("复制成功，请到公众号编辑器粘贴。");
 				uevent("copy");
 			};
 		}
-		
-		// 刷新按钮
-		const refreshBtn = actionGroup.createEl("button", { cls: "toolbar-button refresh-button" });
-		refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
-		
-		refreshBtn.onclick = async () => {
-			this.setStyle(this.getCSS());
-			await this.renderMarkdown();
-			uevent("refresh");
+
+		// 分发按钮
+		const distributeBtn = actionGroup.createEl("button", {
+			cls: "toolbar-button distribute-button",
+		});
+		distributeBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
+
+		distributeBtn.onclick = async () => {
+			this.openDistributionModal();
+			uevent("distribute");
 		};
-		
+
 		// 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
 	}
@@ -566,7 +1034,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const res = await wxGetToken(
 			this.settings.authKey,
 			this.currentAppId,
-			this.getSecret()
+			this.getSecret() || ""
 		);
 		if (res.status != 200) {
 			const data = res.json;
@@ -596,20 +1064,26 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				return wx.secret.replace("SECRET", "");
 			}
 		}
-		return "";
 	}
 
 	updateElementByID(id: string, html: string): void {
-		const item = this.articleDiv.querySelector("#" + id) as HTMLElement;
-		if (!item) return;
-		const doc = sanitizeHTMLToDom(html);
-		item.empty();
-		if (doc.childElementCount > 0) {
-			for (const child of doc.children) {
-				item.appendChild(child.cloneNode(true)); // 使用 cloneNode 复制节点以避免移动它
-			}
-		} else {
-			item.innerText = "渲染失败";
+		const el = document.getElementById(id);
+		if (el) {
+			el.innerHTML = html;
 		}
+	}
+
+	/**
+	 * 打开分发对话框
+	 */
+	openDistributionModal(): void {
+		const article = this.getArticleContent();
+		if (!article) {
+			new Notice("请先渲染文章内容");
+			return;
+		}
+
+		const modal = new DistributionModal(this.app, article);
+		modal.open();
 	}
 }

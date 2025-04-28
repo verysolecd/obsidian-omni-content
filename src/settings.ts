@@ -50,6 +50,8 @@ export class NMPSettings {
     // 模板相关设置
     useTemplate: boolean;
     defaultTemplate: string;
+    // 分发服务相关设置
+    distributionConfig: any;
     expireat: Date | null = null;
 
     private static instance: NMPSettings;
@@ -76,6 +78,7 @@ export class NMPSettings {
         this.math = 'latex';
         this.useTemplate = false; // 默认不使用模板
         this.defaultTemplate = 'default'; // 默认模板名称
+        this.distributionConfig = null; // 分发服务配置
     }
 
     resetStyelAndHighlight() {
@@ -102,6 +105,7 @@ export class NMPSettings {
             useCustomCss,
             useTemplate,
             defaultTemplate,
+            distributionConfig,
         } = data;
 
         const settings = NMPSettings.getInstance();
@@ -144,6 +148,9 @@ export class NMPSettings {
         if (defaultTemplate) {
             settings.defaultTemplate = defaultTemplate;
         }
+        if (distributionConfig) {
+            settings.distributionConfig = distributionConfig;
+        }
         settings.getExpiredDate();
     }
 
@@ -163,6 +170,7 @@ export class NMPSettings {
             'useCustomCss': settings.useCustomCss,
             'useTemplate': settings.useTemplate,
             'defaultTemplate': settings.defaultTemplate,
+            'distributionConfig': settings.distributionConfig,
         }
     }
 
