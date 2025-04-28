@@ -21,8 +21,7 @@
  */
 
 import { Token, Tokens, MarkedExtension } from "marked";
-import { Notice, TAbstractFile, TFile, Vault, MarkdownView, requestUrl } from "obsidian";
-import { wxUploadImage } from "../weixin-api";
+import { TAbstractFile, TFile, MarkdownView, requestUrl } from "obsidian";
 import { Extension } from "./extension";
 import { NMPSettings } from "../settings";
 
@@ -64,25 +63,6 @@ export class LocalImageManager {
         if (!this.images.has(path)) {
             this.images.set(path, info);
         } 
-    }
-
-    async uploadLocalImage(token: string, vault: Vault) {
-        const keys = this.images.keys();
-        for (let key of keys) {
-            const value = this.images.get(key);
-            if (value == null) continue;
-            if (value.url != null) continue;
-            const file = vault.getFileByPath(value.filePath);
-            if (file == null) continue;
-            const fileData = await vault.readBinary(file);
-            const res = await wxUploadImage(new Blob([fileData]), file.name, token);
-            if (res.errcode != 0) {
-                const msg = `上传图片失败: ${res.errcode} ${res.errmsg}`;
-                new Notice(msg);
-                console.error(msg);
-            }
-            value.url = res.url;
-        }
     }
 
     replaceImages(root: HTMLElement) {
