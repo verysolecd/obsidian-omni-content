@@ -299,15 +299,34 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	buildToolbar(parent: HTMLDivElement) {
-		// 创建现代化的工具栏
+		// 创建专业化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
+		
+		// 添加工具栏顶部品牌区域
+		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
+		
+		// 品牌Logo和名称
+		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
+		brandLogo.innerHTML = `
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		`;
+		
+		const brandName = brandSection.createDiv({ cls: "brand-name" });
+		brandName.innerHTML = "手工川智能创作平台";
 		
 		// 创建主工具栏容器
 		const toolbarContainer = this.toolbar.createDiv({ cls: "toolbar-container" });
 		
+		// 创建工具栏内容区域
+		const toolbarContent = toolbarContainer.createDiv({ cls: "toolbar-content" });
+		
 		// 1. 创建左侧区域 - 主要设置
-		const leftSection = toolbarContainer.createDiv({ cls: "toolbar-section toolbar-section-left" });
+		const leftSection = toolbarContent.createDiv({ cls: "toolbar-section toolbar-section-left" });
 		
 		// 1.1 模板设置组
 		const templateGroup = leftSection.createDiv({ cls: "toolbar-group" });
@@ -317,7 +336,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
 		
-		const templateSelect = templateGroup.createEl("select", { cls: "toolbar-select" });
+		const templateWrapper = templateGroup.createDiv({ cls: "select-wrapper" });
+		const templateSelect = templateWrapper.createEl("select", { cls: "toolbar-select" });
 		
 		// 添加"不使用模板"选项
 		const emptyOption = templateSelect.createEl("option");
@@ -353,11 +373,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
 			
 			const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
-			styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>样式</span>';
+			styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
 			
-			const styleControls = styleGroup.createDiv({ cls: "toolbar-controls" });
-			
-			const selectWrapper = styleControls.createDiv({ cls: "select-wrapper" });
+			const selectWrapper = styleGroup.createDiv({ cls: "select-wrapper" });
 			const selectBtn = selectWrapper.createEl("select", { cls: "toolbar-select" });
 
 			selectBtn.onchange = async () => {
@@ -393,7 +411,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		}
 
 		// 2. 创建右侧区域 - 操作按钮
-		const rightSection = toolbarContainer.createDiv({ cls: "toolbar-section toolbar-section-right" });
+		const rightSection = toolbarContent.createDiv({ cls: "toolbar-section toolbar-section-right" });
 		
 		// 操作按钮组
 		const actionGroup = rightSection.createDiv({ cls: "toolbar-group" });
