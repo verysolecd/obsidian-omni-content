@@ -64,13 +64,13 @@ export class LinkRenderer extends Extension {
             return html;
         }
         
-        // 生成脚注列表
+        // 生成脚注列表，使用小字体和浅色
         const links = this.footnoteLinks.map((link, i) => {
-            return `<li>${link.text}, ${link.href}</li>`;
+            return `<li style="font-size: 12px; color: #888; line-height: 1.2;">${link.text}, <span style="color: #aaa;">${link.href}</span></li>`;
         });
         
-        // 添加脚注部分
-        return `${html}<section class="footnotes"><hr><ol>${links.join('')}</ol></section>`;
+        // 添加脚注部分，整体设置小字体和低调样式
+        return `${html}<section class="footnotes" style="font-size: 12px; color: #888; margin-top: 30px;"><hr style="border-top: 1px solid #eee;"><ol style="padding-left: 2em;">${links.join('')}</ol></section>`;
     }
 
     markedExtension(): MarkedExtension {
