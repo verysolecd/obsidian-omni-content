@@ -299,23 +299,25 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	buildToolbar(parent: HTMLDivElement) {
+		// 创建现代化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
-		let lineDiv;
-
-
-
-		// 模板选择
-		lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
-		const templateLabel = lineDiv.createDiv({ cls: "style-label" });
-		templateLabel.innerText = "模板:";
-
+		this.toolbar.addClasses(["modern-toolbar"]);
+		
+		// 创建主工具栏容器
+		const toolbarContainer = this.toolbar.createDiv({ cls: "toolbar-container" });
+		
+		// 1. 创建左侧区域 - 主要设置
+		const leftSection = toolbarContainer.createDiv({ cls: "toolbar-section toolbar-section-left" });
+		
+		// 1.1 模板设置组
+		const templateGroup = leftSection.createDiv({ cls: "toolbar-group" });
+		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
+		templateLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+		
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
 		
-		const templateSelect = lineDiv.createEl(
-			"select",
-			{ cls: "style-select" }
-		);
+		const templateSelect = templateGroup.createEl("select", { cls: "toolbar-select" });
 		
 		// 添加"不使用模板"选项
 		const emptyOption = templateSelect.createEl("option");
@@ -333,32 +335,30 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		
 		templateSelect.onchange = async () => {
 			if (templateSelect.value === "") {
-				// 选择不使用模板
 				this.settings.useTemplate = false;
 			} else {
-				// 选择使用指定模板
 				this.settings.useTemplate = true;
 				this.settings.defaultTemplate = templateSelect.value;
 			}
 			
 			// 通过更新静态实例保存设置
-			NMPSettings.getInstance(); // 确保实例更新
+			NMPSettings.getInstance();
 			
 			// 重新渲染以应用模板
 			await this.renderMarkdown();
 		};
 
-		// 样式
+		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
-			lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
-			const cssStyle = lineDiv.createDiv({ cls: "style-label" });
-			cssStyle.innerText = "样式:";
-
-			const selectBtn = lineDiv.createEl(
-				"select",
-				{ cls: "style-select" },
-				async (sel) => {}
-			);
+			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
+			
+			const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
+			styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>样式</span>';
+			
+			const styleControls = styleGroup.createDiv({ cls: "toolbar-controls" });
+			
+			const selectWrapper = styleControls.createDiv({ cls: "select-wrapper" });
+			const selectBtn = selectWrapper.createEl("select", { cls: "toolbar-select" });
 
 			selectBtn.onchange = async () => {
 				this.updateStyle(selectBtn.value);
@@ -370,15 +370,15 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				op.text = s.name;
 				op.selected = s.className == this.settings.defaultStyle;
 			}
-
-			const highlightStyle = lineDiv.createDiv({ cls: "style-label" });
-			highlightStyle.innerText = "代码高亮:";
-
-			const highlightStyleBtn = lineDiv.createEl(
-				"select",
-				{ cls: "style-select" },
-				async (sel) => {}
-			);
+			
+			// 代码高亮设置
+			const highlightGroup = leftSection.createDiv({ cls: "toolbar-group" });
+			
+			const highlightLabel = highlightGroup.createDiv({ cls: "toolbar-label" });
+			highlightLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
+			
+			const highlightWrapper = highlightGroup.createDiv({ cls: "select-wrapper" });
+			const highlightStyleBtn = highlightWrapper.createEl("select", { cls: "toolbar-select" });
 
 			highlightStyleBtn.onchange = async () => {
 				this.updateHighLight(highlightStyleBtn.value);
@@ -392,39 +392,36 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			}
 		}
 
-		this.buildMsgView(this.toolbar);
-
-				// 复制，刷新，带图片复制，发草稿箱
-				lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
-				if (Platform.isDesktop) {
-					const copyBtn = lineDiv.createEl(
-						"button",
-						{ cls: "copy-button" },
-						async (button) => {
-							button.setText("复制");
-						}
-					);
+		// 2. 创建右侧区域 - 操作按钮
+		const rightSection = toolbarContainer.createDiv({ cls: "toolbar-section toolbar-section-right" });
 		
-					copyBtn.onclick = async () => {
-						await this.copyArticle();
-						new Notice("复制成功，请到公众号编辑器粘贴。");
-						uevent("copy");
-					};
-				}
+		// 操作按钮组
+		const actionGroup = rightSection.createDiv({ cls: "toolbar-group" });
 		
-				const refreshBtn = lineDiv.createEl(
-					"button",
-					{ cls: "refresh-button" },
-					async (button) => {
-						button.setText("刷新");
-					}
-				);
+		// 复制按钮
+		if (Platform.isDesktop) {
+			const copyBtn = actionGroup.createEl("button", { cls: "toolbar-button copy-button" });
+			copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
+			
+			copyBtn.onclick = async () => {
+				await this.copyArticle();
+				new Notice("复制成功，请到公众号编辑器粘贴。");
+				uevent("copy");
+			};
+		}
 		
-				refreshBtn.onclick = async () => {
-					this.setStyle(this.getCSS());
-					await this.renderMarkdown();
-					uevent("refresh");
-				};
+		// 刷新按钮
+		const refreshBtn = actionGroup.createEl("button", { cls: "toolbar-button refresh-button" });
+		refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
+		
+		refreshBtn.onclick = async () => {
+			this.setStyle(this.getCSS());
+			await this.renderMarkdown();
+			uevent("refresh");
+		};
+		
+		// 创建消息视图，但将其放在工具栏之外
+		this.buildMsgView(parent);
 	}
 
 	async buildUI() {

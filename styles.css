@@ -37,27 +37,123 @@
   overflow-y: auto;
 }
 
+/* 现代化工具栏样式 */
 .preview-toolbar {
   position: relative;
-  min-height: 100px;
-  border-bottom: #e4e4e4 1px solid;
+  border-bottom: 1px solid var(--background-modifier-border);
   background-color: var(--background-primary);
+  padding: 8px 12px;
 }
 
-.toolbar-line {
+.modern-toolbar {
+  min-height: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-container {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  margin: 10px 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-section-left {
+  flex: 1;
+}
+
+.toolbar-section-right {
+  justify-content: flex-end;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  border-radius: 4px;
+}
+
+.toolbar-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.toolbar-label svg {
+  opacity: 0.8;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.toolbar-select {
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-normal);
+  min-width: 120px;
+  height: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-select:hover, .toolbar-select:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: var(--interactive-normal);
+  color: var(--text-normal);
+  border: none;
+  cursor: pointer;
+  height: 30px;
+  transition: all 0.2s ease;
+}
+
+.toolbar-button:hover {
+  background-color: var(--interactive-hover);
 }
 
 .copy-button {
-  margin-right: 10px;
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.copy-button:hover {
+  background-color: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
 }
 
 .refresh-button {
-  margin-right: 10px;
+  background-color: var(--interactive-normal);
+  color: var(--text-normal);
 }
 
 .upload-input {
@@ -66,13 +162,30 @@
   width: 0px;
 }
 
+/* 旧工具栏元素兼容性样式 */
+.toolbar-line {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0;
+}
+
 .style-label {
-  margin-right: 10px;
+  margin-right: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .style-select {
-  margin-right: 10px;
+  margin-right: 8px;
   width: 120px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-normal);
 }
 
 .msg-view {
