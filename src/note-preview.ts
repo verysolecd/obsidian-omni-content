@@ -474,10 +474,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.container.empty();
 
 		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
-		this.mainDiv.setAttribute(
-			"style",
-			"padding: 50px;"
-		);
+		// this.mainDiv.setAttribute(
+		// 	"style",
+		// 	"padding: 50px;"
+		// );
 
 		this.buildToolbar(this.mainDiv);
 
@@ -485,7 +485,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.renderDiv.id = "render-div";
 		this.renderDiv.setAttribute(
 			"style",
-			"-webkit-user-select: text; user-select: text;"
+			"-webkit-user-select: text; user-select: text; padding:10px;"
 		);
 		this.styleEl = this.renderDiv.createEl("style");
 		this.styleEl.setAttr("title", "note-to-mp-style");
