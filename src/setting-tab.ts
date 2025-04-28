@@ -34,6 +34,8 @@ import { wxGetToken, wxEncrypt } from "./weixin-api";
 import { cleanMathCache } from "./markdown/math";
 import { LinkDescriptionMode, LinkFootnoteMode, NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
+import { DistributionService, PlatformType } from "./distribution";
+import { logger } from "./utils";
 
 export class NoteToMpSettingTab extends PluginSettingTab {
 	plugin: NoteToMpPlugin;
@@ -63,104 +65,6 @@ export class NoteToMpSettingTab extends PluginSettingTab {
 			res += `${wx.name}|${wx.appid}|********\n`;
 		}
 		return res;
-	}
-
-	async testWXInfo() {
-		const authKey = this.settings.authKey;
-		if (authKey.length == 0) {
-			new Notice("请先设置authKey");
-			return;
-		}
-		const wxInfo = this.settings.wxInfo;
-		if (wxInfo.length == 0) {
-			new Notice("请先设置公众号信息");
-			return;
-		}
-		try {
-			for (let wx of wxInfo) {
-				const res = await wxGetToken(
-					authKey,
-					wx.appid,
-					wx.secret.replace("SECRET", "")
-				);
-				if (res.status != 200) {
-					const data = res.json;
-					new Notice(
-						`${wx.name}|${wx.appid} 测试失败：${data.message}`
-					);
-					break;
-				}
-
-				const data = res.json;
-				if (data.token.length == 0) {
-					new Notice(`${wx.name}|${wx.appid} 测试失败`);
-					break;
-				}
-				new Notice(`${wx.name} 测试通过`);
-			}
-		} catch (error) {
-			new Notice(`测试失败：${error}`);
-		}
-	}
-
-	async encrypt() {
-		if (this.wxInfo.length == 0) {
-			new Notice("请输入内容");
-			return false;
-		}
-
-		if (this.settings.wxInfo.length > 0) {
-			new Notice("已经加密过了，请先清除！");
-			return false;
-		}
-
-		const wechat = [];
-		const lines = this.wxInfo.split("\n");
-		for (let line of lines) {
-			line = line.trim();
-			if (line.length == 0) {
-				continue;
-			}
-			const items = line.split("|");
-			if (items.length != 3) {
-				new Notice("格式错误，请检查");
-				return false;
-			}
-			const name = items[0];
-			const appid = items[1];
-			const secret = items[2];
-			wechat.push({ name, appid, secret });
-		}
-
-		if (wechat.length == 0) {
-			return false;
-		}
-
-		try {
-			const res = await wxEncrypt(this.settings.authKey, wechat);
-			if (res.status != 200) {
-				const data = res.json;
-				new Notice(`${data.message}`);
-				return false;
-			}
-
-			const data = res.json;
-			for (let wx of wechat) {
-				wx.secret = data[wx.appid];
-			}
-
-			this.settings.wxInfo = wechat;
-			await this.plugin.saveSettings();
-			this.wxInfo = this.parseWXInfo();
-			this.displayWXInfo(this.wxInfo);
-			new Notice("加密成功");
-			return true;
-		} catch (error) {
-			new Notice(`加密失败：${error}`);
-			console.error(error);
-		}
-
-		return false;
 	}
 
 	async clear() {
@@ -398,78 +302,210 @@ export class NoteToMpSettingTab extends PluginSettingTab {
 				});
 			});
 
-		// const descHtml = '有效期至：aaaaa <br/>详情说明：<a href="https://mp.weixin.qq.com/s/LYujo4ODEYLuq0OkzkkoCw">https://mp.weixin.qq.com/s/LYujo4ODEYLuq0OkzkkoCw</a>';
-		let descHtml =
-			'详情说明：<a href="https://mp.weixin.qq.com/s/LYujo4ODEYLuq0OkzkkoCw">https://mp.weixin.qq.com/s/LYujo4ODEYLuq0OkzkkoCw</a>';
-		if (this.settings.expireat) {
-			const timestr = this.settings.expireat.toLocaleString();
-			descHtml = `有效期至：${timestr} <br/>${descHtml}`;
-		}
-		new Setting(containerEl)
-			.setName("注册码（AuthKey）")
-			.setDesc(sanitizeHTMLToDom(descHtml))
-			.addText((text) => {
-				text.setPlaceholder("请输入注册码")
-					.setValue(this.settings.authKey)
-					.onChange(async (value) => {
-						this.settings.authKey = value.trim();
-						this.settings.getExpiredDate();
-						await this.plugin.saveSettings();
-					})
-					.inputEl.setAttr("style", "width: 320px;");
-			})
-			.descEl.setAttr(
-				"style",
-				"-webkit-user-select: text; user-select: text;"
-			);
-
-		let isClear = this.settings.wxInfo.length > 0;
-		let isRealClear = false;
-		const buttonText = isClear ? "清空公众号信息" : "加密公众号信息";
-		new Setting(containerEl).setName("公众号信息").addTextArea((text) => {
-			this.wxTextArea = text;
-			text.setPlaceholder(
-				"请输入公众号信息\n格式：公众号名称|公众号AppID|公众号AppSecret\n多个公众号请换行输入\n输入完成后点击加密按钮"
-			)
-				.setValue(this.wxInfo)
-				.onChange((value) => {
-					this.wxInfo = value;
-				})
-				.inputEl.setAttr("style", "width: 520px; height: 120px;");
+		// === 内容分发设置 ===
+		containerEl.createEl("h2", { text: "内容分发设置" });
+		containerEl.createEl("p", { 
+			text: "配置各平台的认证信息，以便将内容分发到对应平台。",
+			cls: "setting-item-description"
 		});
 
-		new Setting(containerEl)
-			.addButton((button) => {
-				button.setButtonText(buttonText);
-				button.onClick(async () => {
-					if (isClear) {
-						isRealClear = true;
-						isClear = false;
-						button.setButtonText("确认清空?");
-					} else if (isRealClear) {
-						isRealClear = false;
-						isClear = false;
-						this.clear();
-						button.setButtonText("加密公众号信息");
-					} else {
-						button.setButtonText("加密中...");
-						if (await this.encrypt()) {
-							isClear = true;
-							isRealClear = false;
-							button.setButtonText("清空公众号信息");
-						} else {
-							button.setButtonText("加密公众号信息");
-						}
+		// 初始化分发服务
+		const distributionService = DistributionService.getInstance();
+
+		// 加载现有配置
+		const distributionConfig = this.settings.distributionConfig || {};
+		if (!this.settings.distributionConfig) {
+			this.settings.distributionConfig = {};
+		}
+
+		// 微信公众号平台配置
+		const wxConfig = distributionConfig[PlatformType.WECHAT] || {};
+		const wxAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
+		wxAuthSection.createEl("h3", { text: "微信公众号" });
+		wxAuthSection.createEl("p", { 
+			text: "使用上方公众号配置，无需重复输入。",
+			cls: "setting-item-description" 
+		});
+
+		new Setting(wxAuthSection)
+			.setName("启用微信公众号分发")
+			.addToggle(toggle => {
+				toggle.setValue(wxConfig.enabled || false);
+				toggle.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.WECHAT]) {
+						distributionConfig[PlatformType.WECHAT] = {};
 					}
-				});
-			})
-			.addButton((button) => {
-				button.setButtonText("测试公众号");
-				button.onClick(async () => {
-					button.setButtonText("测试中...");
-					await this.testWXInfo();
-					button.setButtonText("测试公众号");
+					distributionConfig[PlatformType.WECHAT].enabled = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+					logger.info("已更新微信公众号分发设置");
 				});
 			});
+
+		// 知乎平台配置
+		const zhihuConfig = distributionConfig[PlatformType.ZHIHU] || {};
+		const zhihuAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
+		zhihuAuthSection.createEl("h3", { text: "知乎" });
+
+		new Setting(zhihuAuthSection)
+			.setName("启用知乎分发")
+			.addToggle(toggle => {
+				toggle.setValue(zhihuConfig.enabled || false);
+				toggle.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.ZHIHU]) {
+						distributionConfig[PlatformType.ZHIHU] = {};
+					}
+					distributionConfig[PlatformType.ZHIHU].enabled = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+					logger.info("已更新知乎分发设置");
+				});
+			});
+
+		new Setting(zhihuAuthSection)
+			.setName("知乎 Cookie")
+			.setDesc("从浏览器复制的知乎登录态 Cookie 字符串")
+			.addTextArea(text => {
+				text.setValue(zhihuConfig.cookie || "");
+				text.inputEl.style.minHeight = "80px";
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.ZHIHU]) {
+						distributionConfig[PlatformType.ZHIHU] = {};
+					}
+					distributionConfig[PlatformType.ZHIHU].cookie = value;
+					distributionConfig[PlatformType.ZHIHU].token = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
+		// 小红书平台配置
+		const xhsConfig = distributionConfig[PlatformType.XIAOHONGSHU] || {};
+		const xhsAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
+		xhsAuthSection.createEl("h3", { text: "小红书" });
+
+		new Setting(xhsAuthSection)
+			.setName("启用小红书分发")
+			.addToggle(toggle => {
+				toggle.setValue(xhsConfig.enabled || false);
+				toggle.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.XIAOHONGSHU]) {
+						distributionConfig[PlatformType.XIAOHONGSHU] = {};
+					}
+					distributionConfig[PlatformType.XIAOHONGSHU].enabled = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+					logger.info("已更新小红书分发设置");
+				});
+			});
+
+		new Setting(xhsAuthSection)
+			.setName("小红书 Cookie")
+			.setDesc("从浏览器复制的小红书登录态 Cookie 字符串")
+			.addTextArea(text => {
+				text.setValue(xhsConfig.cookie || "");
+				text.inputEl.style.minHeight = "80px";
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.XIAOHONGSHU]) {
+						distributionConfig[PlatformType.XIAOHONGSHU] = {};
+					}
+					distributionConfig[PlatformType.XIAOHONGSHU].cookie = value;
+					distributionConfig[PlatformType.XIAOHONGSHU].token = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
+		// Twitter平台配置
+		const twitterConfig = distributionConfig[PlatformType.TWITTER] || {};
+		const twitterAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
+		twitterAuthSection.createEl("h3", { text: "Twitter" });
+
+		new Setting(twitterAuthSection)
+			.setName("启用Twitter分发")
+			.addToggle(toggle => {
+				toggle.setValue(twitterConfig.enabled || false);
+				toggle.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.TWITTER]) {
+						distributionConfig[PlatformType.TWITTER] = {};
+					}
+					distributionConfig[PlatformType.TWITTER].enabled = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+					logger.info("已更新Twitter分发设置");
+				});
+			});
+
+		new Setting(twitterAuthSection)
+			.setName("Twitter API Key")
+			.setDesc("Twitter API 开发者密钥")
+			.addText(text => {
+				text.setValue(twitterConfig.apiKey || "");
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.TWITTER]) {
+						distributionConfig[PlatformType.TWITTER] = {};
+					}
+					distributionConfig[PlatformType.TWITTER].apiKey = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
+		new Setting(twitterAuthSection)
+			.setName("Twitter API Secret")
+			.setDesc("Twitter API 开发者密钥")
+			.addText(text => {
+				text.setValue(twitterConfig.apiSecret || "");
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.TWITTER]) {
+						distributionConfig[PlatformType.TWITTER] = {};
+					}
+					distributionConfig[PlatformType.TWITTER].apiSecret = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
+		new Setting(twitterAuthSection)
+			.setName("Twitter Access Token")
+			.setDesc("Twitter API 访问令牌")
+			.addText(text => {
+				text.setValue(twitterConfig.accessToken || "");
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.TWITTER]) {
+						distributionConfig[PlatformType.TWITTER] = {};
+					}
+					distributionConfig[PlatformType.TWITTER].accessToken = value;
+					distributionConfig[PlatformType.TWITTER].token = value;
+					this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
+		new Setting(twitterAuthSection)
+			.setName("Twitter Access Token Secret")
+			.setDesc("Twitter API 访问令牌密钥")
+			.addText(text => {
+				text.setValue(twitterConfig.accessTokenSecret || "");
+				text.onChange(async (value) => {
+					if (!distributionConfig[PlatformType.TWITTER]) {
+						distributionConfig[PlatformType.TWITTER] = {};
+					}
+					distributionConfig[PlatformType.TWITTER].accessTokenSecret = value;
+						this.settings.distributionConfig = distributionConfig;
+					await this.plugin.saveSettings();
+					distributionService.loadConfig(distributionConfig);
+				});
+			});
+
 	}
 }
