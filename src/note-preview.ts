@@ -476,7 +476,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
 		this.mainDiv.setAttribute(
 			"style",
-			"padding: 2em;"
+			"padding: 50px;"
 		);
 
 		this.buildToolbar(this.mainDiv);
