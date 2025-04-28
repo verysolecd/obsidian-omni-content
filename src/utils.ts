@@ -30,17 +30,13 @@ export function setVersion(version: string) {
 	PluginVersion = version;
 	if (Platform.isWin) {
 		PlugPlatform = "win";
-	}
-	else if (Platform.isMacOS) {
+	} else if (Platform.isMacOS) {
 		PlugPlatform = "mac";
-	}
-	else if (Platform.isLinux) {
+	} else if (Platform.isLinux) {
 		PlugPlatform = "linux";
-	}
-	else if (Platform.isIosApp) {
+	} else if (Platform.isIosApp) {
 		PlugPlatform = "ios";
-	}
-	else if (Platform.isAndroidApp) {
+	} else if (Platform.isAndroidApp) {
 		PlugPlatform = "android";
 	}
 }
@@ -48,33 +44,46 @@ export function setVersion(version: string) {
 function getStyleSheet() {
 	for (var i = 0; i < document.styleSheets.length; i++) {
 		var sheet = document.styleSheets[i];
-		if (sheet.title == 'note-to-mp-style') {
-		  return sheet;
+		if (sheet.title == "note-to-mp-style") {
+			return sheet;
 		}
 	}
 }
 
-function applyStyles(element: HTMLElement, styles: CSSStyleDeclaration, computedStyle: CSSStyleDeclaration) {
+function applyStyles(
+	element: HTMLElement,
+	styles: CSSStyleDeclaration,
+	computedStyle: CSSStyleDeclaration
+) {
 	for (let i = 0; i < styles.length; i++) {
 		const propertyName = styles[i];
 		let propertyValue = computedStyle.getPropertyValue(propertyName);
-		if (propertyName == 'width' && styles.getPropertyValue(propertyName) == 'fit-content') {
-			propertyValue = 'fit-content';
+		if (
+			propertyName == "width" &&
+			styles.getPropertyValue(propertyName) == "fit-content"
+		) {
+			propertyValue = "fit-content";
 		}
-		if (propertyName.indexOf('margin') >= 0 && styles.getPropertyValue(propertyName).indexOf('auto') >= 0) {
-		    propertyValue = styles.getPropertyValue(propertyName);
+		if (
+			propertyName.indexOf("margin") >= 0 &&
+			styles.getPropertyValue(propertyName).indexOf("auto") >= 0
+		) {
+			propertyValue = styles.getPropertyValue(propertyName);
 		}
 		element.style.setProperty(propertyName, propertyValue);
 	}
 }
 
-function parseAndApplyStyles(element: HTMLElement, sheet:CSSStyleSheet) {
+function parseAndApplyStyles(element: HTMLElement, sheet: CSSStyleSheet) {
 	try {
 		const computedStyle = getComputedStyle(element);
 		for (let i = 0; i < sheet.cssRules.length; i++) {
 			const rule = sheet.cssRules[i];
-			if (rule instanceof CSSStyleRule && element.matches(rule.selectorText)) {
-			  	applyStyles(element, rule.style, computedStyle);
+			if (
+				rule instanceof CSSStyleRule &&
+				element.matches(rule.selectorText)
+			) {
+				applyStyles(element, rule.style, computedStyle);
 			}
 		}
 	} catch (e) {
@@ -82,16 +91,15 @@ function parseAndApplyStyles(element: HTMLElement, sheet:CSSStyleSheet) {
 	}
 }
 
-function traverse(root: HTMLElement, sheet:CSSStyleSheet) {
+function traverse(root: HTMLElement, sheet: CSSStyleSheet) {
 	let element = root.firstElementChild;
 	while (element) {
-		if (element.tagName === 'svg') {
+		if (element.tagName === "svg") {
 			// pass
+		} else {
+			traverse(element as HTMLElement, sheet);
 		}
-		else {
-	  		traverse(element as HTMLElement, sheet);
-		}
-	  	element = element.nextElementSibling;
+		element = element.nextElementSibling;
 	}
 	parseAndApplyStyles(root, sheet);
 }
@@ -109,37 +117,37 @@ export function parseCSS(css: string) {
 }
 
 export function ruleToStyle(rule: postcss.Rule) {
-	let style = '';	
-	rule.walkDecls(decl => {
-		style += decl.prop + ':' + decl.value + ';';
-	})
+	let style = "";
+	rule.walkDecls((decl) => {
+		style += decl.prop + ":" + decl.value + ";";
+	});
 
 	return style;
 }
 
 function applyStyle(root: HTMLElement, cssRoot: postcss.Root) {
-	cssRoot.walkRules(rule => {
+	cssRoot.walkRules((rule) => {
 		if (root.matches(rule.selector)) {
-			rule.walkDecls(decl => {
+			rule.walkDecls((decl) => {
 				root.style.setProperty(decl.prop, decl.value);
-			})
+			});
 		}
 	});
 
-	if (root.tagName === 'svg') {
+	if (root.tagName === "svg") {
 		return;
 	}
 
 	let element = root.firstElementChild;
 	while (element) {
 		applyStyle(element as HTMLElement, cssRoot);
-	  	element = element.nextElementSibling;
+		element = element.nextElementSibling;
 	}
 }
 
-export function applyCSS(html: string, css: string) {
-	const doc = sanitizeHTMLToDom(html);
-	const root = doc.firstChild as HTMLElement;
+export function applyCSS(root: HTMLElement, css: string) {
+	// const doc = sanitizeHTMLToDom(html);
+	// const root = doc.firstChild as HTMLElement;
 	const cssRoot = postcss.parse(css);
 	applyStyle(root, cssRoot);
 	return root.outerHTML;
@@ -147,9 +155,11 @@ export function applyCSS(html: string, css: string) {
 
 export function uevent(name: string) {
 	const url = `https://u.sunboshi.tech/event?name=${name}&platform=${PlugPlatform}&v=${PluginVersion}`;
-	requestUrl(url).then().catch(error => {
-		console.error("Failed to send event: " + url, error);
-	});
+	requestUrl(url)
+		.then()
+		.catch((error) => {
+			console.error("Failed to send event: " + url, error);
+		});
 }
 
 // 统一的日志工具
@@ -165,6 +175,5 @@ export const logger = {
 	},
 	error: (...args: any[]) => {
 		console.error(`[NoteToMP] ERROR:`, ...args);
-	}
+	},
 };
- 

@@ -171,7 +171,7 @@ function GetCallout(type: string) {
 };
 
 function matchCallouts(text:string) {
-    const regex = /\[\!(.*?)\]/g;
+    const regex = /\[!(.*?)\]/g;
 	let m;
 	if( m = regex.exec(text)) {
 	    return m[1];
