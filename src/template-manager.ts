@@ -69,9 +69,6 @@ export default class TemplateManager {
             const files = await adapter.list(this.templateDir);
             this.templates.clear();
             
-            // 检查并确保默认模板存在
-            let hasDefaultTemplate = false;
-            
             for (const file of files.files) {
                 if (file.endsWith('.html')) {
                     const fileName = file.split('/').pop()?.replace('.html', '') || '';
@@ -82,15 +79,8 @@ export default class TemplateManager {
                         path: file,
                         content: content
                     });
-                    
-                    if (fileName === 'default') {
-                        hasDefaultTemplate = true;
-                    }
                 }
             }
-            
-            // 如果没有默认模板，创建一个
-            if (!hasDefaultTemplate) throw new Error('默认模板不存在');
             
             logger.info('模板加载完成，共加载', this.templates.size, '个模板');
         } catch (error) {

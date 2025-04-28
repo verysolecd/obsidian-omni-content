@@ -304,6 +304,50 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 
 
+		// 模板选择
+		lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
+		const templateLabel = lineDiv.createDiv({ cls: "style-label" });
+		templateLabel.innerText = "模板:";
+
+		const templateManager = TemplateManager.getInstance();
+		const templates = templateManager.getTemplateNames();
+		
+		const templateSelect = lineDiv.createEl(
+			"select",
+			{ cls: "style-select" }
+		);
+		
+		// 添加"不使用模板"选项
+		const emptyOption = templateSelect.createEl("option");
+		emptyOption.value = "";
+		emptyOption.text = "不使用模板";
+		emptyOption.selected = !this.settings.useTemplate;
+		
+		// 添加模板选项
+		templates.forEach(template => {
+			const op = templateSelect.createEl("option");
+			op.value = template;
+			op.text = template;
+			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
+		});
+		
+		templateSelect.onchange = async () => {
+			if (templateSelect.value === "") {
+				// 选择不使用模板
+				this.settings.useTemplate = false;
+			} else {
+				// 选择使用指定模板
+				this.settings.useTemplate = true;
+				this.settings.defaultTemplate = templateSelect.value;
+			}
+			
+			// 通过更新静态实例保存设置
+			NMPSettings.getInstance(); // 确保实例更新
+			
+			// 重新渲染以应用模板
+			await this.renderMarkdown();
+		};
+
 		// 样式
 		if (this.settings.showStyleUI) {
 			lineDiv = this.toolbar.createDiv({ cls: "toolbar-line" });
