@@ -298,6 +298,18 @@ export class NotePreview extends ItemView implements MDRendererCallback {
             uevent('refresh');
         }
 
+        // 添加转换非微信链接为脚注的按钮
+        const convertLinksBtn = lineDiv.createEl('button', { cls: 'copy-button' }, async (button) => {
+            button.setText('转为脚注');
+            button.setAttr('title', '将非微信生态链接转换为脚注格式');
+        })
+
+        convertLinksBtn.onclick = async () => {
+            await this.convertNonWxLinksToFootnotes();
+            new Notice('非微信链接已转换为脚注格式');
+            uevent('convert_links');
+        }
+
         // 封面
         lineDiv = this.toolbar.createDiv({ cls: 'toolbar-line' }); 
 
@@ -543,6 +555,64 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
         await this.copyArticle();
         this.showMsg('图片已上传，并且已复制，请到公众号编辑器粘贴。');
+    }
+
+    /**
+     * 将非微信生态的链接转换为脚注格式
+     * 微信公众号文章链接格式为: https://mp.weixin.qq.com/s/xxx
+     */
+    async convertNonWxLinksToFootnotes() {
+        // 临时保存当前的链接样式设置
+        const originalLinkStyle = this.settings.linkStyle;
+        
+        // 如果已经是脚注格式，就不需要做任何变更
+        if (originalLinkStyle === 'footnote') {
+            new Notice('当前已经是脚注格式');
+            return;
+        }
+        
+        // 将链接样式设置为脚注
+        this.settings.linkStyle = 'footnote';
+        
+        // 重新渲染文章
+        await this.renderMarkdown();
+        
+        // 弹出提示
+        new Notice('非微信链接已转换为脚注格式，复制完成后将自动恢复原设置');
+
+        // 记录是否已经恢复设置
+        let isRestored = false;
+        
+        // 创建一个函数来恢复设置
+        const restoreSettings = () => {
+            if (isRestored) return; // 防止重复恢复
+            isRestored = true;
+            
+            // 恢复原始设置
+            setTimeout(() => {
+                this.settings.linkStyle = originalLinkStyle;
+                this.renderMarkdown();
+                new Notice('已恢复链接样式设置');
+                // 移除事件监听器
+                document.removeEventListener('copy', copyHandler);
+            }, 500); // 给用户复制操作一点时间
+        };
+        
+        // 创建事件处理函数
+        const copyHandler = () => restoreSettings();
+
+        // 监听复制事件
+        document.addEventListener('copy', copyHandler);
+
+        // 添加一个安全机制，如果用户没有复制，60秒后自动恢复
+        setTimeout(() => {
+            if (!isRestored && this.settings.linkStyle === 'footnote' && originalLinkStyle !== 'footnote') {
+                document.removeEventListener('copy', copyHandler);
+                this.settings.linkStyle = originalLinkStyle;
+                this.renderMarkdown();
+                new Notice('链接样式设置已自动恢复');
+            }
+        }, 60000);
     }
 
     async copyArticle() {
