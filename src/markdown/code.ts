@@ -26,6 +26,7 @@ import { Tokens } from "marked";
 import { MathRendererQueue } from "./math";
 import { Extension } from "./extension";
 import { wxUploadImage } from "../weixin-api";
+import { GetCallout } from "./callouts";
 
 export class CardDataManager {
 	private cardData: Map<string, string>;
@@ -226,6 +227,43 @@ export class CodeRenderer extends Extension {
 		}
 	}
 
+	renderAdCallout(token: Tokens.Code) {
+		try {
+			// 确保 lang 存在
+			if (!token.lang) {
+				return this.codeRenderer(token.text, token.lang);
+			}
+			
+			// 提取 callout 类型（去掉 'ad-' 前缀）
+			const calloutType = token.lang.substring(3).toLowerCase();
+			
+			// 提取标题
+			let title = calloutType.charAt(0).toUpperCase() + calloutType.slice(1).toLowerCase();
+			
+			// 处理自定义标题（如果第一行包含标题）
+			const firstLine = token.text.split('\n')[0];
+			if (firstLine && firstLine.trim() !== '') {
+				title = firstLine.trim();
+			}
+			
+			// 处理内容（忽略第一行标题）
+			const content = token.text.split('\n').slice(1).join('\n').trim();
+			const body = this.marked.parser(this.marked.lexer(content));
+			
+			// 获取 callout 样式信息
+			const info = GetCallout(calloutType);
+			if (!info) {
+				return this.codeRenderer(token.text, token.lang);
+			}
+			
+			// 生成 callout HTML
+			return `<section class="ad ${info.style}"><section class="ad-title-wrap"><span class="ad-icon">${info.icon}</span><span class="ad-title">${title}<span></section><section class="ad-content">${body}</section></section>`;
+		} catch (error) {
+			console.error('Error rendering ad callout:', error);
+			return this.codeRenderer(token.text, token.lang);
+		}
+	}
+
 	markedExtension() {
 		return {
 			extensions: [
@@ -233,6 +271,12 @@ export class CodeRenderer extends Extension {
 					name: "code",
 					level: "block",
 					renderer: (token: Tokens.Code) => {
+						// 处理 ad-xxx 语法的 callout
+						if (token.lang && token.lang.startsWith("ad-")) {
+							return this.renderAdCallout(token);
+						}
+						
+						// 其他代码块处理逻辑
 						if (this.settings.isAuthKeyVaild()) {
 							const type = CodeRenderer.getMathType(
 								token.lang ?? ""
