@@ -237,17 +237,36 @@ export class CodeRenderer extends Extension {
 			// 提取 callout 类型（去掉 'ad-' 前缀）
 			const calloutType = token.lang.substring(3).toLowerCase();
 			
-			// 提取标题
+			// 提取标题 - 默认使用 callout 类型作为标题
 			let title = calloutType.charAt(0).toUpperCase() + calloutType.slice(1).toLowerCase();
 			
-			// 处理自定义标题（如果第一行包含标题）
-			const firstLine = token.text.split('\n')[0];
-			if (firstLine && firstLine.trim() !== '') {
-				title = firstLine.trim();
+			// 解析第一行内容
+			const lines = token.text.split('\n');
+			const firstLine = lines[0].trim();
+			
+			// 检查是否有自定义标题
+			// 关键逻辑：只有当第一行是空或者第一行有内容但后面跟了一个空行时，才记为是标题
+			let hasCustomTitle = false;
+			
+			// 空白行判定标准：第一行后跟空白行或没有内容
+			if ((lines.length > 1 && lines[1].trim() === '') || firstLine === '') {
+				// 这种情况下不将第一行内容作为标题
+				hasCustomTitle = false;
+			} else if (firstLine !== '') {
+				// 如果有一个非空项开头，并且第二行不是空白行，这表明这是内容，不是标题
+				hasCustomTitle = true; // 第一行是标题
+				title = firstLine;
 			}
 			
-			// 处理内容（忽略第一行标题）
-			const content = token.text.split('\n').slice(1).join('\n').trim();
+			// 处理内容
+			let content;
+			if (hasCustomTitle) {
+				// 如果第一行是标题，从第二行开始是内容
+				content = lines.slice(1).join('\n').trim();
+			} else {
+				// 如果没有标题，全部都是内容
+				content = token.text.trim();
+			}
 			const body = this.marked.parser(this.marked.lexer(content));
 			
 			// 获取 callout 样式信息
