@@ -539,7 +539,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	errorContent(error: any) {
 		return (
 			"<h1>渲染失败!</h1><br/>" +
-			'如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/note-to-mp/issues">https://github.com/sunbooshi/note-to-mp/issues</a>&nbsp;&nbsp;反馈<br/><br/>' +
+			'如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/omni-content/issues">https://github.com/sunbooshi/omni-content/issues</a>&nbsp;&nbsp;反馈<br/><br/>' +
 			"如果方便，请提供引发错误的完整Markdown内容。<br/><br/>" +
 			"<br/>Obsidian版本：" +
 			apiVersion +
@@ -574,14 +574,14 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	isOldTheme() {
 		const theme = this.assetsManager.getTheme(this.currentTheme);
 		if (theme) {
-			return theme.css.indexOf(".note-to-mp") < 0;
+			return theme.css.indexOf(".omni-content") < 0;
 		}
 		return false;
 	}
 
 	setArticle(article: string) {
 		this.articleDiv.empty();
-		let className = "note-to-mp";
+		let className = "omni-content";
 		// 兼容旧版本样式
 		if (this.isOldTheme()) {
 			className = this.currentTheme;
@@ -929,7 +929,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			"-webkit-user-select: text; user-select: text; padding:10px;"
 		);
 		this.styleEl = this.renderDiv.createEl("style");
-		this.styleEl.setAttr("title", "note-to-mp-style");
+		this.styleEl.setAttr("title", "omni-content-style");
 		this.setStyle(this.getCSS());
 		this.articleDiv = this.renderDiv.createEl("div");
 	}

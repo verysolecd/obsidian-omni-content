@@ -20,12 +20,12 @@
 对于新手用户，推荐使用[BRAT插件](https://github.com/TfTHacker/obsidian42-brat)安装。
 
 在BRAT的设置中
-打开Obsidian的**设置**界面，在底部的**第三方插件**——在**BRAT**中点击**Add Beta plugin**，然后输入本插件地址`https://github.com/sunbooshi/note-to-mp`，点击**Add Plugin**就可以安装 OmniContent 插件了。
+打开Obsidian的**设置**界面，在底部的**第三方插件**——在**BRAT**中点击**Add Beta plugin**，然后输入本插件地址`https://github.com/sunbooshi/omni-content`，点击**Add Plugin**就可以安装 OmniContent 插件了。
 
 
 ## 2、手动安装
 
-到[Release](https://github.com/sunbooshi/note-to-mp/releases)页面下载最新版本，将`main.js`、 `manifest.json`、`styles.css`保存到Obsidian仓库的`.obsidian/plugins/note-to-mp`目录下。
+到[Release](https://github.com/sunbooshi/omni-content/releases)页面下载最新版本，将`main.js`、 `manifest.json`、`styles.css`保存到Obsidian仓库的`.obsidian/plugins/omni-content`目录下。
 
 打开Obsidian的**设置**界面，点击**第三方插件**，在**已安装插件**中刷新一下，然后启用本插件 **OmniContent**。
 
@@ -230,15 +230,15 @@
 在`new-style.css`追加定义样式，所有样式都应该写在`themes.json`中`className`定义的选择器下，以上面新增的样式举例，CSS应按如下所示编写：
 
 ```CSS
-.note-to-mp strong {
+.omni-content strong {
   font-weight: 700
 }
-.note-to-mp a {
+.omni-content a {
   color: #428bca;
   text-decoration: none;
   background: 0 0
 }
-.note-to-mp p {
+.omni-content p {
   margin: 10px 0;
   line-height: 1.7
 }

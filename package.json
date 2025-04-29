@@ -1,5 +1,5 @@
 {
-	"name": "note-to-mp",
+	"name": "obsidian-omni-content",
 	"version": "1.0.0",
 	"description": "This is a plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",

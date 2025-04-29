@@ -17,10 +17,10 @@
  * 各个属性的默认值为 chrome 的默认样式，见 variables/default.scss。
  */
 /**
- * MWeb 包裹 markdown 的容器是 .note-to-mp
+ * MWeb 包裹 markdown 的容器是 .omni-content
  * Typora 中是 #write
  */
-.note-to-mp {
+.omni-content {
   line-height: 1.6em;
   -webkit-text-size-adjust: 100%;
   margin: 0px 0px;
@@ -36,22 +36,22 @@
   /* table */
   /* svg */
 }
-.note-to-mp * {
+.omni-content * {
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
-.note-to-mp > *:first-child {
+.omni-content > *:first-child {
   margin-top: 0 !important;
 }
-.note-to-mp > *:last-child {
+.omni-content > *:last-child {
   margin-top: 0 !important;
 }
-.note-to-mp p, .note-to-mp details, .note-to-mp dl, .note-to-mp ol, .note-to-mp ul, .note-to-mp pre, .note-to-mp xmp, .note-to-mp plaintext, .note-to-mp listing, .note-to-mp blockquote, .note-to-mp table, .note-to-mp figure, .note-to-mp hr {
+.omni-content p, .omni-content details, .omni-content dl, .omni-content ol, .omni-content ul, .omni-content pre, .omni-content xmp, .omni-content plaintext, .omni-content listing, .omni-content blockquote, .omni-content table, .omni-content figure, .omni-content hr {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
 }
-.note-to-mp h1 {
+.omni-content h1 {
   font-size: 2em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -59,7 +59,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp h2 {
+.omni-content h2 {
   font-size: 1.5em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -67,7 +67,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp h3 {
+.omni-content h3 {
   font-size: 1.17em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -75,7 +75,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp h4 {
+.omni-content h4 {
   font-size: 1em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -83,7 +83,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp h5 {
+.omni-content h5 {
   font-size: 0.83em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -91,7 +91,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp h6 {
+.omni-content h6 {
   font-size: 0.67em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -99,105 +99,105 @@
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp p {
+.omni-content p {
   margin-left: 0;
   margin-right: 0;
 }
-.note-to-mp pre, .note-to-mp xmp, .note-to-mp plaintext, .note-to-mp listing {
+.omni-content pre, .omni-content xmp, .omni-content plaintext, .omni-content listing {
   font-family: monospace, Menlo-Regular, Menlo, Monaco, Consolas, "Courier New";
 }
-.note-to-mp blockquote > :first-child {
+.omni-content blockquote > :first-child {
   margin-top: 0;
 }
-.note-to-mp blockquote > :last-child {
+.omni-content blockquote > :last-child {
   margin-bottom: 0;
 }
-.note-to-mp hr {
+.omni-content hr {
   border-style: inset;
   border-width: 1px;
 }
-.note-to-mp img {
+.omni-content img {
   max-width: 100%;
   height: auto;
 }
-.note-to-mp li {
+.omni-content li {
   word-wrap: break-all;
 }
-.note-to-mp li + li {
+.omni-content li + li {
   margin-top: 0.25em;
 }
-.note-to-mp ul ul, .note-to-mp ol ul, .note-to-mp ul ol, .note-to-mp ol ol {
+.omni-content ul ul, .omni-content ol ul, .omni-content ul ol, .omni-content ol ol {
   margin-top: 0;
   margin-bottom: 0;
 }
-.note-to-mp .task-list-item {
+.omni-content .task-list-item {
   list-style-type: none;
 }
-.note-to-mp a {
+.omni-content a {
   color: -webkit-link;
   text-decoration: underline;
 }
-.note-to-mp a img {
+.omni-content a img {
   border: none;
 }
-.note-to-mp b, .note-to-mp strong {
+.omni-content b, .omni-content strong {
   font-weight: bold;
 }
-.note-to-mp i, .note-to-mp cite, .note-to-mp em, .note-to-mp var, .note-to-mp address, .note-to-mp dfn {
+.omni-content i, .omni-content cite, .omni-content em, .omni-content var, .omni-content address, .omni-content dfn {
   font-style: italic;
 }
-.note-to-mp code, .note-to-mp kbd, .note-to-mp tt, .note-to-mp samp {
+.omni-content code, .omni-content kbd, .omni-content tt, .omni-content samp {
   font-family: monospace, Menlo-Regular, Menlo, Monaco, Consolas, "Courier New";
 }
-.note-to-mp mark {
+.omni-content mark {
   padding: 0.2em 0;
   background-color: yellow;
 }
-.note-to-mp del, .note-to-mp s {
+.omni-content del, .omni-content s {
   color: inherit;
 }
-.note-to-mp table {
+.omni-content table {
   color: black;
   border-collapse: collapse;
   background-color: white;
   border-spacing: 2px;
   font-size: 1em;
 }
-.note-to-mp th, .note-to-mp td {
+.omni-content th, .omni-content td {
   border-color: gray;
   border-width: 1px;
   border-style: solid;
 }
-.note-to-mp th {
+.omni-content th {
   padding: 4px 8px;
   font-size: 1em;
   font-weight: bold;
 }
-.note-to-mp td {
+.omni-content td {
   padding: 4px 8px;
   font-size: 1em;
   font-weight: normal;
 }
-.note-to-mp div[id^=mweb-chart-ele] svg {
+.omni-content div[id^=mweb-chart-ele] svg {
   background-color: white;
 }
 
-.note-to-mp .task-list-item + .task-list-item {
+.omni-content .task-list-item + .task-list-item {
   margin-top: 3px;
 }
-.note-to-mp .task-list-item input {
+.omni-content .task-list-item input {
   margin: 0.3em 0 0.25em -1.6em;
 }
-.note-to-mp .code-section {
+.omni-content .code-section {
   display: flex;
   border: 1px solid gray;
 }
-.note-to-mp .code-section pre {
+.omni-content .code-section pre {
   margin: 0;
   padding: 0;
   overflow-x: auto;
 }
-.note-to-mp .code-section pre code {
+.omni-content .code-section pre code {
   font-family: Consolas, ui-monospace, SFMono-Regular, Menlo, Monaco, "Liberation Mono", "Courier New", monospace;
   border: none;
   font-size: 1em;
@@ -206,7 +206,7 @@
   display: block;
   text-wrap: nowrap;
 }
-.note-to-mp .code-section ul {
+.omni-content .code-section ul {
   flex-shrink: 0;
   counter-reset: line;
   margin: 0;
@@ -214,7 +214,7 @@
   white-space: normal;
   width: fit-content;
 }
-.note-to-mp .code-section ul > li {
+.omni-content .code-section ul > li {
   position: relative;
   margin: 0;
   padding: 0;
@@ -228,6 +228,6 @@
   list-style-type: none;
   color: #ff502c;
 }
-.note-to-mp .code-section ul > li::marker {
+.omni-content .code-section ul > li::marker {
   content: none;
 }

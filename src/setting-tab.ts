@@ -284,7 +284,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 						const path = require("path");
 						const adapter = this.app.vault.adapter as FileSystemAdapter;
 						const vaultRoot = adapter.getBasePath();
-						const templatesPath = `${this.app.vault.configDir}/plugins/note-to-mp/templates/`;
+						const templatesPath = `${this.app.vault.configDir}/plugins/omni-content/templates/`;
 						const dst = path.join(vaultRoot, templatesPath);
 						shell.openPath(dst);
 					} catch (error) {
