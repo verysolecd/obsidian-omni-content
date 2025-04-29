@@ -29,7 +29,7 @@ import {
 	sanitizeHTMLToDom,
 	FileSystemAdapter,
 } from "obsidian";
-import NoteToMpPlugin from "./main";
+import OmniContentPlugin from "./main";
 import { wxGetToken, wxEncrypt } from "./weixin-api";
 import { cleanMathCache } from "./markdown/math";
 import { LinkDescriptionMode, LinkFootnoteMode, NMPSettings } from "./settings";
@@ -37,13 +37,13 @@ import TemplateManager from "./template-manager";
 import { DistributionService, PlatformType } from "./distribution";
 import { logger } from "./utils";
 
-export class NoteToMpSettingTab extends PluginSettingTab {
-	plugin: NoteToMpPlugin;
+export class OmniContentSettingTab extends PluginSettingTab {
+	plugin: OmniContentPlugin;
 	wxInfo: string;
 	wxTextArea: TextAreaComponent | null;
 	settings: NMPSettings;
 
-	constructor(app: App, plugin: NoteToMpPlugin) {
+	constructor(app: App, plugin: OmniContentPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.settings = NMPSettings.getInstance();

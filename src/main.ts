@@ -20,72 +20,72 @@
  * THE SOFTWARE.
  */
 
-import { Plugin, WorkspaceLeaf, App, PluginManifest } from 'obsidian';
-import { NotePreview, VIEW_TYPE_NOTE_PREVIEW } from './note-preview';
-import { NMPSettings } from './settings';
-import { NoteToMpSettingTab } from './setting-tab';
-import AssetsManager from './assets';
-import TemplateManager from './template-manager';
-import { setVersion, uevent, logger } from './utils';
-import { DistributionService } from './distribution';
+import { Plugin, WorkspaceLeaf, App, PluginManifest } from "obsidian";
+import { NotePreview, VIEW_TYPE_NOTE_PREVIEW } from "./note-preview";
+import { NMPSettings } from "./settings";
+import { OmniContentSettingTab } from "./setting-tab";
+import AssetsManager from "./assets";
+import TemplateManager from "./template-manager";
+import { setVersion, uevent, logger } from "./utils";
+import { DistributionService } from "./distribution";
 
-
-export default class NoteToMpPlugin extends Plugin {
+export default class OmniContentPlugin extends Plugin {
 	settings: NMPSettings;
 	assetsManager: AssetsManager;
 	constructor(app: App, manifest: PluginManifest) {
-	    super(app, manifest);
+		super(app, manifest);
 		AssetsManager.setup(app, manifest);
-	    this.assetsManager = AssetsManager.getInstance();
+		this.assetsManager = AssetsManager.getInstance();
 	}
 
 	async onload() {
-		console.log('Loading Note to MP');
+		console.log("Loading OmniContent");
 		setVersion(this.manifest.version);
-		uevent('load');
+		uevent("load");
 		await this.loadSettings();
 		await this.assetsManager.loadAssets();
-		
+
 		// 初始化模板管理器
 		const templateManager = TemplateManager.getInstance();
 		templateManager.setup(this.app);
 		await templateManager.loadTemplates();
-		
+
 		// 初始化分发服务
 		const distributionService = DistributionService.getInstance();
 		distributionService.setup(this.app);
-		
+
 		// 加载分发服务配置
-		const distributionConfig = this.settings ? this.settings.distributionConfig : null;
+		const distributionConfig = this.settings
+			? this.settings.distributionConfig
+			: null;
 		if (distributionConfig) {
 			distributionService.loadConfig(distributionConfig);
-			logger.info('分发服务配置已加载');
+			logger.info("分发服务配置已加载");
 		}
-		
+
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
 			(leaf) => new NotePreview(leaf)
 		);
 
-		const ribbonIconEl = this.addRibbonIcon('clipboard-paste', '复制到公众号', (evt: MouseEvent) => {
-			this.activateView();
-		});
-		ribbonIconEl.addClass('note-to-mp-plugin-ribbon-class');
-
-		this.addCommand({
-			id: 'open-note-preview',
-			name: '复制到公众号',
-			callback: () => {
+		const ribbonIconEl = this.addRibbonIcon('clipboard-paste', '复制到公众号', () => {
 				this.activateView();
 			}
+		);
+		ribbonIconEl.addClass('omnicontent-plugin-ribbon-class');
+
+		this.addCommand({
+			id: "open-note-preview",
+			name: "复制到公众号",
+			callback: () => {
+				this.activateView();
+			},
 		});
 
-		this.addSettingTab(new NoteToMpSettingTab(this.app, this));
+		this.addSettingTab(new OmniContentSettingTab(this.app, this));
 	}
 
-	onunload() {
-
-	}
+	onunload() {}
 
 	async loadSettings() {
 		NMPSettings.loadSettings(await this.loadData());
@@ -96,23 +96,26 @@ export default class NoteToMpPlugin extends Plugin {
 		const distributionService = DistributionService.getInstance();
 		const distributionConfig = distributionService.saveConfig();
 		this.settings.distributionConfig = distributionConfig;
-		
+
 		await this.saveData(NMPSettings.allSettings());
 	}
 
 	async activateView() {
 		const { workspace } = this.app;
-	
+
 		let leaf: WorkspaceLeaf | null = null;
 		const leaves = workspace.getLeavesOfType(VIEW_TYPE_NOTE_PREVIEW);
-	
+
 		if (leaves.length > 0) {
 			leaf = leaves[0];
 		} else {
-		  	leaf = workspace.getRightLeaf(false);
-		  	await leaf?.setViewState({ type: VIEW_TYPE_NOTE_PREVIEW, active: true });
+			leaf = workspace.getRightLeaf(false);
+			await leaf?.setViewState({
+				type: VIEW_TYPE_NOTE_PREVIEW,
+				active: true,
+			});
 		}
-	
+
 		if (leaf) workspace.revealLeaf(leaf);
 	}
 }
