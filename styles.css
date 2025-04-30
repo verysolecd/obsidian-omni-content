@@ -328,3 +328,37 @@
   font-size: 14px;
   color: rgba(0, 0, 0, 0.3);
 }
+
+/* 脚注样式 */
+.footnotes {
+  margin-top: 40px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.footnotes hr {
+  margin-bottom: 20px;
+  border: none;
+  border-top: 1px solid #ececec;
+}
+
+.footnotes ol {
+  padding-left: 25px;
+}
+
+.footnotes li {
+  margin-bottom: 10px;
+  padding-left: 5px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.footnote-url {
+  display: block;
+  margin-top: 4px;
+  word-break: break-all; /* 确保长 URL 能够在任何位置断行 */
+  color: rgba(0, 0, 0, 0.5);
+  font-family: monospace;
+  font-size: 13px;
+  padding-left: 8px;
+}

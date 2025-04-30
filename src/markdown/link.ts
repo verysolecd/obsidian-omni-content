@@ -64,13 +64,18 @@ export class LinkRenderer extends Extension {
             return html;
         }
         
-        // 生成脚注列表
+        // 生成简化的脚注列表，确保序号能正常显示
         const links = this.footnoteLinks.map((link, i) => {
-            return `<li>${link.text}, ${link.href}</li>`;
+            // 简化 HTML 结构，让浏览器正确处理 li 元素
+            return `<li>${link.text}<br>
+            <span class="footnote-url">${link.href}</span></li>`;
         });
         
-        // 添加脚注部分
-        return `${html}<section class="footnotes"><hr><ol>${links.join('')}</ol></section>`;
+        // 添加脚注部分，简化结构
+        return `${html}<section class="footnotes">
+            <hr>
+            <ol>${links.join('')}</ol>
+        </section>`;
     }
 
     markedExtension(): MarkedExtension {
