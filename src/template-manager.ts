@@ -55,7 +55,7 @@ export default class TemplateManager {
 
     public setup(app: App): void {
         this.app = app;
-        this.templateDir = `${this.app.vault.configDir}/plugins/omni-content/templates/`;
+        this.templateDir = `${this.app.vault.configDir}/plugins/obsidian-omni-content/templates/`;
     }
 
     // 加载所有模板

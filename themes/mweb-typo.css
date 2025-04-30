@@ -1,5 +1,5 @@
 /* MWeb：增大字体，便于阅读 */
-.omni-content {
+.note-to-mp {
   font-size: 16px;
   min-width: 200px;
   max-width: 760px;
@@ -45,76 +45,76 @@
   /* Responsive images */
   /* 代码片断 */
 }
-.omni-content dl,
-.omni-content dt,
-.omni-content dd,
-.omni-content ul,
-.omni-content ol,
-.omni-content li,
-.omni-content h1,
-.omni-content h2,
-.omni-content h3,
-.omni-content h4,
-.omni-content h5,
-.omni-content h6,
-.omni-content pre,
-.omni-content code,
-.omni-content form,
-.omni-content fieldset,
-.omni-content legend,
-.omni-content input,
-.omni-content textarea,
-.omni-content p,
-.omni-content blockquote,
-.omni-content th,
-.omni-content td,
-.omni-content hr,
-.omni-content button,
-.omni-content article,
-.omni-content aside,
-.omni-content details,
-.omni-content figcaption,
-.omni-content figure,
-.omni-content footer,
-.omni-content header,
-.omni-content menu,
-.omni-content nav,
-.omni-content section {
+.note-to-mp dl,
+.note-to-mp dt,
+.note-to-mp dd,
+.note-to-mp ul,
+.note-to-mp ol,
+.note-to-mp li,
+.note-to-mp h1,
+.note-to-mp h2,
+.note-to-mp h3,
+.note-to-mp h4,
+.note-to-mp h5,
+.note-to-mp h6,
+.note-to-mp pre,
+.note-to-mp code,
+.note-to-mp form,
+.note-to-mp fieldset,
+.note-to-mp legend,
+.note-to-mp input,
+.note-to-mp textarea,
+.note-to-mp p,
+.note-to-mp blockquote,
+.note-to-mp th,
+.note-to-mp td,
+.note-to-mp hr,
+.note-to-mp button,
+.note-to-mp article,
+.note-to-mp aside,
+.note-to-mp details,
+.note-to-mp figcaption,
+.note-to-mp figure,
+.note-to-mp footer,
+.note-to-mp header,
+.note-to-mp menu,
+.note-to-mp nav,
+.note-to-mp section {
   margin: 0;
   padding: 0;
 }
-.omni-content article,
-.omni-content aside,
-.omni-content details,
-.omni-content figcaption,
-.omni-content figure,
-.omni-content footer,
-.omni-content header,
-.omni-content menu,
-.omni-content nav,
-.omni-content section {
+.note-to-mp article,
+.note-to-mp aside,
+.note-to-mp details,
+.note-to-mp figcaption,
+.note-to-mp figure,
+.note-to-mp footer,
+.note-to-mp header,
+.note-to-mp menu,
+.note-to-mp nav,
+.note-to-mp section {
   display: block;
 }
-.omni-content audio,
-.omni-content canvas,
-.omni-content video {
+.note-to-mp audio,
+.note-to-mp canvas,
+.note-to-mp video {
   display: inline-block;
 }
-.omni-content button,
-.omni-content input,
-.omni-content select,
-.omni-content textarea {
+.note-to-mp button,
+.note-to-mp input,
+.note-to-mp select,
+.note-to-mp textarea {
   font: 300 1em/1.8 PingFang SC, Lantinghei SC, Microsoft Yahei, Hiragino Sans GB, Microsoft Sans Serif, WenQuanYi Micro Hei, sans-serif;
 }
-.omni-content table {
+.note-to-mp table {
   border-collapse: collapse;
   border-spacing: 0;
 }
-.omni-content fieldset,
-.omni-content img {
+.note-to-mp fieldset,
+.note-to-mp img {
   border: 0;
 }
-.omni-content blockquote {
+.note-to-mp blockquote {
   position: relative;
   color: #999;
   font-weight: 400;
@@ -123,261 +123,261 @@
   margin: 1em 3em 1em 2em;
 }
 @media only screen and (max-width: 640px) {
-  .omni-content blockquote {
+  .note-to-mp blockquote {
     margin: 1em 0;
   }
 }
-.omni-content acronym,
-.omni-content abbr {
+.note-to-mp acronym,
+.note-to-mp abbr {
   border-bottom: 1px dotted;
   font-variant: normal;
   text-decoration: none;
 }
-.omni-content abbr {
+.note-to-mp abbr {
   cursor: help;
 }
-.omni-content del {
+.note-to-mp del {
   text-decoration: line-through;
 }
-.omni-content address,
-.omni-content caption,
-.omni-content cite,
-.omni-content code,
-.omni-content dfn,
-.omni-content em,
-.omni-content th,
-.omni-content var {
+.note-to-mp address,
+.note-to-mp caption,
+.note-to-mp cite,
+.note-to-mp code,
+.note-to-mp dfn,
+.note-to-mp em,
+.note-to-mp th,
+.note-to-mp var {
   font-style: normal;
   font-weight: 400;
 }
-.omni-content ul,
-.omni-content ol {
+.note-to-mp ul,
+.note-to-mp ol {
   list-style: none;
 }
-.omni-content caption,
-.omni-content th {
+.note-to-mp caption,
+.note-to-mp th {
   text-align: left;
 }
-.omni-content q:before,
-.omni-content q:after {
+.note-to-mp q:before,
+.note-to-mp q:after {
   content: "";
 }
-.omni-content sub,
-.omni-content sup {
+.note-to-mp sub,
+.note-to-mp sup {
   font-size: 75%;
   line-height: 0;
   position: relative;
 }
-.omni-content :root sub,
-.omni-content :root sup {
+.note-to-mp :root sub,
+.note-to-mp :root sup {
   vertical-align: baseline;
   /* for ie9 and other modern browsers */
 }
-.omni-content sup {
+.note-to-mp sup {
   top: -0.5em;
 }
-.omni-content sub {
+.note-to-mp sub {
   bottom: -0.25em;
 }
-.omni-content a {
+.note-to-mp a {
   color: #1abc9c;
 }
-.omni-content a:hover {
+.note-to-mp a:hover {
   text-decoration: underline;
 }
-.omni-content a {
+.note-to-mp a {
   border-bottom: 1px solid #1abc9c;
 }
-.omni-content a:hover {
+.note-to-mp a:hover {
   border-bottom-color: #555;
   color: #555;
   text-decoration: none;
 }
-.omni-content ins,
-.omni-content a {
+.note-to-mp ins,
+.note-to-mp a {
   text-decoration: none;
 }
-.omni-content u,
-.omni-content .typo-u {
+.note-to-mp u,
+.note-to-mp .typo-u {
   text-decoration: underline;
 }
-.omni-content mark {
+.note-to-mp mark {
   background: #fffdd1;
   border-bottom: 1px solid #ffedce;
   padding: 2px;
   /* margin: 0 5px; */
 }
-.omni-content hr {
+.note-to-mp hr {
   border: none;
   border-bottom: 1px solid #cfcfcf;
   margin-bottom: 0.8em;
   height: 10px;
 }
-.omni-content small,
-.omni-content .typo-small,
-.omni-content figcaption {
+.note-to-mp small,
+.note-to-mp .typo-small,
+.note-to-mp figcaption {
   font-size: 0.9em;
   color: #888;
 }
-.omni-content strong,
-.omni-content b {
+.note-to-mp strong,
+.note-to-mp b {
   font-weight: bold;
   color: #000;
 }
-.omni-content [draggable] {
+.note-to-mp [draggable] {
   cursor: move;
 }
-.omni-content .clearfix:before,
-.omni-content .clearfix:after {
+.note-to-mp .clearfix:before,
+.note-to-mp .clearfix:after {
   content: "";
   display: table;
 }
-.omni-content .clearfix:after {
+.note-to-mp .clearfix:after {
   clear: both;
 }
-.omni-content .clearfix {
+.note-to-mp .clearfix {
   zoom: 1;
 }
-.omni-content .textwrap,
-.omni-content .textwrap td,
-.omni-content .textwrap th {
+.note-to-mp .textwrap,
+.note-to-mp .textwrap td,
+.note-to-mp .textwrap th {
   word-wrap: break-word;
   word-break: break-all;
 }
-.omni-content .textwrap-table {
+.note-to-mp .textwrap-table {
   table-layout: fixed;
 }
-.omni-content .serif {
+.note-to-mp .serif {
   font-family: Palatino, Optima, Georgia, serif;
 }
-.omni-content p,
-.omni-content pre,
-.omni-content ul,
-.omni-content ol,
-.omni-content dl,
-.omni-content form,
-.omni-content hr,
-.omni-content table,
-.omni-content .typo-p,
-.omni-content .typo-pre,
-.omni-content .typo-ul,
-.omni-content .typo-ol,
-.omni-content .typo-dl,
-.omni-content .typo-form,
-.omni-content .typo-hr,
-.omni-content .typo-table,
-.omni-content blockquote {
+.note-to-mp p,
+.note-to-mp pre,
+.note-to-mp ul,
+.note-to-mp ol,
+.note-to-mp dl,
+.note-to-mp form,
+.note-to-mp hr,
+.note-to-mp table,
+.note-to-mp .typo-p,
+.note-to-mp .typo-pre,
+.note-to-mp .typo-ul,
+.note-to-mp .typo-ol,
+.note-to-mp .typo-dl,
+.note-to-mp .typo-form,
+.note-to-mp .typo-hr,
+.note-to-mp .typo-table,
+.note-to-mp blockquote {
   margin-bottom: 1.2em;
 }
-.omni-content h1,
-.omni-content h2,
-.omni-content h3,
-.omni-content h4,
-.omni-content h5,
-.omni-content h6 {
+.note-to-mp h1,
+.note-to-mp h2,
+.note-to-mp h3,
+.note-to-mp h4,
+.note-to-mp h5,
+.note-to-mp h6 {
   font-family: PingFang SC, Verdana, Helvetica Neue, Microsoft Yahei, Hiragino Sans GB, Microsoft Sans Serif, WenQuanYi Micro Hei, sans-serif;
   font-weight: lighter;
   color: #000;
   line-height: 1.35;
 }
-.omni-content h1,
-.omni-content h2,
-.omni-content h3,
-.omni-content h4,
-.omni-content h5,
-.omni-content h6,
-.omni-content .typo-h1,
-.omni-content .typo-h2,
-.omni-content .typo-h3,
-.omni-content .typo-h4,
-.omni-content .typo-h5,
-.omni-content .typo-h6 {
+.note-to-mp h1,
+.note-to-mp h2,
+.note-to-mp h3,
+.note-to-mp h4,
+.note-to-mp h5,
+.note-to-mp h6,
+.note-to-mp .typo-h1,
+.note-to-mp .typo-h2,
+.note-to-mp .typo-h3,
+.note-to-mp .typo-h4,
+.note-to-mp .typo-h5,
+.note-to-mp .typo-h6 {
   margin-top: 1.2em;
   margin-bottom: 0.6em;
   line-height: 1.35;
 }
-.omni-content h1,
-.omni-content .typo-h1 {
+.note-to-mp h1,
+.note-to-mp .typo-h1 {
   font-size: 2em;
 }
-.omni-content h2,
-.omni-content .typo-h2 {
+.note-to-mp h2,
+.note-to-mp .typo-h2 {
   font-size: 1.8em;
 }
-.omni-content h3,
-.omni-content .typo-h3 {
+.note-to-mp h3,
+.note-to-mp .typo-h3 {
   font-size: 1.6em;
 }
-.omni-content h4,
-.omni-content .typo-h4 {
+.note-to-mp h4,
+.note-to-mp .typo-h4 {
   font-size: 1.4em;
 }
-.omni-content h5,
-.omni-content h6,
-.omni-content .typo-h5,
-.omni-content .typo-h6 {
+.note-to-mp h5,
+.note-to-mp h6,
+.note-to-mp .typo-h5,
+.note-to-mp .typo-h6 {
   font-size: 1.2em;
 }
-.omni-content ul,
-.omni-content .typo-ul {
+.note-to-mp ul,
+.note-to-mp .typo-ul {
   margin-left: 1.3em;
   list-style: disc;
 }
-.omni-content ol,
-.omni-content .typo-ol {
+.note-to-mp ol,
+.note-to-mp .typo-ol {
   list-style: decimal;
   margin-left: 1.9em;
 }
-.omni-content li ul,
-.omni-content li ol,
-.omni-content .typo-ul ul,
-.omni-content .typo-ul ol,
-.omni-content .typo-ol ul,
-.omni-content .typo-ol ol {
+.note-to-mp li ul,
+.note-to-mp li ol,
+.note-to-mp .typo-ul ul,
+.note-to-mp .typo-ul ol,
+.note-to-mp .typo-ol ul,
+.note-to-mp .typo-ol ol {
   margin-bottom: 0.8em;
   margin-left: 2em;
 }
-.omni-content li ul,
-.omni-content .typo-ul ul,
-.omni-content .typo-ol ul {
+.note-to-mp li ul,
+.note-to-mp .typo-ul ul,
+.note-to-mp .typo-ol ul {
   list-style: circle;
 }
-.omni-content table th,
-.omni-content table td,
-.omni-content .typo-table th,
-.omni-content .typo-table td,
-.omni-content table caption {
+.note-to-mp table th,
+.note-to-mp table td,
+.note-to-mp .typo-table th,
+.note-to-mp .typo-table td,
+.note-to-mp table caption {
   border: 1px solid #ddd;
   padding: 0.5em 1em;
   color: #666;
 }
-.omni-content table th,
-.omni-content .typo-table th {
+.note-to-mp table th,
+.note-to-mp .typo-table th {
   background: #fbfbfb;
 }
-.omni-content table thead th,
-.omni-content .typo-table thead th {
+.note-to-mp table thead th,
+.note-to-mp .typo-table thead th {
   background: #f1f1f1;
 }
-.omni-content table caption {
+.note-to-mp table caption {
   border-bottom: none;
 }
-.omni-content .typo-input,
-.omni-content .typo-textarea {
+.note-to-mp .typo-input,
+.note-to-mp .typo-textarea {
   -webkit-appearance: none;
   border-radius: 0;
 }
-.omni-content .typo-em,
-.omni-content em,
-.omni-content legend,
-.omni-content caption {
+.note-to-mp .typo-em,
+.note-to-mp em,
+.note-to-mp legend,
+.note-to-mp caption {
   color: #000;
   font-weight: inherit;
 }
-.omni-content .typo-em {
+.note-to-mp .typo-em {
   position: relative;
 }
-.omni-content .typo-em:after {
+.note-to-mp .typo-em:after {
   position: absolute;
   top: 0.65em;
   left: 0;
@@ -386,35 +386,35 @@
   white-space: nowrap;
   content: "・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・";
 }
-.omni-content img {
+.note-to-mp img {
   max-width: 100%;
 }
-.omni-content .footnotes hr {
+.note-to-mp .footnotes hr {
   margin-top: 4em;
   margin-bottom: 0.5em;
 }
-.omni-content pre,
-.omni-content code,
-.omni-content pre tt {
+.note-to-mp pre,
+.note-to-mp code,
+.note-to-mp pre tt {
   font-family: Courier, "Courier New", monospace;
 }
-.omni-content pre {
+.note-to-mp pre {
   padding: 1em 1.5em;
   display: block;
   -webkit-overflow-scrolling: touch;
 }
-.omni-content .code-section {
+.note-to-mp .code-section {
   display: flex;
   background: #f8f8f8;
   border: 1px solid #ddd;
 }
-.omni-content .code-section pre {
+.note-to-mp .code-section pre {
   margin: 0;
   display: block;
   padding: 1em;
   overflow-x: auto;
 }
-.omni-content .code-section pre code {
+.note-to-mp .code-section pre code {
   border: none;
   background: #f8f8f8;
   font-size: 1em;
@@ -423,7 +423,7 @@
   margin: 0 !important;
   text-wrap: nowrap;
 }
-.omni-content .code-section ul {
+.note-to-mp .code-section ul {
   flex-shrink: 0;
   counter-reset: line;
   margin: 0;
@@ -431,7 +431,7 @@
   white-space: normal;
   width: fit-content;
 }
-.omni-content .code-section ul > li {
+.note-to-mp .code-section ul > li {
   position: relative;
   margin: 0;
   padding: 0;
@@ -444,6 +444,6 @@
   list-style-type: none;
   text-wrap: nowrap;
 }
-.omni-content .code-section ul > li::marker {
+.note-to-mp .code-section ul > li::marker {
   content: none;
 }

@@ -111,7 +111,6 @@ export class CodeRenderer extends Extension {
 		const lang = (infostring || "").match(/^\S*/)?.[0];
 		code = code.replace(/\n$/, "") + "\n";
 
-		let codeSection = "";
 		if (this.settings.lineNumber) {
 			const lines = code.split("\n");
 
@@ -121,26 +120,26 @@ export class CodeRenderer extends Extension {
 				liItems = liItems + `<li>${count}</li>`;
 				count = count + 1;
 			}
-			codeSection =
-				'<section class="code-section"><ul>' + liItems + "</ul>";
-		} else {
-			codeSection = '<section class="code-section">';
-		}
-
-		if (!lang) {
+			
+			// Create a code-section with both line numbers and code content side by side
+			const codeContent = !lang
+				? `<pre><code>${code}</code></pre>`
+				: `<pre><code class="hljs language-${lang}">${code}</code></pre>`;
+			
 			return (
-				codeSection + "<pre><code>" + code + "</code></pre></section>\n"
+				'<section class="code-section">'
+				// + '<div class="line-numbers"><ul>' + liItems + '</ul></div>'
+				+ '<div class="code-content">' + codeContent + '</div>'
+				+ '</section>\n'
 			);
+		} else {
+			// No line numbers, simpler structure
+			if (!lang) {
+				return '<section class="code-section"><pre><code>' + code + '</code></pre></section>\n';
+			}
+			
+			return '<section class="code-section"><pre><code class="hljs language-' + lang + '">' + code + '</code></pre></section>\n';
 		}
-
-		return (
-			codeSection +
-			'<pre><code class="hljs language-' +
-			lang +
-			'">' +
-			code +
-			"</code></pre></section>\n"
-		);
 	}
 
 	static getMathType(lang: string | null) {

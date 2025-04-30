@@ -1,4 +1,4 @@
-.omni-content {
+.note-to-mp {
   color: #595959;
   font-size: 15px;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, Helvetica Neue, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
@@ -24,115 +24,115 @@
   /* 表格 */
   /* 代码 */
 }
-.omni-content p {
+.note-to-mp p {
   color: #595959;
   font-size: 15px;
   line-height: 2;
   font-weight: 400;
 }
-.omni-content p + p {
+.note-to-mp p + p {
   margin-top: 16px;
 }
-.omni-content h1,
-.omni-content h2,
-.omni-content h3,
-.omni-content h4,
-.omni-content h5,
-.omni-content h6 {
+.note-to-mp h1,
+.note-to-mp h2,
+.note-to-mp h3,
+.note-to-mp h4,
+.note-to-mp h5,
+.note-to-mp h6 {
   padding: 30px 0;
   margin: 0;
   color: #135ce0;
   font-weight: 600;
 }
-.omni-content h1 {
+.note-to-mp h1 {
   position: relative;
   text-align: center;
   font-size: 22px;
   margin: 50px 0;
 }
-.omni-content h2 {
+.note-to-mp h2 {
   position: relative;
   font-size: 20px;
   border-left: 4px solid;
   padding: 0 0 0 10px;
   margin: 30px 0;
 }
-.omni-content h3 {
+.note-to-mp h3 {
   font-size: 16px;
 }
-.omni-content ul {
+.note-to-mp ul {
   list-style: disc outside;
   padding-left: 2em;
   margin-top: 1em;
 }
-.omni-content li {
+.note-to-mp li {
   line-height: 2;
   color: #595959;
   margin-bottom: 0;
   list-style: inherit;
 }
-.omni-content img {
+.note-to-mp img {
   max-width: 100%;
 }
-.omni-content img.loaded {
+.note-to-mp img.loaded {
   margin: 0 auto;
   display: block;
 }
-.omni-content blockquote {
+.note-to-mp blockquote {
   background: #fff9f9;
   margin: 2em 0;
   padding: 2px 20px;
   border-left: 4px solid #b2aec5;
 }
-.omni-content blockquote p {
+.note-to-mp blockquote p {
   color: #666;
   line-height: 2;
 }
-.omni-content a {
+.note-to-mp a {
   color: #036aca;
   border-bottom: 1px solid rgba(3, 106, 202, 0.8);
   font-weight: 400;
   text-decoration: none;
 }
-.omni-content strong {
+.note-to-mp strong {
   color: #036aca;
 }
-.omni-content em strong {
+.note-to-mp em strong {
   color: #036aca;
 }
-.omni-content hr {
+.note-to-mp hr {
   border-top: 1px solid #135ce0;
 }
-.omni-content table {
+.note-to-mp table {
   border-collapse: collapse;
   margin: 1rem 0;
   overflow-x: auto;
 }
-.omni-content table th,
-.omni-content table td {
+.note-to-mp table th,
+.note-to-mp table td {
   border: 1px solid #dfe2e5;
   padding: 0.6em 1em;
 }
-.omni-content table tr {
+.note-to-mp table tr {
   border-top: 1px solid #dfe2e5;
 }
-.omni-content table tr:nth-child(2n) {
+.note-to-mp table tr:nth-child(2n) {
   background-color: #f6f8fa;
 }
-.omni-content .footnotes hr {
+.note-to-mp .footnotes hr {
   margin-bottom: 0.5em;
 }
-.omni-content pre {
+.note-to-mp pre {
   overflow: auto;
 }
-.omni-content pre,
-.omni-content code {
+.note-to-mp pre,
+.note-to-mp code {
   overflow: auto;
   position: relative;
   line-height: 1.75;
   font-family: Menlo, Monaco, Consolas, Courier New, monospace;
 }
-.omni-content pre > code {
+.note-to-mp pre > code {
   /* font-size: 12px; */
   padding: 15px 12px;
   margin: 0;
@@ -142,7 +142,7 @@
   color: #333;
   background: #f8f8f8;
 }
-.omni-content code {
+.note-to-mp code {
   word-break: break-word;
   border-radius: 2px;
   overflow-x: auto;
@@ -151,17 +151,17 @@
   font-size: 0.87em;
   padding: 0.065em 0.4em;
 }
-.omni-content .code-section {
+.note-to-mp .code-section {
   display: flex;
   background: #f8f8f8;
 }
-.omni-content .code-section pre {
+.note-to-mp .code-section pre {
   margin: 0;
   display: block;
   padding: 1em;
   overflow-x: auto;
 }
-.omni-content .code-section pre code {
+.note-to-mp .code-section pre code {
   border: none;
   background: #f8f8f8;
   font-size: 1em;
@@ -170,7 +170,7 @@
   margin: 0 !important;
   text-wrap: nowrap;
 }
-.omni-content .code-section ul {
+.note-to-mp .code-section ul {
   flex-shrink: 0;
   counter-reset: line;
   margin: 0;
@@ -178,7 +178,7 @@
   white-space: normal;
   width: fit-content;
 }
-.omni-content .code-section ul > li {
+.note-to-mp .code-section ul > li {
   position: relative;
   margin: 0;
   padding: 0;
@@ -192,6 +192,6 @@
   color: #ff502c;
   text-wrap: nowrap;
 }
-.omni-content .code-section ul > li::marker {
+.note-to-mp .code-section ul > li::marker {
   content: none;
 }

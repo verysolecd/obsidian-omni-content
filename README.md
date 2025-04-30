@@ -25,7 +25,7 @@
 
 ## 2、手动安装
 
-到[Release](https://github.com/sunbooshi/omni-content/releases)页面下载最新版本，将`main.js`、 `manifest.json`、`styles.css`保存到Obsidian仓库的`.obsidian/plugins/omni-content`目录下。
+到[Release](https://github.com/sunbooshi/omni-content/releases)页面下载最新版本，将`main.js`、 `manifest.json`、`styles.css`保存到Obsidian仓库的`.obsidian/plugins/obsidian-omni-content`目录下。
 
 打开Obsidian的**设置**界面，点击**第三方插件**，在**已安装插件**中刷新一下，然后启用本插件 **OmniContent**。
 
@@ -35,12 +35,12 @@
 为了尽可能保证插件符合官方规范，从`1.0.4`版本开始，主题和代码高亮需要在插件的设置——**获取更多主题**手动下载。
 
 ### 3.2 手动下载
-也可以直接在[Release](https://github.com/sunbooshi/omnicontent/releases)页面下载`assets.zip`文件，解压后放到`.obsidian/plugins/omnicontent/assets`目录下。
+也可以直接在[Release](https://github.com/sunbooshi/omnicontent/releases)页面下载`assets.zip`文件，解压后放到`.obsidian/plugins/obsidian-omnicontent/assets`目录下。
 
 完整的目录结构如下：
 
 ```
-.obsidian/plugins/omnicontent/
+.obsidian/plugins/obsidian-omnicontent/
 ├── assets
 │   ├── themes.json
 │   ├── highlights.json
@@ -230,15 +230,15 @@
 在`new-style.css`追加定义样式，所有样式都应该写在`themes.json`中`className`定义的选择器下，以上面新增的样式举例，CSS应按如下所示编写：
 
 ```CSS
-.omni-content strong {
+.note-to-mp strong {
   font-weight: 700
 }
-.omni-content a {
+.note-to-mp a {
   color: #428bca;
   text-decoration: none;
   background: 0 0
 }
-.omni-content p {
+.note-to-mp p {
   margin: 10px 0;
   line-height: 1.7
 }

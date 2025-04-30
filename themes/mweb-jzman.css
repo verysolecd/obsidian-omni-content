@@ -13,10 +13,10 @@
  * 各个属性的默认值为 chrome 的默认样式，见 variables/default.scss。
  */
 /**
- * MWeb 包裹 markdown 的容器是 .omni-content
+ * MWeb 包裹 markdown 的容器是 .note-to-mp
  * Typora 中是 #write
  */
-.omni-content {
+.note-to-mp {
   line-height: 1.6em;
   -webkit-text-size-adjust: 100%;
   margin: 0px 0px;
@@ -32,22 +32,22 @@
   /* table */
   /* svg */
 }
-.omni-content * {
+.note-to-mp * {
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
-.omni-content > *:first-child {
+.note-to-mp > *:first-child {
   margin-top: 0 !important;
 }
-.omni-content > *:last-child {
+.note-to-mp > *:last-child {
   margin-top: 0 !important;
 }
-.omni-content p, .omni-content details, .omni-content dl, .omni-content ol, .omni-content ul, .omni-content pre, .omni-content xmp, .omni-content plaintext, .omni-content listing, .omni-content blockquote, .omni-content table, .omni-content figure, .omni-content hr {
+.note-to-mp p, .note-to-mp details, .note-to-mp dl, .note-to-mp ol, .note-to-mp ul, .note-to-mp pre, .note-to-mp xmp, .note-to-mp plaintext, .note-to-mp listing, .note-to-mp blockquote, .note-to-mp table, .note-to-mp figure, .note-to-mp hr {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
 }
-.omni-content h1 {
+.note-to-mp h1 {
   font-size: 2em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -55,7 +55,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content h2 {
+.note-to-mp h2 {
   font-size: 1.5em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -63,7 +63,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content h3 {
+.note-to-mp h3 {
   font-size: 1.17em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -71,7 +71,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content h4 {
+.note-to-mp h4 {
   font-size: 1em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -79,7 +79,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content h5 {
+.note-to-mp h5 {
   font-size: 0.83em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -87,7 +87,7 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content h6 {
+.note-to-mp h6 {
   font-size: 0.67em;
   font-weight: bold;
   margin-top: 1.5em;
@@ -95,90 +95,90 @@
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content p {
+.note-to-mp p {
   margin-left: 0;
   margin-right: 0;
 }
-.omni-content pre, .omni-content xmp, .omni-content plaintext, .omni-content listing {
+.note-to-mp pre, .note-to-mp xmp, .note-to-mp plaintext, .note-to-mp listing {
   font-family: monospace, Menlo-Regular, Menlo, Monaco, Consolas, "Courier New";
 }
-.omni-content blockquote > :first-child {
+.note-to-mp blockquote > :first-child {
   margin-top: 0;
 }
-.omni-content blockquote > :last-child {
+.note-to-mp blockquote > :last-child {
   margin-bottom: 0;
 }
-.omni-content hr {
+.note-to-mp hr {
   border-style: inset;
   border-width: 1px;
 }
-.omni-content img {
+.note-to-mp img {
   max-width: 100%;
   height: auto;
 }
-.omni-content li {
+.note-to-mp li {
   word-wrap: break-all;
 }
-.omni-content li + li {
+.note-to-mp li + li {
   margin-top: 0.25em;
 }
-.omni-content ul ul, .omni-content ol ul, .omni-content ul ol, .omni-content ol ol {
+.note-to-mp ul ul, .note-to-mp ol ul, .note-to-mp ul ol, .note-to-mp ol ol {
   margin-top: 0;
   margin-bottom: 0;
 }
-.omni-content .task-list-item {
+.note-to-mp .task-list-item {
   list-style-type: none;
 }
-.omni-content a {
+.note-to-mp a {
   color: -webkit-link;
   text-decoration: underline;
 }
-.omni-content a img {
+.note-to-mp a img {
   border: none;
 }
-.omni-content b, .omni-content strong {
+.note-to-mp b, .note-to-mp strong {
   font-weight: bold;
 }
-.omni-content i, .omni-content cite, .omni-content em, .omni-content var, .omni-content address, .omni-content dfn {
+.note-to-mp i, .note-to-mp cite, .note-to-mp em, .note-to-mp var, .note-to-mp address, .note-to-mp dfn {
   font-style: italic;
 }
-.omni-content code, .omni-content kbd, .omni-content tt, .omni-content samp {
+.note-to-mp code, .note-to-mp kbd, .note-to-mp tt, .note-to-mp samp {
   font-family: monospace, Menlo-Regular, Menlo, Monaco, Consolas, "Courier New";
 }
-.omni-content mark {
+.note-to-mp mark {
   padding: 0.2em 0;
   background-color: yellow;
 }
-.omni-content del, .omni-content s {
+.note-to-mp del, .note-to-mp s {
   color: inherit;
 }
-.omni-content table {
+.note-to-mp table {
   color: black;
   border-collapse: collapse;
   background-color: white;
   border-spacing: 2px;
   font-size: 1em;
 }
-.omni-content th, .omni-content td {
+.note-to-mp th, .note-to-mp td {
   border-color: gray;
   border-width: 1px;
   border-style: solid;
 }
-.omni-content th {
+.note-to-mp th {
   padding: 4px 8px;
   font-size: 1em;
   font-weight: bold;
 }
-.omni-content td {
+.note-to-mp td {
   padding: 4px 8px;
   font-size: 1em;
   font-weight: normal;
 }
-.omni-content div[id^=mweb-chart-ele] svg {
+.note-to-mp div[id^=mweb-chart-ele] svg {
   background-color: white;
 }
 
-.omni-content {
+.note-to-mp {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
   padding: 2em;
   word-break: break-word;
@@ -194,32 +194,32 @@
   background-position: center center;
   /* 代码块特殊处理 */
 }
-.omni-content h1,
-.omni-content h2,
-.omni-content h3,
-.omni-content h4,
-.omni-content h5,
-.omni-content h6 {
+.note-to-mp h1,
+.note-to-mp h2,
+.note-to-mp h3,
+.note-to-mp h4,
+.note-to-mp h5,
+.note-to-mp h6 {
   line-height: 1.5;
   margin-top: 35px;
   margin-bottom: 10px;
   padding-bottom: 5px;
   font-weight: 600;
 }
-.omni-content h1 {
+.note-to-mp h1 {
   font-size: 30px;
   margin-bottom: 5px;
 }
-.omni-content h2 {
+.note-to-mp h2 {
   padding-bottom: 12px;
   font-size: 24px;
   border-bottom: 1px solid #ececec;
 }
-.omni-content h3 {
+.note-to-mp h3 {
   font-size: 18px;
   padding-bottom: 0;
 }
-.omni-content h4 {
+.note-to-mp h4 {
   font-size: 1.2em;
   border-bottom: 2px solid rgb(239, 112, 96);
   word-spacing: 0px !important;
@@ -235,21 +235,21 @@
   border-top-left-radius: 3px;
   margin-right: 3px;
 }
-.omni-content h5 {
+.note-to-mp h5 {
   font-size: 15px;
 }
-.omni-content h6 {
+.note-to-mp h6 {
   margin-top: 5px;
 }
-.omni-content p {
+.note-to-mp p {
   line-height: inherit;
   margin-top: 22px;
   margin-bottom: 22px;
 }
-.omni-content img {
+.note-to-mp img {
   max-width: 100%;
 }
-.omni-content hr {
+.note-to-mp hr {
   border-top: 1px solid #ddd;
   border-bottom: none;
   border-left: none;
@@ -257,16 +257,16 @@
   margin-top: 32px;
   margin-bottom: 32px;
 }
-.omni-content a {
+.note-to-mp a {
   text-decoration: none;
   color: #0269c8;
   border-bottom: 1px solid #d1e9ff;
 }
-.omni-content a:hover,
-.omni-content a:active {
+.note-to-mp a:hover,
+.note-to-mp a:active {
   color: #275b8c;
 }
-.omni-content table {
+.note-to-mp table {
   display: inline-block !important;
   font-size: 12px;
   width: auto;
@@ -274,78 +274,78 @@
   overflow: auto;
   border: solid 1px #f6f6f6;
 }
-.omni-content thead {
+.note-to-mp thead {
   background: #f6f6f6;
   color: #000;
   text-align: left;
 }
-.omni-content tr:nth-child(2n) {
+.note-to-mp tr:nth-child(2n) {
   background-color: #fcfcfc;
 }
-.omni-content th,
-.omni-content td {
+.note-to-mp th,
+.note-to-mp td {
   padding: 12px 7px;
   line-height: 24px;
 }
-.omni-content td {
+.note-to-mp td {
   min-width: 120px;
 }
-.omni-content blockquote {
+.note-to-mp blockquote {
   color: #666;
   padding: 1px 23px;
   margin: 22px 0;
   border-left: 4px solid #cbcbcb;
   background-color: #f8f8f8;
 }
-.omni-content blockquote::after {
+.note-to-mp blockquote::after {
   display: block;
   content: "";
 }
-.omni-content blockquote > p {
+.note-to-mp blockquote > p {
   margin: 10px 0;
 }
-.omni-content ol,
-.omni-content ul {
+.note-to-mp ol,
+.note-to-mp ul {
   padding-left: 28px;
 }
-.omni-content ol li,
-.omni-content ul li {
+.note-to-mp ol li,
+.note-to-mp ul li {
   margin-bottom: 0;
   list-style: inherit;
 }
-.omni-content ol li .task-list-item,
-.omni-content ul li .task-list-item {
+.note-to-mp ol li .task-list-item,
+.note-to-mp ul li .task-list-item {
   list-style: none;
 }
-.omni-content .task-list-item ul,
-.omni-content .task-list-item ol {
+.note-to-mp .task-list-item ul,
+.note-to-mp .task-list-item ol {
   margin-top: 0;
 }
-.omni-content ol ul,
-.omni-content ol ol,
-.omni-content ul ul,
-.omni-content ul ol {
+.note-to-mp ol ul,
+.note-to-mp ol ol,
+.note-to-mp ul ul,
+.note-to-mp ul ol {
   margin-top: 3px;
 }
-.omni-content ol li {
+.note-to-mp ol li {
   padding-left: 6px;
 }
 @media (max-width: 720px) {
-  .omni-content h1 {
+  .note-to-mp h1 {
     font-size: 24px;
   }
-  .omni-content h2 {
+  .note-to-mp h2 {
     font-size: 20px;
   }
-  .omni-content h3 {
+  .note-to-mp h3 {
     font-size: 18px;
   }
 }
-.omni-content .footnotes hr {
+.note-to-mp .footnotes hr {
   margin-top: 4em;
   margin-bottom: 0.5em;
 }
-.omni-content code {
+.note-to-mp code {
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
   word-break: break-word;
   border-radius: 2px;
@@ -355,12 +355,12 @@
   font-size: 0.87em;
   padding: 0.065em 0.4em;
 }
-.omni-content .code-section {
+.note-to-mp .code-section {
   display: flex;
   overflow: auto;
   background-color: #fff5f5;
 }
-.omni-content .code-section code {
+.note-to-mp .code-section code {
   font-size: 1em;
   line-height: 1.75em;
   color: #ff502c;
@@ -370,13 +370,13 @@
   text-wrap: nowrap;
   display: block;
 }
-.omni-content .code-section pre {
+.note-to-mp .code-section pre {
   display: block;
   overflow: auto;
   padding: 1em;
   margin: 0;
 }
-.omni-content .code-section ul {
+.note-to-mp .code-section ul {
   flex-shrink: 0;
   counter-reset: line;
   margin: 0;
@@ -384,7 +384,7 @@
   white-space: normal;
   width: fit-content;
 }
-.omni-content .code-section ul > li {
+.note-to-mp .code-section ul > li {
   position: relative;
   margin: 0;
   padding: 0;
@@ -398,6 +398,6 @@
   color: #ff502c;
   text-wrap: nowrap;
 }
-.omni-content .code-section ul > li::marker {
+.note-to-mp .code-section ul > li::marker {
   content: none;
 }

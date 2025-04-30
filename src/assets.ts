@@ -71,7 +71,7 @@ export default class AssetsManager {
     private _setup(app: App, manifest: PluginManifest) {
         this.app = app;
         this.manifest = manifest;
-        this.assetsPath = this.app.vault.configDir + '/plugins/' + this.manifest.id + '/assets/';
+        this.assetsPath = this.app.vault.configDir + '/plugins/obsidian-omni-content/assets/';
         this.themesPath = this.assetsPath + 'themes/';
         this.hilightPath = this.assetsPath + 'highlights/';
         this.themeCfg = this.assetsPath + 'themes.json';
@@ -195,7 +195,7 @@ export default class AssetsManager {
 
     getThemeURL() {
         const version = this.manifest.version;
-        return `https://github.com/sunbooshi/omni-content/releases/download/${version}/assets.zip`;
+        return `https://github.com/sunbooshi/note-to-mp/releases/download/1.1.3/assets.zip`;
     }
 
     async downloadThemes() {

@@ -574,14 +574,14 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	isOldTheme() {
 		const theme = this.assetsManager.getTheme(this.currentTheme);
 		if (theme) {
-			return theme.css.indexOf(".omni-content") < 0;
+			return theme.css.indexOf(".note-to-mp") < 0;
 		}
 		return false;
 	}
 
 	setArticle(article: string) {
 		this.articleDiv.empty();
-		let className = "omni-content";
+		let className = "note-to-mp";
 		// 兼容旧版本样式
 		if (this.isOldTheme()) {
 			className = this.currentTheme;
