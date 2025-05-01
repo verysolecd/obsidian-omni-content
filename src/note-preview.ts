@@ -1049,13 +1049,26 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	async copyArticle() {
+		// Enable WeChat compatible mode before rendering
+		const { setWeChatMode } = await import('./markdown/parser');
+		setWeChatMode(true);
+		
+		// Re-render with WeChat mode enabled
+		await this.renderMarkdown();
+		
+		// Get the WeChat-formatted content
 		const content = this.getArticleContent();
 
+		// Copy to clipboard
 		await navigator.clipboard.write([
 			new ClipboardItem({
 				"text/html": new Blob([content], { type: "text/html" }),
 			}),
 		]);
+		
+		// Disable WeChat mode and re-render for normal viewing
+		setWeChatMode(false);
+		await this.renderMarkdown();
 	}
 
 	getSecret() {

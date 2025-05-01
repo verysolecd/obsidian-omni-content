@@ -62,3 +62,12 @@ h2 .content {
     width: auto;
     -webkit-box-reflect: unset;
 }
+
+
+.note-to-mp element.style {
+    margin-left: 0px !important;
+}
+
+element.style {
+    margin-left: 0px !important;
+}
