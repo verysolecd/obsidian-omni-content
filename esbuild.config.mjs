@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import { copy } from "esbuild-plugin-copy";
 
 const banner =
 `/*
@@ -38,7 +39,22 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
+	plugins: [
+		copy({
+			// 复制以下资源到 assets 目录
+			assets: [
+				{ from: ['./themes/**/*'], to: ['./assets/themes'] },
+				{ from: ['./templates/**/*'], to: ['./assets/templates'] },
+				{ from: ['./themes.json'], to: ['./assets/themes.json'] },
+				{ from: ['./highlights.json'], to: ['./assets/highlights.json'] },
+				{ from: ["./css-snippets/black-h2.css"], to: ["./assets/custom.css"] },
+			],
+			verbose: false, // 输出复制操作的日志
+		}),
+	],
 });
+
+
 
 if (prod) {
 	await context.rebuild();

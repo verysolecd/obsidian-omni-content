@@ -487,6 +487,30 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	currentAppId: string;
 	markedParser: MarkedParser;
 
+	/**
+	 * 添加键盘导航事件到select元素
+	 * @param selectEl select元素
+	 */
+	private addKeyboardNavigation(selectEl: HTMLSelectElement) {
+		selectEl.addEventListener("keydown", (e: KeyboardEvent) => {
+			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+				e.preventDefault();
+				
+				const options = selectEl.options;
+				const currentIndex = selectEl.selectedIndex;
+				
+				if (e.key === "ArrowDown" && currentIndex < options.length - 1) {
+					selectEl.selectedIndex = currentIndex + 1;
+				} else if (e.key === "ArrowUp" && currentIndex > 0) {
+					selectEl.selectedIndex = currentIndex - 1;
+				}
+				
+				// 触发change事件，确保选择变更后的回调被执行
+				selectEl.dispatchEvent(new Event("change"));
+			}
+		});
+	}
+
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 		this.workspace = this.app.workspace;
@@ -802,6 +826,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			await this.renderMarkdown();
 		};
 
+		// 添加键盘导航
+		this.addKeyboardNavigation(templateSelect);
+
 		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
 			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
@@ -827,6 +854,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				op.text = s.name;
 				op.selected = s.className == this.settings.defaultStyle;
 			}
+
+			// 添加键盘导航
+			this.addKeyboardNavigation(selectBtn);
 
 			// 代码高亮设置
 			const highlightGroup = leftSection.createDiv({
@@ -856,6 +886,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				op.text = s.name;
 				op.selected = s.name == this.settings.defaultHighlight;
 			}
+
+			// 添加键盘导航
+			this.addKeyboardNavigation(highlightStyleBtn);
 		}
 
 		// 2. 创建右侧区域 - 操作按钮

@@ -38,7 +38,8 @@ export class LinkRenderer extends Extension {
     // 检查是否为微信链接
     isWechatLink(href: string): boolean {
         return href.indexOf('https://mp.weixin.qq.com/mp') === 0 ||
-               href.indexOf('https://mp.weixin.qq.com/s') === 0;
+               href.indexOf('https://mp.weixin.qq.com/s') === 0 ||
+               href.indexOf('https://mmbiz.qpic.cn') === 0;
     }
 
     // 检查链接是否应该转为脚注

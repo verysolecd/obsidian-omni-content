@@ -1,0 +1,294 @@
+/*
+ * Modded CSS based on mweb-olive-dunk.css
+ * Optimized for a black background and Tesla red highlight theme.
+ * This is NOT for direct use as a stylesheet.
+ * It serves as a reference for INLINE STYLES to be applied to HTML elements
+ * within the {{content}} area of the WeChat template.
+ */
+
+/* --- Base Container & Text --- */
+/* Corresponds to .note-to-mp */
+/* Apply these styles to the main content div or individual elements within {{content}} */
+.content-area-base { /* conceptual class */
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; /* Keep system fonts as fallback */
+    font-size: 16px; /* Base font size */
+    color: #d1d5db; /* Light gray text */
+    background-color: #000000; /* Pure black background */
+    line-height: 1.6em; /* Standard line height */
+    word-wrap: break-word; /* Ensure long words break */
+    word-break: break-word; /* Ensure long words break */
+}
+
+/* --- Margins for Block Elements --- */
+/* Corresponds to p, pre, dl, form, details, blockquote, table, etc. */
+/* Apply margin-top and margin-bottom to create vertical spacing */
+p, pre, dl, form, details, blockquote, table, xmp, plaintext, listing, figure {
+    margin: 0.75em 0 0.45em; /* Example margin: top/bottom 0.75em, left/right 0 */
+}
+/* Note: Adjust margins as needed for specific elements or context */
+
+/* --- Horizontal Rule (HR) --- */
+/* Corresponds to hr */
+hr {
+    height: 1px;
+    border: 0; /* Remove default border */
+    background-color: #a0a0a0; /* Medium gray line */
+    margin: 1.5em auto; /* Center the line with vertical margin */
+    width: 80%; /* Example width, can be adjusted */
+}
+
+/* --- Headings (H1-H6) --- */
+/* Corresponds to h1, h2, h3, h4, h5, h6 */
+/* Note: h1, h2 are used in the header. Use h3-h6 for content subheadings. */
+h3, h4, h5, h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold; /* Bold weight */
+    line-height: 1.4em; /* Line height for headings */
+    color: #E31937; /* Tesla red for headings */
+}
+h3 { font-size: 1.3em; } /* Adjusted from original for better hierarchy in content */
+h4 { font-size: 1.1em; }
+h5 { font-size: 1em; }
+h6 { font-size: 0.9em; color: #a0a0a0; } /* Smaller, muted color for lowest level */
+
+
+/* --- Blockquote --- */
+/* Corresponds to blockquote */
+blockquote {
+    display: block;
+    padding: 8px 16px; /* Top/bottom 8px, left/right 16px */
+    border-left: 4px solid #E31937; /* Left border in Tesla red */
+    color: #a0a0a0; /* Muted gray for quote text */
+    margin: 1.5em 0; /* Vertical margin */
+    background-color: rgba(227, 25, 55, 0.05); /* Subtle translucent red background */
+}
+/* Inner elements within blockquote might need margin: 0 */
+blockquote > p {
+    margin: 0 0 8px 0; /* Remove default paragraph margin within blockquote */
+    color: #a0a0a0; /* Ensure color inheritance */
+}
+blockquote > p:last-child {
+     margin-bottom: 0;
+}
+
+/* --- Lists (UL, OL, LI) --- */
+/* Corresponds to ul, ol, li */
+ul {
+    list-style: none; /* Remove default bullets */
+    padding: 0; /* Remove default padding */
+    margin: 1em 0; /* Vertical margin for the list */
+}
+li {
+    margin-bottom: 8px; /* Spacing between list items */
+    color: #d1d5db; /* Default list item color */
+    line-height: 1.6;
+    display: flex; /* Use flex for custom bullet alignment */
+    align-items: baseline; /* Align baseline of text */
+}
+li:last-child {
+    margin-bottom: 0; /* No bottom margin on the last item */
+}
+/* Custom bullet (use a span with inline styles) */
+.custom-bullet { /* conceptual class for the span */
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #E31937; /* Red bullet */
+    border-radius: 50%; /* Round shape */
+    margin-right: 8px; /* Space after bullet */
+    flex-shrink: 0; /* Prevent bullet from shrinking */
+    margin-top: 8px; /* Adjust vertically to align with text baseline */
+}
+/* Text wrapper for flex layout */
+.list-item-text { /* conceptual class for the span wrapping text */
+    flex-grow: 1; /* Allow text to take available space */
+}
+
+ol {
+    list-style: decimal; /* Default numbers */
+    color: #d1d5db; /* Default list item color */
+    padding-left: 20px; /* Add padding for numbers */
+    margin: 1em 0; /* Vertical margin for the list */
+}
+ol li {
+    margin-bottom: 8px; /* Spacing between list items */
+    color: #d1d5db; /* Default list item color */
+    line-height: 1.6;
+    /* Note: Custom numbering color is hard with inline styles */
+}
+
+/* --- Images (IMG) --- */
+/* Corresponds to img */
+img {
+    max-width: 100%; /* Ensure image fits container */
+    height: auto; /* Maintain aspect ratio */
+    border: 1px solid #a0a0a0; /* Optional: Subtle gray border */
+    border-radius: 4px; /* Optional: Rounded corners */
+    display: inline-block; /* Allows setting margin/padding correctly */
+}
+/* Image captions (figcaption or p below img) */
+figcaption, .image-caption { /* conceptual class for caption paragraph */
+    text-align: center;
+    font-size: 0.9em;
+    color: #a0a0a0; /* Muted gray for captions */
+    margin: 0.5em 0 1.5em 0; /* Space above/below caption */
+}
+
+
+/* --- Underline (U) --- */
+/* Corresponds to u */
+u {
+    text-decoration: none; /* Remove default underline */
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, #E31937 50%); /* Red underline */
+    background-repeat: repeat-x;
+    background-size: 2px 2px;
+    background-position: 0 1em; /* Position underline below text */
+}
+
+/* --- Links (A) --- */
+/* Corresponds to a */
+a {
+    color: #E31937; /* Tesla red for links */
+    text-decoration: none; /* Remove default underline */
+}
+a:hover, a:focus, a:active { /* Hover/focus/active states (less reliable in email/some editors) */
+    text-decoration: underline; /* Add underline on hover/focus/active */
+    color: #ffffff; /* White on hover */
+}
+
+/* --- Strikethrough (DEL, S) --- */
+/* Corresponds to del, s */
+del, s {
+    color: #a0a0a0; /* Muted gray for struck text */
+}
+
+/* --- Highlight (MARK) --- */
+/* Corresponds to mark */
+mark {
+    color: inherit; /* Inherit text color */
+    display: inline;
+    padding: 0.2em 0.5em; /* Padding around highlighted text */
+    background-color: rgba(255, 255, 255, 0.2); /* Translucent white background */
+    border-radius: 4px; /* Optional: Rounded corners */
+}
+
+/* --- Inline Code (CODE) --- */
+/* Corresponds to code (inline) */
+code {
+    display: inline; /* Ensure inline display */
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* Monospace font */
+    font-size: 0.95em; /* Slightly smaller font size */
+    color: #cccccc; /* Light gray for code text */
+    background-color: rgba(255, 255, 255, 0.08); /* Very subtle translucent white background */
+    padding: 0.2em 0.4em; /* Small padding */
+    border-radius: 4px; /* Rounded corners */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Very subtle border */
+}
+
+/* --- Code Blocks (PRE CODE) --- */
+/* Corresponds to pre, pre[class*=language-], .code-section, .code-section pre, .code-section code, .code-section ul, .code-section ul > li */
+.code-block-container { /* conceptual div wrapping pre */
+    display: flex; /* Use flex for line numbers + code if desired */
+    border: 1px solid #E31937; /* Tesla red border for the block */
+    background-color: #1a1a1a; /* Dark gray background */
+    margin: 1.5em 0; /* Vertical margin for the block */
+    border-radius: 4px; /* Rounded corners */
+    overflow-x: auto; /* Allow horizontal scrolling */
+    word-wrap: normal; word-break: normal; /* Prevent word breaking in code */
+}
+.code-block-pre { /* conceptual pre tag style */
+     padding: 0; /* Padding controlled by code/line numbers */
+     margin: 0; /* Remove default margin */
+     overflow-x: visible; /* Let flex container handle scroll */
+     flex-grow: 1; /* Let code area take available space */
+}
+.code-block-code { /* conceptual code tag style inside pre */
+     display: block; /* Make code a block */
+     padding: 1em; /* Inner padding */
+     font-size: 0.9em; /* Code font size */
+     line-height: 1.6em; /* Code line height */
+     color: #a0a0a0; /* Muted gray for code text */
+     font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* Monospace font */
+     background-color: inherit; /* Inherit dark background */
+}
+/* Optional: Line numbers (requires manually adding a ul) */
+.code-block-lines { /* conceptual ul for line numbers */
+     flex-shrink: 0; /* Prevent shrinking */
+     counter-reset: line; /* Reset line counter */
+     margin: 0; padding: 1em 0.8em 1em 1em; /* Padding for line number area */
+     list-style: none; /* Remove list style */
+     text-align: right; /* Align numbers to the right */
+     font-size: 0.9em; line-height: 1.6em; /* Match code font/line height */
+     color: #5a5a5a; /* Even more muted color for line numbers */
+     font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; /* Monospace font */
+     border-right: 1px solid rgba(255, 255, 255, 0.1); /* Separator line */
+}
+.code-block-lines > li { /* conceptual li for each line number */
+    margin: 0; padding: 0; /* Remove default list item styles */
+    list-style: none; /* Ensure no markers */
+    /* Add line numbers via content property - BUT THIS NEEDS CSS ::before, which is not safe for inline */
+    /* Alternative: manually add line numbers as spans, or accept no line numbers */
+}
+
+
+/* --- Tables (TABLE, TH, TD) --- */
+/* Corresponds to table, th, td, thead, tbody */
+table {
+    border-collapse: collapse; /* Collapse borders */
+    width: 100%; /* Full width */
+    margin: 1.5em 0; /* Vertical margin */
+    border: 1px solid #E31937; /* Tesla red outer border */
+    color: #d1d5db; /* Default table text color */
+    background-color: #1a1a1a; /* Dark background for table body */
+    font-size: 0.9em; /* Slightly smaller font */
+}
+th, td {
+    padding: 0.8em; /* Padding inside cells */
+    border: 1px solid #a0a0a0; /* Medium gray inner borders */
+    text-align: left; /* Default text alignment */
+    vertical-align: top; /* Align content to top */
+}
+thead {
+    background-color: rgba(227, 25, 55, 0.1); /* Translucent red background for header */
+    color: #ffffff; /* White text for header */
+}
+th {
+    font-weight: bold; /* Header text bold */
+}
+tbody {
+    /* background-color set on table */
+}
+/* Optional: zebra stripes for rows */
+/* tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.05); } */ /* Faint white for even rows (needs CSS, hard inline) */
+
+
+/* --- Footnotes --- */
+/* Corresponds to .footnotes */
+/* Footnote area often appears at the end */
+.footnotes { /* conceptual div */
+    margin-top: 3em; /* Space above footnotes */
+    border-top: 1px solid #a0a0a0; /* Separator line */
+    padding-top: 1em; /* Space below line */
+    font-size: 0.9em; /* Smaller text */
+    color: #a0a0a0; /* Muted gray */
+}
+.footnotes ol { /* conceptual ol inside footnotes */
+     list-style: decimal;
+     padding-left: 20px;
+     margin: 0;
+}
+.footnotes li { /* conceptual li inside footnotes */
+    margin-bottom: 4px;
+    color: #a0a0a0; /* Ensure color */
+    line-height: 1.5;
+    display: list-item; /* Revert to default list item display if flex was used globally */
+}
+/* Back references (optional, often [^1]: link) */
+.footnote-backref { /* conceptual a tag */
+    color: #E31937; /* Red link color */
+    text-decoration: none;
+    font-weight: bold;
+}

@@ -1,9 +1,15 @@
 [
     {
-        "name": "Maple", 
-        "className": "maple",
-        "desc": "改自https://github.com/xbmlz/hexo-theme-maple",
+        "name": "Bento",
+        "className": "bento",
+        "desc": "Bento",
         "author": "Mark Shawn"
+    },
+    {
+      "name": "Bento Dark",
+      "className": "bento-dark",
+      "desc": "Bento Dark",
+      "author": "Mark Shawn"
     },
     {
         "name": "MWeb Ayu",
