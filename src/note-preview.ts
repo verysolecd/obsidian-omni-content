@@ -706,29 +706,72 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const tempDiv = document.createElement('div');
 		tempDiv.innerHTML = content;
 
+		// 获取主题颜色 - 手工川红色
+		const themeColor = '#E31937';
+
 		// 处理无序列表
 		const ulElements = tempDiv.querySelectorAll('ul');
 		ulElements.forEach(ul => {
-			// 为 ul 添加明确的缩进和样式
-			ul.setAttribute('style', 'padding-left: 2em !important; margin-left: 0 !important; list-style-position: outside !important;');
+			// 为 ul 添加明确的缩进和样式，将list-style-type设为none以隐藏默认标记
+			ul.setAttribute('style', 'padding-left: 1em !important; margin-left: 0 !important; list-style-position: outside !important; list-style-type: none !important;');
+			ul.className = 'list-paddingleft-2'; // 添加微信兼容的列表类
 			
 			// 处理列表项
 			const liElements = ul.querySelectorAll('li');
-			liElements.forEach(li => {
-				// 确保列表项有正确的样式
-				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit;');
+			liElements.forEach((li, index) => {
+				// 确保列表项有正确的样式，list-style-type: none 确保不显示原生标记
+				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit; position: relative; list-style-type: none !important;');
+				
+				// 微信公众号不支持 ::marker 伪元素，需要使用特殊方法处理列表颜色
+				// 插入一个带颜色的伪装标记，然后隐藏原始标记
+				// 检查是否已经有自定义标记
+				const existingMarker = li.querySelector('.custom-marker');
+				if (!existingMarker) {
+					// 创建一个 span 作为自定义标记
+					const marker = document.createElement('span');
+					marker.className = 'custom-marker';
+					marker.style.cssText = `color: ${themeColor}; margin-right: 0.5em; position: absolute; left: -1.2em;`;
+					marker.textContent = '•'; // 无序列表使用圆点
+					
+					// 确保将标记放在li的最前面
+					if (li.firstChild) {
+						li.insertBefore(marker, li.firstChild);
+					} else {
+						li.appendChild(marker);
+					}
+				}
 			});
 		});
 
 		// 处理有序列表
 		const olElements = tempDiv.querySelectorAll('ol');
 		olElements.forEach(ol => {
-			ol.setAttribute('style', 'padding-left: 2em !important; margin-left: 0 !important; list-style-position: outside !important;');
+			// 添加样式并隐藏原生标记
+			ol.setAttribute('style', 'padding-left: 2em !important; margin-left: 0 !important; list-style-position: outside !important; counter-reset: item; list-style-type: none !important;');
+			ol.className = 'list-paddingleft-2'; // 添加微信兼容的列表类
 			
 			// 处理列表项
 			const liElements = ol.querySelectorAll('li');
-			liElements.forEach(li => {
-				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit;');
+			liElements.forEach((li, index) => {
+				// 确保列表项有正确的样式并隐藏原生标记
+				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit; position: relative; list-style-type: none !important;');
+				
+				// 为有序列表自定义编号
+				const existingMarker = li.querySelector('.custom-marker');
+				if (!existingMarker) {
+					// 创建一个 span 作为自定义标记
+					const marker = document.createElement('span');
+					marker.className = 'custom-marker';
+					marker.style.cssText = `color: ${themeColor}; margin-right: 0.5em; position: absolute; left: -1.5em;`;
+					marker.textContent = `${index + 1}.`; // 有序列表使用数字
+					
+					// 确保将标记放在li的最前面
+					if (li.firstChild) {
+						li.insertBefore(marker, li.firstChild);
+					} else {
+						li.appendChild(marker);
+					}
+				}
 			});
 		});
 
