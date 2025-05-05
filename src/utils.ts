@@ -126,7 +126,9 @@ function applyStyle(root: HTMLElement, cssRoot: postcss.Root) {
 export function applyCSS(root: HTMLElement, css: string) {
 	// const doc = sanitizeHTMLToDom(html);
 	// const root = doc.firstChild as HTMLElement;
-	logger.info("applyCSS", css);
+	logger.info("applyCSS",
+		//  css
+		);
 
 	// 这种方式会导致样式应用问题，我们采用另一种策略
 	// const cssRoot = postcss.parse(css);

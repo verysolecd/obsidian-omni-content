@@ -294,10 +294,12 @@ export class WeChatAdapter implements ContentAdapter {
 			// 创建一个新容器来接收转换后的列表
 			const container = document.createElement('div');
 			
+			const themeAccentColor = this.getThemeColor();
+
 			// 处理每个顶级列表
 			for (const list of topLevelLists) {
 				// 转换原列表为微信兼容格式
-				const newList = this.transformList(list as HTMLUListElement);
+				const newList = this.transformList(list as HTMLUListElement, 0, themeAccentColor);
 				
 				// 找到原列表的位置
 				const parent = list.parentElement;
@@ -321,12 +323,60 @@ export class WeChatAdapter implements ContentAdapter {
 			return html;
 		}
 	}
+
+	protected getThemeColor() {
+				// 获取设置
+				const settings = NMPSettings.getInstance();
+		
+		// 动态获取当前主题颜色
+		let themeAccentColor: string;
+		
+		// 如果启用了自定义主题色，使用用户设置的颜色
+		if (settings.enableThemeColor) {
+			themeAccentColor = settings.themeColor || '#7852ee';
+			logger.debug("使用自定义主题色：", themeAccentColor);
+		} else {
+			// 从当前激活的DOM中获取实际使用的主题颜色
+			// 尝试获取主题的primary-red变量
+			try {
+				// 尝试从文档中获取计算后的CSS变量值
+				const testElement = document.createElement('div');
+				testElement.style.display = 'none';
+				testElement.className = 'note-to-mp';
+				document.body.appendChild(testElement);
+				
+				// 获取计算后的样式
+				const computedStyle = window.getComputedStyle(testElement);
+				const primaryColor = computedStyle.getPropertyValue('--primary-color').trim() 
+					// || computedStyle.getPropertyValue('--primary-red').trim();
+				
+				logger.debug("获取到的主题色：", primaryColor);
+				if (primaryColor) {
+					themeAccentColor = primaryColor;
+				} else {
+					// 如果无法获取，默认使用手工川主题的红色
+					themeAccentColor = '#E31937';
+				}
+				
+				// 清理测试元素
+				document.body.removeChild(testElement);
+			} catch (e) {
+				// 如果出错，回退到默认值
+				themeAccentColor = '#E31937';
+				logger.error('无法获取主题色变量，使用默认值', e);
+			}
+			
+			logger.debug("使用主题中的颜色：", themeAccentColor);
+		}
+
+		return themeAccentColor;
+	}
 	
 	/**
 	 * 转换列表为微信兼容格式
 	 * @param list 要转换的列表元素
 	 */
-	private transformList(list: HTMLUListElement | HTMLOListElement, level = 0): HTMLUListElement {
+	private transformList(list: HTMLUListElement | HTMLOListElement, level = 0, themeAccentColor=""): HTMLUListElement {
 		const isOrdered = list.tagName.toLowerCase() === 'ol';
 		
 		// 创建新的微信格式列表
@@ -338,26 +388,16 @@ export class WeChatAdapter implements ContentAdapter {
 		// 获取设置
 		const settings = NMPSettings.getInstance();
 		
-		// 判断是否应用主题色
-		// 1. 如果用户启用自定义主题色，使用设置中的主题色
-		// 2. 如果不启用，则不覆盖主题CSS中的值（当前默认为红色#E31937）
-		let themeAccentColor = '#E31937'; // 默认使用主题中的颜色（手工川主题默认为红色）
-		
-		// 如果启用了自定义主题色，使用用户设置的颜色
-		if (settings.enableThemeColor) {
-			themeAccentColor = settings.themeColor || '#7852ee';
-			logger.debug("使用自定义主题色：", themeAccentColor);
-		}
-		
+
 		// 针对不同级别设置不同的样式
 		let listStyleType;
 		if (isOrdered) {
 			listStyleType = 'decimal'; // 数字导航符号
 		} else {
 			switch (level) {
-				case 0: listStyleType = 'circle'; break; // 外层列表用空心圆
+				case 0: listStyleType = 'square'; break; // 外层列表用空心圆
 				case 1: listStyleType = 'disc'; break; // 中间层用实心圆
-				default: listStyleType = 'square'; break; // 最内层用方块
+				default: listStyleType = 'circle'; break; // 最内层用方块
 			}
 		}
 		
@@ -394,11 +434,9 @@ export class WeChatAdapter implements ContentAdapter {
 			}
 			
 			// 为列表项符号设置颜色
-			// 如果用户启用自定义主题色，或者缺失CSS变量，才直接设置颜色
-			if (settings.enableThemeColor) {
-				newItem.style.color = themeAccentColor; // 这会影响列表符号的颜色
-				logger.debug("应用主题色到列表符号：", themeAccentColor);
-			}
+			// 无论是否启用了自定义主题色，都需要设置颜色
+			// 否则微信公众号中的列表标记将始终为默认黑色
+			newItem.style.color = themeAccentColor; // 这会影响列表符号的颜色
 			
 			// 创建微信格式的内容容器
 			const section = document.createElement('section');
@@ -415,7 +453,7 @@ export class WeChatAdapter implements ContentAdapter {
 		// 处理嵌套列表
 		for (const {parentItem, list: childList} of nestedLists) {
 			// 递归转换子列表
-			const newChildList = this.transformList(childList, level + 1);
+			const newChildList = this.transformList(childList, level + 1, themeAccentColor);
 			
 			// 在父列表项后添加嵌套列表直接作为父列表的子元素
 			// 注意：微信编辑器要求嵌套列表不要放在父列表项内部

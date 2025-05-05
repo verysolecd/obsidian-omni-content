@@ -12,6 +12,7 @@ export interface ContentAdapter {
 	 * @returns 适配后的HTML内容
 	 */
 	adaptContent(html: string, settings: NMPSettings): string;
+
 }
 
 /**
