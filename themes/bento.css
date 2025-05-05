@@ -8,6 +8,8 @@
 /* 亮色模式变量 */
 :root {
     --primary-red: #E31937;
+    /* 主题色变量 - 如果未定义则使用 primary-red */
+    --primary-color: var(--primary-red);
     --text-primary: #333333;
     --text-secondary: #666666;
     --text-tertiary: #999999;
@@ -16,15 +18,16 @@
     --border-color: #e5e7eb;
     --code-bg: #f3f4f6;
     --mark-bg: rgba(227, 25, 55, 0.1);
-    --blockquote-border: #E31937;
-    --link-color: #E31937;
-    --strong-color: #E31937;
+    --blockquote-border: var(--primary-color, #E31937);
+    --link-color: var(--primary-color, #E31937);
+    --strong-color: var(--primary-color, #E31937);
   }
   
   /* 深色模式变量 */
   @media (prefers-color-scheme: dark) {
     :root {
       --primary-red: #E31937;
+      /* 主题色变量不变 */
       --text-primary: #ffffff;
       --text-secondary: #d1d5db;
       --text-tertiary: #a0a0a0;
@@ -33,8 +36,8 @@
       --border-color: #404040;
       --code-bg: rgba(255, 255, 255, 0.05);
       --mark-bg: rgba(227, 25, 55, 0.2);
-      --blockquote-border: #E31937;
-      --link-color: #E31937;
+      --blockquote-border: var(--primary-color, #E31937);
+      --link-color: var(--primary-color, #E31937);
       --strong-color: #ffffff;
     }
   }
@@ -164,7 +167,7 @@
   }
   
   .note-to-mp li::marker {
-    color: var(--primary-red);
+    color: var(--primary-color, var(--primary-red));
     transition: color 0.3s ease;
   }
   

@@ -248,6 +248,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 	getCSS() {
 		try {
+			// 获取主题和高亮样式
 			const theme = this.assetsManager.getTheme(this.currentTheme);
 			const highlight = this.assetsManager.getHighlight(
 				this.currentHighlight
@@ -255,9 +256,32 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			const customCSS = this.settings.useCustomCss
 				? this.assetsManager.customCSS
 				: "";
-			return `${InlineCSS}\n\n${highlight!.css}\n\n${
-				theme!.css
-			}\n\n${customCSS}`;
+			
+			// 根据用户选择决定是否注入主题色变量
+			let themeColorCSS = '';
+			
+			// 当用户启用自定义主题色时，注入变量
+			if (this.settings.enableThemeColor) {
+				themeColorCSS = `
+:root {
+  --primary-color: ${this.settings.themeColor || '#7852ee'};
+}
+`;
+			}
+			
+			// 确保highlight和theme存在，否则使用默认值
+const highlightCss = highlight?.css || '';
+const themeCss = theme?.css || '';
+
+return `${themeColorCSS}
+
+${InlineCSS}
+
+${highlightCss}
+
+${themeCss}
+
+${customCSS}`;
 		} catch (error) {
 			console.error(error);
 			new Notice(
@@ -452,21 +476,63 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			// 添加键盘导航
 			this.addKeyboardNavigation(highlightStyleBtn);
 
-			// 主题色选择器组
+			// 主题色组
 			const colorGroup = leftSection.createDiv({cls: "toolbar-group"});
 			
 			const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
 			colorLabel.innerHTML =
 				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
 
-			const colorWrapper = colorGroup.createDiv({cls: "color-picker-wrapper"});
+			// 选择器容器
+			const colorControlWrapper = colorGroup.createDiv({cls: "color-control-wrapper"});
+			
+			// 添加开关选项
+			const enableSwitch = colorControlWrapper.createDiv({cls: "enable-switch"});
+			
+			// 创建开关按钮
+			const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
+			const toggleInput = toggleSwitch.createEl("input", {
+				attr: {
+					type: "checkbox", 
+					checked: this.settings.enableThemeColor
+				}
+			});
+			toggleSwitch.createEl("span", {cls: "slider round"});
+			
+			// 开关文本
+			const toggleText = enableSwitch.createEl("span", {
+				cls: "toggle-text",
+				text: this.settings.enableThemeColor ? "启用自定义色" : "使用主题色"
+			});
+			
+			// 开关事件
+			toggleInput.onchange = async () => {
+				this.settings.enableThemeColor = toggleInput.checked;
+				toggleText.textContent = this.settings.enableThemeColor ? "启用自定义色" : "使用主题色";
+				
+				// 更新颜色选择器的禁用状态
+				colorPicker.disabled = !this.settings.enableThemeColor;
+				colorWrapper.style.opacity = this.settings.enableThemeColor ? "1" : "0.5";
+				
+				this.saveSettingsToPlugin();
+				await this.renderMarkdown();
+			};
+			
+			// 颜色选择器容器
+			const colorWrapper = colorControlWrapper.createDiv({
+				cls: "color-picker-wrapper",
+				attr: {
+					style: this.settings.enableThemeColor ? "" : "opacity: 0.5;"
+				}
+			});
 			
 			// 创建颜色选择器
 			const colorPicker = colorWrapper.createEl("input", {
 				cls: "toolbar-color-picker",
 				attr: {
 					type: "color",
-					value: this.settings.themeColor || "#7852ee"
+					value: this.settings.themeColor || "#7852ee",
+					disabled: !this.settings.enableThemeColor
 				}
 			});
 			

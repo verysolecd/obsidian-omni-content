@@ -335,9 +335,19 @@ export class WeChatAdapter implements ContentAdapter {
 		// 设置微信所需的列表样式
 		newList.className = 'list-paddingleft-1';
 		
-		// 使用用户设置的主题色
+		// 获取设置
 		const settings = NMPSettings.getInstance();
-		const themeAccentColor = settings.themeColor || '#7852ee'; // 使用用户的自定义颜色，默认为紫色
+		
+		// 判断是否应用主题色
+		// 1. 如果用户启用自定义主题色，使用设置中的主题色
+		// 2. 如果不启用，则不覆盖主题CSS中的值（当前默认为红色#E31937）
+		let themeAccentColor = '#E31937'; // 默认使用主题中的颜色（手工川主题默认为红色）
+		
+		// 如果启用了自定义主题色，使用用户设置的颜色
+		if (settings.enableThemeColor) {
+			themeAccentColor = settings.themeColor || '#7852ee';
+			logger.debug("使用自定义主题色：", themeAccentColor);
+		}
 		
 		// 针对不同级别设置不同的样式
 		let listStyleType;
@@ -357,7 +367,7 @@ export class WeChatAdapter implements ContentAdapter {
 		newList.style.margin = '0.5em 0';
 		
 		// 添加自定义属性，用于在处理列表项时应用颜色
-		newList.setAttribute('data-theme-color', themeAccentColor);
+		// newList.setAttribute('data-theme-color', themeAccentColor);
 		
 		// 存储嵌套列表，稍后处理
 		interface NestedListInfo {
@@ -384,8 +394,11 @@ export class WeChatAdapter implements ContentAdapter {
 			}
 			
 			// 为列表项符号设置颜色
-			const bulletColor = newList.getAttribute('data-theme-color') || '#7852ee';
-			newItem.style.color = bulletColor; // 这会影响列表符号的颜色
+			// 如果用户启用自定义主题色，或者缺失CSS变量，才直接设置颜色
+			if (settings.enableThemeColor) {
+				newItem.style.color = themeAccentColor; // 这会影响列表符号的颜色
+				logger.debug("应用主题色到列表符号：", themeAccentColor);
+			}
 			
 			// 创建微信格式的内容容器
 			const section = document.createElement('section');
@@ -416,56 +429,7 @@ export class WeChatAdapter implements ContentAdapter {
 		
 		return newList;
 	}
-	
-	/**
-	 * 将列表项的内容包裹在 section 标签内，这是微信编辑器的特殊需求
-	 * @param listItem 要处理的列表项元素
-	 */
-	private wrapListItemContentInSection(listItem: Element): void {
-		// 已经有 section 就不需要再包裹
-		if (listItem.querySelector(':scope > section')) {
-			return;
-		}
-		
-		// 创建 section 元素
-		const section = document.createElement('section');
-		
-		// 将除了嵌套列表外的内容移动到 section 内
-		while (listItem.firstChild) {
-			const child = listItem.firstChild;
-			
-			// 如果是嵌套列表，我们不移动它，留到后面处理
-			if (child.nodeName === 'UL' || child.nodeName === 'OL') {
-				break;
-			}
-			
-			// 将非列表内容移动到 section
-			section.appendChild(child);
-		}
-		
-		// 确保内容非空
-		if (!section.hasChildNodes()) {
-			// 如果没有内容（可能只有嵌套列表），添加一个空白字符
-			const span = document.createElement('span');
-			span.setAttribute('leaf', '');
-			span.textContent = '\u00a0'; // 不断行空格
-			section.appendChild(span);
-		} else {
-			// 确保所有文本节点都包裹在 span 元素内
-			Array.from(section.childNodes).forEach(child => {
-				if (child.nodeType === Node.TEXT_NODE) {
-					const span = document.createElement('span');
-					span.setAttribute('leaf', '');
-					span.textContent = child.textContent || '';
-					child.replaceWith(span);
-				}
-			});
-		}
-		
-		// 将包裹好的 section 添加到列表项的开头
-		listItem.prepend(section);
-	}
-	
+
 	/**
 	 * 处理样式，确保符合微信公众号的样式限制
 	 */

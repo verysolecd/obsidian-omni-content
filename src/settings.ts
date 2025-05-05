@@ -30,6 +30,8 @@ export class NMPSettings {
 	defaultTemplate: string;
 	// 主题色设置
 	themeColor: string;
+	// 是否启用自定义主题色（如果不启用，则使用CSS文件中定义的颜色）
+	enableThemeColor: boolean;
 	// 分发服务相关设置
 	distributionConfig: any;
 	expireat: Date | null = null;
@@ -59,6 +61,7 @@ export class NMPSettings {
 		this.useTemplate = false; // 默认不使用模板
 		this.defaultTemplate = 'default'; // 默认模板名称
 		this.themeColor = '#7852ee'; // 默认主题色为紫色
+		this.enableThemeColor = false; // 默认不启用自定义主题色，使用CSS中的颜色
 		this.distributionConfig = null; // 分发服务配置
 	}
 
@@ -87,6 +90,7 @@ export class NMPSettings {
 			useTemplate,
 			defaultTemplate,
 			themeColor,
+			enableThemeColor,
 			distributionConfig,
 		} = data;
 
@@ -133,6 +137,9 @@ export class NMPSettings {
 		if (themeColor) {
 			settings.themeColor = themeColor;
 		}
+		if (enableThemeColor !== undefined) {
+			settings.enableThemeColor = enableThemeColor;
+		}
 		if (distributionConfig) {
 			settings.distributionConfig = distributionConfig;
 		}
@@ -156,6 +163,7 @@ export class NMPSettings {
 			'useTemplate': settings.useTemplate,
 			'defaultTemplate': settings.defaultTemplate,
 			'themeColor': settings.themeColor,
+			'enableThemeColor': settings.enableThemeColor,
 			'distributionConfig': settings.distributionConfig,
 		}
 	}
