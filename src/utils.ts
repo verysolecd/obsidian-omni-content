@@ -148,6 +148,7 @@ function applyStyle(root: HTMLElement, cssRoot: postcss.Root) {
 export function applyCSS(root: HTMLElement, css: string) {
 	// const doc = sanitizeHTMLToDom(html);
 	// const root = doc.firstChild as HTMLElement;
+	logger.info("applyCSS", css);
 	const cssRoot = postcss.parse(css);
 	applyStyle(root, cssRoot);
 	return root.outerHTML;
