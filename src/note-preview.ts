@@ -699,7 +699,41 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		await this.renderMarkdown();
 		
 		// Get the WeChat-formatted content
-		const content = this.getArticleContent();
+		let content = this.getArticleContent();
+
+		// 处理列表样式，确保在微信公众号中正确显示
+		// 创建临时 DOM 元素来处理 HTML
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = content;
+
+		// 处理无序列表
+		const ulElements = tempDiv.querySelectorAll('ul');
+		ulElements.forEach(ul => {
+			// 为 ul 添加明确的缩进和样式
+			ul.setAttribute('style', 'padding-left: 2em !important; margin-left: 0 !important; list-style-position: outside !important;');
+			
+			// 处理列表项
+			const liElements = ul.querySelectorAll('li');
+			liElements.forEach(li => {
+				// 确保列表项有正确的样式
+				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit;');
+			});
+		});
+
+		// 处理有序列表
+		const olElements = tempDiv.querySelectorAll('ol');
+		olElements.forEach(ol => {
+			ol.setAttribute('style', 'padding-left: 2em !important; margin-left: 0 !important; list-style-position: outside !important;');
+			
+			// 处理列表项
+			const liElements = ol.querySelectorAll('li');
+			liElements.forEach(li => {
+				li.setAttribute('style', 'margin-bottom: 0.5em; color: inherit;');
+			});
+		});
+
+		// 获取处理后的 HTML
+		content = tempDiv.innerHTML;
 
 		// Copy to clipboard
 		await navigator.clipboard.write([
