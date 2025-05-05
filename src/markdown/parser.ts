@@ -198,8 +198,9 @@ export class MarkedParser {
 
 			list.setAttribute('style', 
 				`list-style-type: ${listStyleType}; box-sizing: border-box; ` +
-				`-webkit-font-smoothing: antialiased; text-rendering: optimizelegibility; ` +
-				`margin-left: ${marginLeft} !important; padding: 0px !important;`);
+				`-webkit-font-smoothing: antialiased; text-rendering: optimizelegibility; `
+				//  +`margin-left: ${marginLeft} !important; padding: 0px !important;`
+			);
 			
 			// 处理列表中的每个项目
 			this.processListItems(list as HTMLElement, level);
@@ -266,8 +267,8 @@ export class MarkedParser {
 				box-sizing: border-box;
 				-webkit-font-smoothing: antialiased;
 				text-rendering: optimizelegibility;
-				margin-left: 0px !important;
-				padding: 0px !important;
+				// margin-left: 0px !important;
+				// padding: 0px !important;
 			`);
 			nestedList.classList.add('list-paddingleft-1');
 			nestedList.classList.add('wechat-list');

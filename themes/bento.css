@@ -155,7 +155,12 @@
   
   /* 列表样式 */
   .note-to-mp ul {
-    padding-left: 1.0em;
+    padding-left: 1.0em !important;
+  }
+
+  .note-to-mp ol {
+    padding-left: 1.0em !important;
+    list-style-type: decimal;
   }
   
   .note-to-mp li::marker {
@@ -163,13 +168,9 @@
     transition: color 0.3s ease;
   }
   
-  .note-to-mp li > p {
+  .note-to-mp li {
     margin: 0;
-  }
-  
-  .note-to-mp ol {
-    padding-left: 1.0em;
-    list-style-type: decimal;
+    /* margin-left: 1em !important; */
   }
   
   /* 链接样式 */
