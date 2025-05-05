@@ -1,9 +1,7 @@
-
-
 import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, Workspace, WorkspaceLeaf,} from "obsidian";
 import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
-import {ContentAdapterFactory, initializeContentAdapters} from "./adapters";
 import {DistributionModal} from "src/modules/distribution-modal";
+import {ContentAdapterFactory, initializeContentAdapters} from "./adapters";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
 import {CardDataManager} from "./markdown/code";
@@ -45,16 +43,16 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		selectEl.addEventListener("keydown", (e: KeyboardEvent) => {
 			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 				e.preventDefault();
-				
+
 				const options = selectEl.options;
 				const currentIndex = selectEl.selectedIndex;
-				
+
 				if (e.key === "ArrowDown" && currentIndex < options.length - 1) {
 					selectEl.selectedIndex = currentIndex + 1;
 				} else if (e.key === "ArrowUp" && currentIndex > 0) {
 					selectEl.selectedIndex = currentIndex - 1;
 				}
-				
+
 				// 触发change事件，确保选择变更后的回调被执行
 				selectEl.dispatchEvent(new Event("change"));
 			}
@@ -91,7 +89,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 		// 初始化内容适配器
 		initializeContentAdapters();
-		
+
 		this.renderMarkdown();
 		uevent("open");
 	}
@@ -240,14 +238,14 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 获取基础HTML内容
 		const html = applyCSS(this.articleDiv, this.getCSS());
 		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
-		
+
 		// 使用适配器处理内容
 		const adapter = ContentAdapterFactory.getAdapter(platform);
 		const processedHtml = adapter.adaptContent(html, this.settings);
-		
+
 		return processedHtml;
 	}
-	
+
 	/**
 	 * 获取包含完整CSS的文章内容
 	 * 直接将CSS作为style标签插入，确保CSS变量不会丢失
@@ -256,13 +254,13 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 获取原始HTML内容
 		const articleSection = this.getArticleSection();
 		const htmlContent = articleSection ? articleSection.outerHTML : this.articleDiv.innerHTML;
-		
+
 		// 将CSS作为style标签插入HTML
 		const styleTag = `<style>${css}</style>`;
 		const fullContent = styleTag + htmlContent;
-		
+
 		logger.info(`Full article content with CSS (${css.length} bytes of CSS)`);
-		
+
 		// 处理卡片恢复等
 		return CardDataManager.getInstance().restoreCard(fullContent);
 	}
@@ -289,14 +287,15 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	buildMsgView(parent: HTMLDivElement) {
-		this.msgView = parent.createDiv({ cls: "msg-view" });
-		const title = this.msgView.createDiv({ cls: "msg-title" });
+		this.msgView = parent.createDiv({cls: "msg-view"});
+		const title = this.msgView.createDiv({cls: "msg-title"});
 		title.id = "msg-title";
 		title.innerText = "加载中...";
 		const okBtn = this.msgView.createEl(
 			"button",
-			{ cls: "msg-ok-btn" },
-			async (button) => {}
+			{cls: "msg-ok-btn"},
+			async (button) => {
+			}
 		);
 		okBtn.id = "msg-ok-btn";
 		okBtn.innerText = "确定";
@@ -323,14 +322,14 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 	buildToolbar(parent: HTMLDivElement) {
 		// 创建专业化的工具栏
-		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
+		this.toolbar = parent.createDiv({cls: "preview-toolbar"});
 		this.toolbar.addClasses(["modern-toolbar"]);
 
 		// 添加工具栏顶部品牌区域
-		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
+		const brandSection = this.toolbar.createDiv({cls: "brand-section"});
 
 		// 品牌Logo和名称
-		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
+		const brandLogo = brandSection.createDiv({cls: "brand-logo"});
 		brandLogo.innerHTML = `
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -339,7 +338,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			</svg>
 		`;
 
-		const brandName = brandSection.createDiv({ cls: "brand-name" });
+		const brandName = brandSection.createDiv({cls: "brand-name"});
 		brandName.innerHTML = "手工川智能创作平台";
 
 		// 创建主工具栏容器
@@ -358,8 +357,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		});
 
 		// 1.1 模板设置组
-		const templateGroup = leftSection.createDiv({ cls: "toolbar-group" });
-		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
+		const templateGroup = leftSection.createDiv({cls: "toolbar-group"});
+		const templateLabel = templateGroup.createDiv({cls: "toolbar-label"});
 		templateLabel.innerHTML =
 			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
 
@@ -394,22 +393,22 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				this.settings.useTemplate = true;
 				this.settings.defaultTemplate = templateSelect.value;
 			}
-			
+
 			// 保存设置
 			this.saveSettingsToPlugin();
-			
+
 			// 重新渲染以应用模板
 			await this.renderMarkdown();
 		};
-		
+
 		// 添加键盘导航
 		this.addKeyboardNavigation(templateSelect);
-		
+
 		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
-			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
+			const styleGroup = leftSection.createDiv({cls: "toolbar-group"});
 
-			const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
+			const styleLabel = styleGroup.createDiv({cls: "toolbar-label"});
 			styleLabel.innerHTML =
 				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
 
@@ -479,7 +478,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		});
 
 		// 操作按钮组
-		const actionGroup = rightSection.createDiv({ cls: "toolbar-group" });
+		const actionGroup = rightSection.createDiv({cls: "toolbar-group"});
 
 		// 刷新按钮
 		const refreshBtn = actionGroup.createEl("button", {
@@ -529,7 +528,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.container = this.containerEl.children[1];
 		this.container.empty();
 
-		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
+		this.mainDiv = this.container.createDiv({cls: "note-preview"});
 		// this.mainDiv.setAttribute(
 		// 	"style",
 		// 	"padding: 50px;"
@@ -537,7 +536,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 		this.buildToolbar(this.mainDiv);
 
-		this.renderDiv = this.mainDiv.createDiv({ cls: "render-div" });
+		this.renderDiv = this.mainDiv.createDiv({cls: "render-div"});
 		this.renderDiv.id = "render-div";
 		this.renderDiv.setAttribute(
 			"style",
@@ -691,10 +690,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 复制到剪贴板
 		await navigator.clipboard.write([
 			new ClipboardItem({
-				"text/html": new Blob([content], { type: "text/html" }),
+				"text/html": new Blob([content], {type: "text/html"}),
 			}),
 		]);
-		
+
 		new Notice("已复制到剪贴板！");
 	}
 

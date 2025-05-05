@@ -1,18 +1,17 @@
-
-
-import { Plugin, WorkspaceLeaf, App, PluginManifest } from "obsidian";
+import {App, Plugin, PluginManifest, WorkspaceLeaf} from "obsidian";
 import {VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
-import { NotePreview } from "./note-preview";
-import { NMPSettings } from "./settings";
-import { OmniContentSettingTab } from "./setting-tab";
 import AssetsManager from "./assets";
+import {DistributionService} from "./distribution";
+import {NotePreview} from "./note-preview";
+import {OmniContentSettingTab} from "./setting-tab";
+import {NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
-import { setVersion, uevent, logger } from "./utils";
-import { DistributionService } from "./distribution";
+import {logger, setVersion, uevent} from "./utils";
 
 export default class OmniContentPlugin extends Plugin {
 	settings: NMPSettings;
 	assetsManager: AssetsManager;
+
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
 		AssetsManager.setup(app, manifest);
@@ -66,7 +65,8 @@ export default class OmniContentPlugin extends Plugin {
 		this.addSettingTab(new OmniContentSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	onunload() {
+	}
 
 	async loadSettings() {
 		NMPSettings.loadSettings(await this.loadData());
@@ -78,7 +78,7 @@ export default class OmniContentPlugin extends Plugin {
 			this.settings = NMPSettings.getInstance();
 			console.warn("Settings was undefined in saveSettings, initialized it");
 		}
-		
+
 		// 保存分发服务配置
 		try {
 			const distributionService = DistributionService.getInstance();
@@ -98,7 +98,7 @@ export default class OmniContentPlugin extends Plugin {
 	}
 
 	async activateView() {
-		const { workspace } = this.app;
+		const {workspace} = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;
 		const leaves = workspace.getLeavesOfType(VIEW_TYPE_NOTE_PREVIEW);

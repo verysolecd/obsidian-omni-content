@@ -1,171 +1,169 @@
-
-
-import { wxKeyInfo } from './weixin-api';
+import {wxKeyInfo} from './weixin-api';
 
 export enum LinkFootnoteMode {
-    None = 'none',
-    All = 'all',
-    NonWx = 'non-wx'
+	None = 'none',
+	All = 'all',
+	NonWx = 'non-wx'
 }
 
 export enum LinkDescriptionMode {
-    Empty = 'empty',
-    Raw = 'raw'
+	Empty = 'empty',
+	Raw = 'raw'
 }
 
 export class NMPSettings {
-    defaultStyle: string;
-    defaultHighlight: string;
-    showStyleUI: boolean;
-    // 控制哪些链接转为脚注：none-都不转，all-都转，non-wx-非微信文章转
-    linkFootnoteMode: LinkFootnoteMode;
-    // 控制脚注中链接的展示形式：empty-为空，description-为链接的描述
-    linkDescriptionMode: LinkDescriptionMode;
-    embedStyle: string;
-    lineNumber: boolean;
-    authKey: string;
-    useCustomCss: boolean;
-    wxInfo: {name:string, appid:string, secret:string}[];
-    math: string;
-    // 模板相关设置
-    useTemplate: boolean;
-    defaultTemplate: string;
-    // 分发服务相关设置
-    distributionConfig: any;
-    expireat: Date | null = null;
+	defaultStyle: string;
+	defaultHighlight: string;
+	showStyleUI: boolean;
+	// 控制哪些链接转为脚注：none-都不转，all-都转，non-wx-非微信文章转
+	linkFootnoteMode: LinkFootnoteMode;
+	// 控制脚注中链接的展示形式：empty-为空，description-为链接的描述
+	linkDescriptionMode: LinkDescriptionMode;
+	embedStyle: string;
+	lineNumber: boolean;
+	authKey: string;
+	useCustomCss: boolean;
+	wxInfo: { name: string, appid: string, secret: string }[];
+	math: string;
+	// 模板相关设置
+	useTemplate: boolean;
+	defaultTemplate: string;
+	// 分发服务相关设置
+	distributionConfig: any;
+	expireat: Date | null = null;
 
-    private static instance: NMPSettings;
+	private static instance: NMPSettings;
 
-    // 静态方法，用于获取实例
-    public static getInstance(): NMPSettings {
-        if (!NMPSettings.instance) {
-            NMPSettings.instance = new NMPSettings();
-        }
-        return NMPSettings.instance;
-    }
+	// 静态方法，用于获取实例
+	public static getInstance(): NMPSettings {
+		if (!NMPSettings.instance) {
+			NMPSettings.instance = new NMPSettings();
+		}
+		return NMPSettings.instance;
+	}
 
-    private constructor() {
-        this.defaultStyle = 'obsidian-light';
-        this.defaultHighlight = '默认';
-        this.showStyleUI = true;
-        this.linkFootnoteMode = LinkFootnoteMode.NonWx; // 默认只转换非微信文章链接
-        this.linkDescriptionMode = LinkDescriptionMode.Empty; // 默认脚注中不显示描述
-        this.embedStyle = 'quote';
-        this.lineNumber = true;
-        this.useCustomCss = false;
-        this.authKey = '';
-        this.wxInfo = [];
-        this.math = 'latex';
-        this.useTemplate = false; // 默认不使用模板
-        this.defaultTemplate = 'default'; // 默认模板名称
-        this.distributionConfig = null; // 分发服务配置
-    }
+	private constructor() {
+		this.defaultStyle = 'obsidian-light';
+		this.defaultHighlight = '默认';
+		this.showStyleUI = true;
+		this.linkFootnoteMode = LinkFootnoteMode.NonWx; // 默认只转换非微信文章链接
+		this.linkDescriptionMode = LinkDescriptionMode.Empty; // 默认脚注中不显示描述
+		this.embedStyle = 'quote';
+		this.lineNumber = true;
+		this.useCustomCss = false;
+		this.authKey = '';
+		this.wxInfo = [];
+		this.math = 'latex';
+		this.useTemplate = false; // 默认不使用模板
+		this.defaultTemplate = 'default'; // 默认模板名称
+		this.distributionConfig = null; // 分发服务配置
+	}
 
-    resetStyelAndHighlight() {
-        this.defaultStyle = 'obsidian-light';
-        this.defaultHighlight = '默认';
-    }
+	resetStyelAndHighlight() {
+		this.defaultStyle = 'obsidian-light';
+		this.defaultHighlight = '默认';
+	}
 
-    public static loadSettings(data: any) {
-        if (!data) {
-            return
-        }
-        const {
-            defaultStyle,
-            linkStyle,
-            linkFootnoteMode,
-            linkDescriptionMode,
-            embedStyle,
-            showStyleUI,
-            lineNumber,
-            defaultHighlight,
-            authKey,
-            wxInfo,
-            math,
-            useCustomCss,
-            useTemplate,
-            defaultTemplate,
-            distributionConfig,
-        } = data;
+	public static loadSettings(data: any) {
+		if (!data) {
+			return
+		}
+		const {
+			defaultStyle,
+			linkStyle,
+			linkFootnoteMode,
+			linkDescriptionMode,
+			embedStyle,
+			showStyleUI,
+			lineNumber,
+			defaultHighlight,
+			authKey,
+			wxInfo,
+			math,
+			useCustomCss,
+			useTemplate,
+			defaultTemplate,
+			distributionConfig,
+		} = data;
 
-        const settings = NMPSettings.getInstance();
-        if (defaultStyle) {
-            settings.defaultStyle = defaultStyle;
-        }
-        if (defaultHighlight) {
-            settings.defaultHighlight = defaultHighlight;
-        }
-        if (showStyleUI !== undefined) {
-            settings.showStyleUI = showStyleUI;
-        }
-        if (linkFootnoteMode) {
-            settings.linkFootnoteMode = linkFootnoteMode;
-        }
-        if (linkDescriptionMode) {
-            settings.linkDescriptionMode = linkDescriptionMode;
-        }
-        if (embedStyle) {
-            settings.embedStyle = embedStyle;
-        }
-        if (lineNumber !== undefined) {
-            settings.lineNumber = lineNumber;
-        }
-        if (authKey) {
-            settings.authKey = authKey;
-        }
-        if (wxInfo) {
-            settings.wxInfo = wxInfo;
-        }
-        if (math) {
-            settings.math = math;
-        }
-        if (useCustomCss !== undefined) {
-            settings.useCustomCss = useCustomCss;
-        }
-        if (useTemplate !== undefined) {
-            settings.useTemplate = useTemplate;
-        }
-        if (defaultTemplate) {
-            settings.defaultTemplate = defaultTemplate;
-        }
-        if (distributionConfig) {
-            settings.distributionConfig = distributionConfig;
-        }
-        settings.getExpiredDate();
-    }
+		const settings = NMPSettings.getInstance();
+		if (defaultStyle) {
+			settings.defaultStyle = defaultStyle;
+		}
+		if (defaultHighlight) {
+			settings.defaultHighlight = defaultHighlight;
+		}
+		if (showStyleUI !== undefined) {
+			settings.showStyleUI = showStyleUI;
+		}
+		if (linkFootnoteMode) {
+			settings.linkFootnoteMode = linkFootnoteMode;
+		}
+		if (linkDescriptionMode) {
+			settings.linkDescriptionMode = linkDescriptionMode;
+		}
+		if (embedStyle) {
+			settings.embedStyle = embedStyle;
+		}
+		if (lineNumber !== undefined) {
+			settings.lineNumber = lineNumber;
+		}
+		if (authKey) {
+			settings.authKey = authKey;
+		}
+		if (wxInfo) {
+			settings.wxInfo = wxInfo;
+		}
+		if (math) {
+			settings.math = math;
+		}
+		if (useCustomCss !== undefined) {
+			settings.useCustomCss = useCustomCss;
+		}
+		if (useTemplate !== undefined) {
+			settings.useTemplate = useTemplate;
+		}
+		if (defaultTemplate) {
+			settings.defaultTemplate = defaultTemplate;
+		}
+		if (distributionConfig) {
+			settings.distributionConfig = distributionConfig;
+		}
+		settings.getExpiredDate();
+	}
 
-    public static allSettings() {
-        const settings = NMPSettings.getInstance();
-        return {
-            'defaultStyle': settings.defaultStyle,
-            'defaultHighlight': settings.defaultHighlight,
-            'showStyleUI': settings.showStyleUI,
-            'linkFootnoteMode': settings.linkFootnoteMode,
-            'linkDescriptionMode': settings.linkDescriptionMode,
-            'embedStyle': settings.embedStyle,
-            'lineNumber': settings.lineNumber,
-            'authKey': settings.authKey,
-            'wxInfo': settings.wxInfo,
-            'math': settings.math,
-            'useCustomCss': settings.useCustomCss,
-            'useTemplate': settings.useTemplate,
-            'defaultTemplate': settings.defaultTemplate,
-            'distributionConfig': settings.distributionConfig,
-        }
-    }
+	public static allSettings() {
+		const settings = NMPSettings.getInstance();
+		return {
+			'defaultStyle': settings.defaultStyle,
+			'defaultHighlight': settings.defaultHighlight,
+			'showStyleUI': settings.showStyleUI,
+			'linkFootnoteMode': settings.linkFootnoteMode,
+			'linkDescriptionMode': settings.linkDescriptionMode,
+			'embedStyle': settings.embedStyle,
+			'lineNumber': settings.lineNumber,
+			'authKey': settings.authKey,
+			'wxInfo': settings.wxInfo,
+			'math': settings.math,
+			'useCustomCss': settings.useCustomCss,
+			'useTemplate': settings.useTemplate,
+			'defaultTemplate': settings.defaultTemplate,
+			'distributionConfig': settings.distributionConfig,
+		}
+	}
 
-    getExpiredDate() {
-        if (this.authKey.length == 0) return;
-        wxKeyInfo(this.authKey).then((res) => {
-            if (res.status == 200) {
-                this.expireat = new Date(res.json.expireat);
-            }
-        })
-    }
+	getExpiredDate() {
+		if (this.authKey.length == 0) return;
+		wxKeyInfo(this.authKey).then((res) => {
+			if (res.status == 200) {
+				this.expireat = new Date(res.json.expireat);
+			}
+		})
+	}
 
-    isAuthKeyVaild() {
-        if (this.authKey.length == 0) return false;
-        if (this.expireat == null) return false;
-        return this.expireat > new Date();
-    }
+	isAuthKeyVaild() {
+		if (this.authKey.length == 0) return false;
+		if (this.expireat == null) return false;
+		return this.expireat > new Date();
+	}
 }

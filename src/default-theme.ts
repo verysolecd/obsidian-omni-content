@@ -1,5 +1,3 @@
-
-
 const css = `
 /* =========================================================== */
 /* Obsidian的默认样式                                            */
@@ -348,4 +346,4 @@ Code
 }
 `
 
-export default {name: '默认', className: 'obsidian-light', desc: '默认主题', author: 'SunBooshi', css:css};
+export default {name: '默认', className: 'obsidian-light', desc: '默认主题', author: 'SunBooshi', css: css};

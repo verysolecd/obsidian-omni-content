@@ -1,7 +1,7 @@
-import { Parser } from './postcss.js'
+import {Parser} from './postcss.js'
 
 interface Parse extends Parser {
-  default: Parse
+	default: Parse
 }
 
 declare const parse: Parse

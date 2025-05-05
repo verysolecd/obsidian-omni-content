@@ -1,5 +1,3 @@
-
-
 export default `
 pre code.hljs {
   display: block;

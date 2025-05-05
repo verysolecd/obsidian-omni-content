@@ -1,12 +1,10 @@
-
-
-import { MarkdownView, Notice } from "obsidian";
-import { toPng } from "html-to-image";
-import { Tokens } from "marked";
-import { MathRendererQueue } from "./math";
-import { Extension } from "./extension";
-import { wxUploadImage } from "../weixin-api";
-import { GetCallout } from "./callouts";
+import {toPng} from "html-to-image";
+import {Tokens} from "marked";
+import {MarkdownView, Notice} from "obsidian";
+import {wxUploadImage} from "../weixin-api";
+import {GetCallout} from "./callouts";
+import {Extension} from "./extension";
+import {MathRendererQueue} from "./math";
 
 export class CardDataManager {
 	private cardData: Map<string, string>;
@@ -64,7 +62,7 @@ export class CodeRenderer extends Extension {
 			byteNumbers[i] = byteCharacters.charCodeAt(i);
 		}
 		const byteArray = new Uint8Array(byteNumbers);
-		return new Blob([byteArray], { type: "image/png" });
+		return new Blob([byteArray], {type: "image/png"});
 	}
 
 	static async uploadMermaidImages(root: HTMLElement, token: string) {
@@ -100,12 +98,12 @@ export class CodeRenderer extends Extension {
 				liItems = liItems + `<li>${count}</li>`;
 				count = count + 1;
 			}
-			
+
 			// Create a code-section with both line numbers and code content side by side
 			const codeContent = !lang
 				? `<pre><code>${code}</code></pre>`
 				: `<pre><code class="hljs language-${lang}">${code}</code></pre>`;
-			
+
 			return (
 				'<section class="code-section">'
 				// + '<div class="line-numbers"><ul>' + liItems + '</ul></div>'
@@ -117,7 +115,7 @@ export class CodeRenderer extends Extension {
 			if (!lang) {
 				return '<section class="code-section"><pre><code>' + code + '</code></pre></section>\n';
 			}
-			
+
 			return '<section class="code-section"><pre><code class="hljs language-' + lang + '">' + code + '</code></pre></section>\n';
 		}
 	}
@@ -151,7 +149,7 @@ export class CodeRenderer extends Extension {
 	}
 
 	renderCard(token: Tokens.Code) {
-		const { id, headimg, nickname, signature } = this.parseCard(token.text);
+		const {id, headimg, nickname, signature} = this.parseCard(token.text);
 		if (id === "") {
 			return "<span>公众号卡片数据错误，没有id</span>";
 		}
@@ -212,21 +210,21 @@ export class CodeRenderer extends Extension {
 			if (!token.lang) {
 				return this.codeRenderer(token.text, token.lang);
 			}
-			
+
 			// 提取 callout 类型（去掉 'ad-' 前缀）
 			const calloutType = token.lang.substring(3).toLowerCase();
-			
+
 			// 提取标题 - 默认使用 callout 类型作为标题
 			let title = calloutType.charAt(0).toUpperCase() + calloutType.slice(1).toLowerCase();
-			
+
 			// 解析第一行内容
 			const lines = token.text.split('\n');
 			const firstLine = lines[0].trim();
-			
+
 			// 检查是否有自定义标题
 			// 关键逻辑：只有当第一行是空或者第一行有内容但后面跟了一个空行时，才记为是标题
 			let hasCustomTitle = false;
-			
+
 			// 空白行判定标准：第一行后跟空白行或没有内容
 			if ((lines.length > 1 && lines[1].trim() === '') || firstLine === '') {
 				// 这种情况下不将第一行内容作为标题
@@ -236,7 +234,7 @@ export class CodeRenderer extends Extension {
 				hasCustomTitle = true; // 第一行是标题
 				title = firstLine;
 			}
-			
+
 			// 处理内容
 			let content;
 			if (hasCustomTitle) {
@@ -247,13 +245,13 @@ export class CodeRenderer extends Extension {
 				content = token.text.trim();
 			}
 			const body = this.marked.parser(this.marked.lexer(content));
-			
+
 			// 获取 callout 样式信息
 			const info = GetCallout(calloutType);
 			if (!info) {
 				return this.codeRenderer(token.text, token.lang);
 			}
-			
+
 			// 生成 callout HTML
 			return `<section class="ad ${info.style}"><section class="ad-title-wrap"><span class="ad-icon">${info.icon}</span><span class="ad-title">${title}<span></section><section class="ad-content">${body}</section></section>`;
 		} catch (error) {
@@ -273,7 +271,7 @@ export class CodeRenderer extends Extension {
 						if (token.lang && token.lang.startsWith("ad-")) {
 							return this.renderAdCallout(token);
 						}
-						
+
 						// 其他代码块处理逻辑
 						if (this.settings.isAuthKeyVaild()) {
 							const type = CodeRenderer.getMathType(
@@ -290,7 +288,7 @@ export class CodeRenderer extends Extension {
 							if (
 								token.lang &&
 								token.lang.trim().toLocaleLowerCase() ==
-									"mermaid"
+								"mermaid"
 							) {
 								return this.renderMermaid(token);
 							}

@@ -1,19 +1,17 @@
-
-
-import { Marked } from "marked";
-import { NMPSettings } from "src/settings";
-import { App, Vault } from "obsidian";
+import {Marked} from "marked";
+import {App, Vault} from "obsidian";
+import {NMPSettings} from "src/settings";
 import AssetsManager from "../assets";
-import { Extension, MDRendererCallback } from "./extension";
-import { CalloutRenderer } from "./callouts";
-import { CodeHighlight } from "./code-highlight";
-import { CodeRenderer } from "./code";
-import { EmbedBlockMark } from "./embed-block-mark";
-import { SVGIcon } from "./icons";
-import { LinkRenderer } from "./link";
-import { LocalFile } from "./local-file";
-import { MathRenderer } from "./math";
-import { TextHighlight } from "./text-highlight";
+import {CalloutRenderer} from "./callouts";
+import {CodeRenderer} from "./code";
+import {CodeHighlight} from "./code-highlight";
+import {EmbedBlockMark} from "./embed-block-mark";
+import {Extension, MDRendererCallback} from "./extension";
+import {SVGIcon} from "./icons";
+import {LinkRenderer} from "./link";
+import {LocalFile} from "./local-file";
+import {MathRenderer} from "./math";
+import {TextHighlight} from "./text-highlight";
 
 const markedOptiones = {
 	gfm: true,
@@ -39,13 +37,13 @@ const customRenderer = {
 	listitem(text: string, task: boolean, checked: boolean): string {
 		// Add a marker to identify if this list item contains nested lists
 		const hasNestedList = text.includes('<ul') || text.includes('<ol');
-		
+
 		if (isWeChatMode && hasNestedList) {
 			// For WeChat, we'll extract the nested list in post-processing
 			// Mark the list item so we can identify it later
 			return `<li data-has-nested="true">${text}</li>`;
 		}
-		
+
 		return `<li>${text}</li>`;
 	},
 };
@@ -110,7 +108,7 @@ export class MarkedParser {
 			ext.marked = this.marked;
 			await ext.prepare();
 		}
-		this.marked.use({ renderer: customRenderer });
+		this.marked.use({renderer: customRenderer});
 	}
 
 	async prepare() {

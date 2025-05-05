@@ -1,21 +1,10 @@
-
-
-import {
-	App,
-	TextAreaComponent,
-	PluginSettingTab,
-	Setting,
-	Notice,
-	sanitizeHTMLToDom,
-	FileSystemAdapter,
-} from "obsidian";
+import {App, FileSystemAdapter, Notice, PluginSettingTab, Setting, TextAreaComponent,} from "obsidian";
+import {DistributionService, PlatformType} from "./distribution";
 import OmniContentPlugin from "./main";
-import { wxGetToken, wxEncrypt } from "./weixin-api";
-import { cleanMathCache } from "./markdown/math";
-import { LinkDescriptionMode, LinkFootnoteMode, NMPSettings } from "./settings";
+import {cleanMathCache} from "./markdown/math";
+import {LinkDescriptionMode, LinkFootnoteMode, NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
-import { DistributionService, PlatformType } from "./distribution";
-import { logger } from "./utils";
+import {logger} from "./utils";
 
 export class OmniContentSettingTab extends PluginSettingTab {
 	plugin: OmniContentPlugin;
@@ -55,7 +44,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 	}
 
 	display() {
-		const { containerEl } = this;
+		const {containerEl} = this;
 
 		containerEl.empty();
 
@@ -207,7 +196,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 			});
 
 		// 模板设置部分
-		containerEl.createEl("h2", { text: "模板设置" });
+		containerEl.createEl("h2", {text: "模板设置"});
 
 		new Setting(containerEl)
 			.setName("使用模板")
@@ -260,7 +249,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 				button.setButtonText("打开模板文件夹").onClick(() => {
 					// 打开模板文件夹
 					try {
-						const { shell } = require("electron");
+						const {shell} = require("electron");
 						const path = require("path");
 						const adapter = this.app.vault.adapter as FileSystemAdapter;
 						const vaultRoot = adapter.getBasePath();
@@ -283,8 +272,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 			});
 
 		// === 内容分发设置 ===
-		containerEl.createEl("h2", { text: "内容分发设置" });
-		containerEl.createEl("p", { 
+		containerEl.createEl("h2", {text: "内容分发设置"});
+		containerEl.createEl("p", {
 			text: "配置各平台的认证信息，以便将内容分发到对应平台。",
 			cls: "setting-item-description"
 		});
@@ -300,11 +289,11 @@ export class OmniContentSettingTab extends PluginSettingTab {
 
 		// 微信公众号平台配置
 		const wxConfig = distributionConfig[PlatformType.WECHAT] || {};
-		const wxAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
-		wxAuthSection.createEl("h3", { text: "微信公众号" });
-		wxAuthSection.createEl("p", { 
+		const wxAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
+		wxAuthSection.createEl("h3", {text: "微信公众号"});
+		wxAuthSection.createEl("p", {
 			text: "使用上方公众号配置，无需重复输入。",
-			cls: "setting-item-description" 
+			cls: "setting-item-description"
 		});
 
 		new Setting(wxAuthSection)
@@ -325,8 +314,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 
 		// 知乎平台配置
 		const zhihuConfig = distributionConfig[PlatformType.ZHIHU] || {};
-		const zhihuAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
-		zhihuAuthSection.createEl("h3", { text: "知乎" });
+		const zhihuAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
+		zhihuAuthSection.createEl("h3", {text: "知乎"});
 
 		new Setting(zhihuAuthSection)
 			.setName("启用知乎分发")
@@ -364,8 +353,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 
 		// 小红书平台配置
 		const xhsConfig = distributionConfig[PlatformType.XIAOHONGSHU] || {};
-		const xhsAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
-		xhsAuthSection.createEl("h3", { text: "小红书" });
+		const xhsAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
+		xhsAuthSection.createEl("h3", {text: "小红书"});
 
 		new Setting(xhsAuthSection)
 			.setName("启用小红书分发")
@@ -403,8 +392,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 
 		// Twitter平台配置
 		const twitterConfig = distributionConfig[PlatformType.TWITTER] || {};
-		const twitterAuthSection = containerEl.createDiv({ cls: "platform-auth-section" });
-		twitterAuthSection.createEl("h3", { text: "Twitter" });
+		const twitterAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
+		twitterAuthSection.createEl("h3", {text: "Twitter"});
 
 		new Setting(twitterAuthSection)
 			.setName("启用Twitter分发")
@@ -481,7 +470,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 						distributionConfig[PlatformType.TWITTER] = {};
 					}
 					distributionConfig[PlatformType.TWITTER].accessTokenSecret = value;
-						this.settings.distributionConfig = distributionConfig;
+					this.settings.distributionConfig = distributionConfig;
 					await this.plugin.saveSettings();
 					distributionService.loadConfig(distributionConfig);
 				});
