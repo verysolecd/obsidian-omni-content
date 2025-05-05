@@ -1,39 +1,49 @@
 <!--
-手工川 AI 时代生存指南 文章模板 v4 - 内容中心版
+手工川 AI 时代生存指南 文章模板 v4 - Handlebars 版
 专为微信公众号优化，采用 Bento Grid 风格，头部专注内容展示。
 请根据需要修改变量，用您的实际内容替换。
 头部变量说明：
-- {SERIES_NAME}: 系列名称（如：工程系列、产品系列、创业系列）
-- {EPISODE_NUM}: 期数（如：第1期、第2期）
-- {ARTICLE_TITLE}: 文章标题
-- {ARTICLE_SUBTITLE}: 文章副标题或简述
-- {TAG1}, {TAG2}, {TAG3}: 内容标签（可选）
+- {{seriesName}}: 系列名称（如：工程系列、产品系列、创业系列）
+- {{episodeNum}}: 期数（如：第1期、第2期）
+- {{articleTitle}}: 文章标题
+- {{articleSubtitle}}: 文章副标题或简述
+- {{author}}: 作者名称，如：手工川
+- {{publishDate}}: 发布日期，如：2025.05.05
 -->
 
 <!-- 开头 Section - 专注内容本身 -->
-<section style="max-width: 384px; margin: 16px auto; background-color: #000000; padding: 16px; box-sizing: border-box; font-family: sans-serif; color: #d1d5db; line-height: 1.6;">
+<section style="max-width: 640px; margin: 16px auto; background-color: #000000; padding: 16px; box-sizing: border-box; font-family: sans-serif; color: #d1d5db; line-height: 1.6;">
     <div style="border: 1px solid #E31937; padding: 24px; margin-bottom: 24px; border-radius: 8px; position: relative; overflow: hidden; background-color: #000000;">
         <!-- 透明度渐变背景叠加层 -->
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom right, rgba(227, 25, 55, 0.4), transparent); opacity: 1; z-index: 0;"></div>
         <div style="position: relative; z-index: 1;">
             <!-- 系列标识和期数 -->
             <div style="margin-bottom: 16px;">
-                <p style="font-size: 14px; color: #E31937; margin: 0; text-transform: uppercase;">{SERIES_NAME}</p>
-                <p style="font-size: 16px; color: #ffffff; margin: 4px 0 0 0; font-weight: bold;">{EPISODE_NUM}</p>
+                <p style="font-size: 14px; color: #E31937; margin: 0; text-transform: uppercase;">{{seriesName}}</p>
+                <p style="font-size: 16px; color: #ffffff; margin: 4px 0 0 0; font-weight: bold;">{{episodeNum}}</p>
             </div>
             
             <!-- 文章标题 -->
-            <h1 style="font-size: 32px; font-weight: bold; color: #ffffff; margin: 0 0 8px 0; line-height: 1.2;">{ARTICLE_TITLE}</h1>
+            <h1 style="font-size: 32px; font-weight: bold; color: #ffffff; margin: 0 0 8px 0; line-height: 1.2;">{{articleTitle}}</h1>
             
             <!-- 文章副标题 -->
-            <p style="font-size: 18px; color: #d1d5db; margin: 0 0 24px 0; line-height: 1.4;">{ARTICLE_SUBTITLE}</p>
+            <p style="font-size: 18px; color: #d1d5db; margin: 0 0 24px 0; line-height: 1.4;">{{articleSubtitle}}</p>
+            
+            <!-- 作者和日期信息 -->
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 16px; color: #a0a0a0; font-size: 14px;">
+                <span>作者：{{author}}</span>
+                <span style="color: #666;">·</span>
+                <span>{{publishDate}}</span>
+            </div>
             
             <!-- 可选的标签区域 -->
+            {{#if tags}}
             <div style="margin-top: 16px;">
-                <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.1); color: #E31937; padding: 4px 12px; margin: 0 8px 8px 0; border-radius: 16px; font-size: 14px;">#{TAG1}</span>
-                <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.1); color: #E31937; padding: 4px 12px; margin: 0 8px 8px 0; border-radius: 16px; font-size: 14px;">#{TAG2}</span>
-                <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.1); color: #E31937; padding: 4px 12px; margin: 0 8px 8px 0; border-radius: 16px; font-size: 14px;">#{TAG3}</span>
+                {{#each tags}}
+                <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.1); color: #E31937; padding: 4px 12px; margin: 0 8px 8px 0; border-radius: 16px; font-size: 14px;">#{{this}}</span>
+                {{/each}}
             </div>
+            {{/if}}
         </div>
     </div>
 </section>
@@ -48,14 +58,31 @@
 <!-- ===================================================== -->
 
 <!-- 结尾 Section - 公众号推广 -->
-<section style="max-width: 384px; margin: 16px auto; background-color: #000000; padding: 16px; box-sizing: border-box; font-family: sans-serif; color: #d1d5db; line-height: 1.6;">
-    <div style="border: 1px solid #E31937; padding: 24px; margin-top: 24px; border-radius: 8px; background-color: #000000; text-align: center;">
-        <p style="margin: 0 0 16px 0; color: #d1d5db; line-height: 1.6;">公众号 <strong style="color: #ffffff; font-weight: bold;">【手工川】</strong> 致力于原创和精选高质量内容，主要关注<strong style="color: #ffffff; font-weight: bold;">工程、产品、创业三大</strong>主题。</p>
-        <p style="margin: 0 0 24px 0; color: #d1d5db; line-height: 1.6;">希望我们的内容能帮助您更好地理解和利用 AI，在这个充满变革的时代里，<strong style="color: #E31937; font-weight: bold;">一起学习，一起成长，一起抓住属于我们的新机遇！</strong></p>
-        <div style="margin-bottom: 16px;">
-            <p style="font-size: 24px; font-weight: bold; color: #E31937; margin: 0 0 4px 0;">立即关注【手工川】</p>
-            <p style="font-size: 14px; color: #a0a0a0; margin: 0;">Stay Ahead, Follow [Shougong Chuan]</p>
+<section style="max-width: 640px; margin: 16px auto; background-color: #000000; padding: 16px; box-sizing: border-box; font-family: sans-serif; color: #d1d5db; line-height: 1.6;">
+    <div style="border: 1px solid #E31937; border-radius: 8px; background-color: #000000; padding: 24px;">
+        <!-- 头部区域 - 公众号标识 -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h2 style="font-size: 28px; font-weight: bold; color: #E31937; margin: 0 0 8px 0; font-family: sans-serif;">手工川</h2>
+            <p style="font-size: 14px; color: #a0a0a0; margin: 0; letter-spacing: 0.5px;">Stay Fool, Stay Hungry.</p>
         </div>
-        <p style="font-size: 16px; color: #d1d5db; margin: 24px 0 0 0; line-height: 1.6;">如果这篇文章对您有所启发或帮助，<strong style="color: #ffffff; font-weight: bold;">欢迎您点击右下角"在看"或分享</strong>给您的朋友和社群，让这份价值传递给更多需要的人！您的每一次分享都是对我最大的鼓励，谢谢！🙏</p>
+        
+        <!-- 核心卖点 -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <p style="font-size: 20px; color: #ffffff; margin: 0 0 16px 0; line-height: 1.6;">AI 时代生存指南</p>
+            <p style="font-size: 20px; color: #ffffff; margin: 0 0 16px 0; line-height: 1.6;">助您<strong style="color: #E31937;">掌握先机</strong></p>
+            <p style="font-size: 16px; color: #d1d5db; margin: 0;">工程、产品、创业三大核心系列</p>
+            <p style="font-size: 16px; color: #d1d5db; margin: 0;">十年实战经验精华</p>
+        </div>
+        
+        <!-- CTA 按钮 -->
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-block; background-color: #E31937; color: #ffffff; padding: 12px 32px; border-radius: 24px; font-size: 16px; font-weight: bold; cursor: pointer;">立即关注</div>
+        </div>
+        
+        <!-- 分享提示 -->
+        <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 16px;">
+            <p style="font-size: 14px; color: #a0a0a0; margin: 0; line-height: 1.6;">如文章对您有帮助</p>
+            <p style="font-size: 14px; color: #a0a0a0; margin: 0; line-height: 1.6;">欢迎点赞和分享</p>
+        </div>
     </div>
 </section>
