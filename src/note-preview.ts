@@ -1,27 +1,8 @@
-/*
- * Copyright (c) 2025 Mark Shawn
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+
 
 import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, Workspace, WorkspaceLeaf,} from "obsidian";
 import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
+import {ContentAdapterFactory, initializeContentAdapters} from "./adapters";
 import {DistributionModal} from "src/modules/distribution-modal";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
@@ -108,6 +89,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			this.workspace.on("active-leaf-change", () => this.update()),
 		];
 
+		// 初始化内容适配器
+		initializeContentAdapters();
+		
 		this.renderMarkdown();
 		uevent("open");
 	}
@@ -247,14 +231,20 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		return this.articleDiv.querySelector("#article-section") as HTMLElement;
 	}
 
-	getArticleContent() {
-		// 获取渲染后的内容
-		// const content = this.articleDiv.innerHTML;
-		// logger.info(`get innerHTML: `, content);
+	/**
+	 * 获取适配指定平台的文章内容
+	 * @param platform 目标平台，默认为 'preview' 预览模式
+	 * @returns 适配后的文章HTML内容
+	 */
+	getArticleContent(platform = 'preview') {
+		// 获取基础HTML内容
 		const html = applyCSS(this.articleDiv, this.getCSS());
-		logger.info(`apply css: `, html);
-		const processedHtml = CardDataManager.getInstance().restoreCard(html);
-		// logger.info(`processed html: `, processedHtml);
+		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
+		
+		// 使用适配器处理内容
+		const adapter = ContentAdapterFactory.getAdapter(platform);
+		const processedHtml = adapter.adaptContent(html, this.settings);
+		
 		return processedHtml;
 	}
 	
@@ -690,27 +680,22 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		return token;
 	}
 
+	/**
+	 * 复制格式化的文章到剪贴板
+	 * 使用适配器模式，不再修改全局状态
+	 */
 	async copyArticle() {
-		// Enable WeChat compatible mode before rendering
-		const { setWeChatMode } = await import('./markdown/parser');
-		setWeChatMode(true);
-		
-		// Re-render with WeChat mode enabled
-		await this.renderMarkdown();
-		
-		// Get the WeChat-formatted content
-		let content = this.getArticleContent();
+		// 直接获取为微信平台适配的内容
+		const content = this.getArticleContent('wechat');
 
-		// Copy to clipboard
+		// 复制到剪贴板
 		await navigator.clipboard.write([
 			new ClipboardItem({
 				"text/html": new Blob([content], { type: "text/html" }),
 			}),
 		]);
 		
-		// Disable WeChat mode and re-render for normal viewing
-		setWeChatMode(false);
-		await this.renderMarkdown();
+		new Notice("已复制到剪贴板！");
 	}
 
 	getSecret() {
