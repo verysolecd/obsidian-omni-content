@@ -140,6 +140,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			this.articleHTML = await this.markedParser.parse(md);
 
 			this.setArticle(this.articleHTML);
+			
+			// 渲染完成后更新CSS变量，确保列表标记等元素的颜色正确应用
+			this.updateCSSVariables();
 		} catch (e) {
 			console.error(e);
 			this.setArticle(this.errorContent(e));
@@ -152,6 +155,36 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			return theme.css.indexOf(".note-to-mp") < 0;
 		}
 		return false;
+	}
+
+	/**
+	 * 更新CSS变量 - 直接修改DOM中的CSS变量
+	 * 这是让主题色变更立即生效的关键
+	 */
+	updateCSSVariables() {
+		const noteContainer = this.articleDiv?.querySelector(".note-to-mp") as HTMLElement;
+		if (!noteContainer) {
+			console.log("找不到.note-to-mp容器，无法更新CSS变量");
+			return;
+		}
+		
+		// 根据启用状态决定是否设置主题色变量
+		if (this.settings.enableThemeColor) {
+			// 设置自定义主题色
+			noteContainer.style.setProperty("--primary-color", this.settings.themeColor || "#7852ee");
+			console.log(`应用自定义主题色：${this.settings.themeColor}`);
+		} else {
+			// 删除自定义主题色，恢复使用主题文件中的颜色
+			noteContainer.style.removeProperty("--primary-color");
+			console.log("恢复使用主题文件中的颜色");
+		}
+		
+		// 额外强制更新列表标记的样式
+		const listItems = noteContainer.querySelectorAll('li');
+		listItems.forEach(item => {
+			// 触发微小的样式变化来强制浏览器重绘
+			(item as HTMLElement).style.display = 'list-item';
+		});
 	}
 
 	setArticle(article: string) {
@@ -515,6 +548,11 @@ ${customCSS}`;
 				colorWrapper.style.opacity = this.settings.enableThemeColor ? "1" : "0.5";
 				
 				this.saveSettingsToPlugin();
+				
+				// 强制更新CSS变量
+				this.updateCSSVariables();
+				
+				// 重新渲染文档
 				await this.renderMarkdown();
 			};
 			
@@ -546,6 +584,10 @@ ${customCSS}`;
 				this.settings.themeColor = newColor;
 				colorPreview.style.backgroundColor = newColor;
 				this.saveSettingsToPlugin();
+				
+				// 强制更新CSS变量
+				this.updateCSSVariables();
+				
 				await this.renderMarkdown();
 			};
 		}
