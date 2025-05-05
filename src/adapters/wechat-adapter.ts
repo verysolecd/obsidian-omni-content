@@ -1,4 +1,3 @@
-import {CardDataManager} from "../markdown/code";
 import {NMPSettings} from "../settings";
 import {logger} from "../utils";
 import {ContentAdapter} from "./content-adapter";
@@ -38,8 +37,7 @@ export class WeChatAdapter implements ContentAdapter {
 		// 6. 处理微信公众号中的字体和样式限制
 		processedHtml = this.processStyles(processedHtml);
 
-		// 最后，恢复代码卡片
-		// processedHtml = CardDataManager.getInstance().restoreCard(processedHtml);
+		// 处理完成
 
 		logger.debug("微信适配处理完成");
 		return processedHtml;
@@ -337,8 +335,9 @@ export class WeChatAdapter implements ContentAdapter {
 		// 设置微信所需的列表样式
 		newList.className = 'list-paddingleft-1';
 		
-		// 设置主题强调色 - 使用Obsidian默认主题的强调色
-		const themeAccentColor = '#7852ee';
+		// 使用用户设置的主题色
+		const settings = NMPSettings.getInstance();
+		const themeAccentColor = settings.themeColor || '#7852ee'; // 使用用户的自定义颜色，默认为紫色
 		
 		// 针对不同级别设置不同的样式
 		let listStyleType;

@@ -451,6 +451,37 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 			// 添加键盘导航
 			this.addKeyboardNavigation(highlightStyleBtn);
+
+			// 主题色选择器组
+			const colorGroup = leftSection.createDiv({cls: "toolbar-group"});
+			
+			const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
+			colorLabel.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
+
+			const colorWrapper = colorGroup.createDiv({cls: "color-picker-wrapper"});
+			
+			// 创建颜色选择器
+			const colorPicker = colorWrapper.createEl("input", {
+				cls: "toolbar-color-picker",
+				attr: {
+					type: "color",
+					value: this.settings.themeColor || "#7852ee"
+				}
+			});
+			
+			// 添加颜色预览
+			const colorPreview = colorWrapper.createDiv({cls: "color-preview"});
+			colorPreview.style.backgroundColor = this.settings.themeColor || "#7852ee";
+			
+			// 颜色变化事件
+			colorPicker.onchange = async () => {
+				const newColor = colorPicker.value;
+				this.settings.themeColor = newColor;
+				colorPreview.style.backgroundColor = newColor;
+				this.saveSettingsToPlugin();
+				await this.renderMarkdown();
+			};
 		}
 
 		// 2. 创建右侧区域 - 操作按钮

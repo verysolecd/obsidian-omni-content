@@ -28,6 +28,8 @@ export class NMPSettings {
 	// 模板相关设置
 	useTemplate: boolean;
 	defaultTemplate: string;
+	// 主题色设置
+	themeColor: string;
 	// 分发服务相关设置
 	distributionConfig: any;
 	expireat: Date | null = null;
@@ -56,6 +58,7 @@ export class NMPSettings {
 		this.math = 'latex';
 		this.useTemplate = false; // 默认不使用模板
 		this.defaultTemplate = 'default'; // 默认模板名称
+		this.themeColor = '#7852ee'; // 默认主题色为紫色
 		this.distributionConfig = null; // 分发服务配置
 	}
 
@@ -83,6 +86,7 @@ export class NMPSettings {
 			useCustomCss,
 			useTemplate,
 			defaultTemplate,
+			themeColor,
 			distributionConfig,
 		} = data;
 
@@ -126,6 +130,9 @@ export class NMPSettings {
 		if (defaultTemplate) {
 			settings.defaultTemplate = defaultTemplate;
 		}
+		if (themeColor) {
+			settings.themeColor = themeColor;
+		}
 		if (distributionConfig) {
 			settings.distributionConfig = distributionConfig;
 		}
@@ -148,6 +155,7 @@ export class NMPSettings {
 			'useCustomCss': settings.useCustomCss,
 			'useTemplate': settings.useTemplate,
 			'defaultTemplate': settings.defaultTemplate,
+			'themeColor': settings.themeColor,
 			'distributionConfig': settings.distributionConfig,
 		}
 	}

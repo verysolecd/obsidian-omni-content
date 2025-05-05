@@ -342,3 +342,34 @@
   font-size: 13px;
   padding-left: 8px;
 }
+
+/* 颜色选择器样式 */
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 40px;
+}
+
+.toolbar-color-picker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--background-primary);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+  margin-right: 4px;
+}
