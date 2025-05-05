@@ -325,8 +325,8 @@ export class WeChatAdapter implements ContentAdapter {
 	}
 
 	protected getThemeColor() {
-				// 获取设置
-				const settings = NMPSettings.getInstance();
+		// 获取设置
+		const settings = NMPSettings.getInstance();
 		
 		// 动态获取当前主题颜色
 		let themeAccentColor: string;
@@ -347,6 +347,7 @@ export class WeChatAdapter implements ContentAdapter {
 				
 				// 获取计算后的样式
 				const computedStyle = window.getComputedStyle(testElement);
+				// todo: 可否实现复制后保留原样式
 				const primaryColor = computedStyle.getPropertyValue('--primary-color').trim() 
 					// || computedStyle.getPropertyValue('--primary-red').trim();
 				
