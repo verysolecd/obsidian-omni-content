@@ -21,7 +21,8 @@
  */
 
 import { Plugin, WorkspaceLeaf, App, PluginManifest } from "obsidian";
-import { NotePreview, VIEW_TYPE_NOTE_PREVIEW } from "./note-preview";
+import {VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
+import { NotePreview } from "./note-preview";
 import { NMPSettings } from "./settings";
 import { OmniContentSettingTab } from "./setting-tab";
 import AssetsManager from "./assets";
