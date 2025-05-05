@@ -27,7 +27,7 @@ export class WeChatAdapter implements ContentAdapter {
 		processedHtml = this.processLinks(processedHtml, settings);
 
 		// 3. 处理列表（微信公众号对列表有特殊要求）
-		// processedHtml = this.processLists(processedHtml);
+		processedHtml = this.processLists(processedHtml);
 
 		// 4. 处理代码块（确保代码显示正确）
 		processedHtml = this.processCodeBlocks(processedHtml, settings);
@@ -39,7 +39,7 @@ export class WeChatAdapter implements ContentAdapter {
 		processedHtml = this.processStyles(processedHtml);
 
 		// 最后，恢复代码卡片
-		processedHtml = CardDataManager.getInstance().restoreCard(processedHtml);
+		// processedHtml = CardDataManager.getInstance().restoreCard(processedHtml);
 
 		logger.debug("微信适配处理完成");
 		return processedHtml;
@@ -281,13 +281,43 @@ export class WeChatAdapter implements ContentAdapter {
 			const parser = new DOMParser();
 			const doc = parser.parseFromString(html, 'text/html');
 			
-			// 首先添加特殊标记来跟踪列表层级关系
-			this.markListHierarchy(doc);
+			// 找到所有的列表
+			const allLists = Array.from(doc.querySelectorAll('ul, ol'));
+			if (allLists.length === 0) {
+				return html; // 没有列表，直接返回
+			}
 			
-			// 将列表转换为微信兼容的格式
-			const processedContent = this.transformListsForWeChat(doc);
+			// 找到所有顶级列表（不在其他列表内的列表）
+			const topLevelLists = allLists.filter(list => {
+				const parent = list.parentElement;
+				return parent && parent.tagName !== 'LI' && parent.tagName !== 'UL' && parent.tagName !== 'OL';
+			});
 			
-			return processedContent;
+			// 创建一个新容器来接收转换后的列表
+			const container = document.createElement('div');
+			
+			// 处理每个顶级列表
+			for (const list of topLevelLists) {
+				// 转换原列表为微信兼容格式
+				const newList = this.transformList(list as HTMLUListElement);
+				
+				// 找到原列表的位置
+				const parent = list.parentElement;
+				if (parent) {
+					// 使用转换后的列表替换原列表
+					parent.replaceChild(newList, list);
+				} else {
+					// 添加到容器
+					container.appendChild(newList);
+				}
+			}
+			
+			// 如果有直接添加到容器的列表，返回容器内容
+			if (container.children.length > 0) {
+				return container.innerHTML;
+			}
+			
+			return doc.body.innerHTML;
 		} catch (error) {
 			logger.error("处理列表时出错:", error);
 			return html;
@@ -295,226 +325,91 @@ export class WeChatAdapter implements ContentAdapter {
 	}
 	
 	/**
-	 * 递归处理列表项及其子列表
-	 * @param list 当前列表元素
-	 * @param isOrdered 是否为有序列表
-	 * @param level 嵌套级别（用于样式调整）
+	 * 转换列表为微信兼容格式
+	 * @param list 要转换的列表元素
 	 */
-	/**
-	 * 标记列表层级关系，添加特殊属性来跟踪列表项的父子关系
-	 * @param doc 文档对象
-	 */
-	private markListHierarchy(doc: Document): void {
-		// 首先标记所有列表项的元素ID和父元素ID
-		let itemId = 0;
+	private transformList(list: HTMLUListElement | HTMLOListElement, level = 0): HTMLUListElement {
+		const isOrdered = list.tagName.toLowerCase() === 'ol';
 		
-		// 查找所有顶层列表
-		const topLists = Array.from(doc.querySelectorAll('ul, ol')).filter(list => {
-			const parent = list.parentElement;
-			return !parent || (parent.tagName !== 'LI' && !parent.closest('li > ul, li > ol'));
-		});
+		// 创建新的微信格式列表
+		const newList = document.createElement(isOrdered ? 'ol' : 'ul');
 		
-		// 递归标记列表项
-		const markListItems = (listElement: Element, parentId: string | null = null, level = 0) => {
-			const isOrdered = listElement.tagName === 'OL';
-			const listItems = listElement.querySelectorAll(':scope > li');
+		// 设置微信所需的列表样式
+		newList.className = 'list-paddingleft-1';
+		
+		// 针对不同级别设置不同的样式
+		let listStyleType;
+		if (isOrdered) {
+			listStyleType = 'decimal'; // 数字导航符号
+		} else {
+			switch (level) {
+				case 0: listStyleType = 'circle'; break; // 外层列表用空心圆
+				case 1: listStyleType = 'disc'; break; // 中间层用实心圆
+				default: listStyleType = 'square'; break; // 最内层用方块
+			}
+		}
+		
+		newList.style.listStyleType = listStyleType;
+		
+		// 存储嵌套列表，稍后处理
+		interface NestedListInfo {
+			parentItem: HTMLLIElement;
+			list: HTMLUListElement | HTMLOListElement;
+		}
+		const nestedLists: NestedListInfo[] = [];
+		
+		// 处理列表项
+		const listItems = Array.from(list.querySelectorAll(':scope > li'));
+		for (const item of listItems) {
+			// 创建新的列表项
+			const newItem = document.createElement('li');
 			
-			// 标记列表类型和层级
-			listElement.setAttribute('data-wx-list-level', level.toString());
-			listElement.setAttribute('data-wx-list-type', isOrdered ? 'ordered' : 'unordered');
+			// 查找并存储任何嵌套列表
+			const childLists = Array.from(item.querySelectorAll(':scope > ul, :scope > ol'));
+			for (const childList of childLists) {
+				nestedLists.push({
+					parentItem: newItem,
+					list: childList as HTMLUListElement | HTMLOListElement
+				});
+				// 从原列表项中移除嵌套列表
+				childList.remove();
+			}
 			
-			// 遍历列表项
-			listItems.forEach((item, index) => {
-				// 给每个列表项分配唯一ID
-				const currentId = `li-${itemId++}`;
-				item.setAttribute('data-wx-id', currentId);
-				
-				// 记录父子关系
-				if (parentId) {
-					item.setAttribute('data-wx-parent-id', parentId);
-				}
-				
-				// 记录子列表类型属性
-				item.setAttribute('data-wx-list-level', level.toString());
-				item.setAttribute('data-wx-list-index', index.toString());
-				item.setAttribute('data-wx-list-type', isOrdered ? 'ordered' : 'unordered');
-				
-				// 处理嵌套列表
-				const nestedLists = item.querySelectorAll(':scope > ul, :scope > ol');
-				if (nestedLists.length > 0) {
-					// 记录该项有子列表
-					item.setAttribute('data-wx-has-sublist', 'true');
-					
-					// 递归处理子列表
-					nestedLists.forEach(nestedList => {
-						markListItems(nestedList, currentId, level + 1);
-					});
-				}
-			});
-		};
+			// 创建微信格式的内容容器
+			const paragraph = document.createElement('p');
+			const span = document.createElement('span');
+			span.setAttribute('leaf', '');
+			
+			// 获取列表项的文本内容去除HTML标签
+			span.textContent = item.textContent?.trim() || ' ';
+			
+			// 组装微信格式的列表项
+			paragraph.appendChild(span);
+			newItem.appendChild(paragraph);
+			newList.appendChild(newItem);
+		}
 		
-		// 为每个顶层列表标记层级关系
-		topLists.forEach(list => markListItems(list));
+		// 处理嵌套列表
+		for (const {parentItem, list: childList} of nestedLists) {
+			// 递归转换子列表
+			const newChildList = this.transformList(childList, level + 1);
+			
+			// 在父列表项后添加嵌套列表直接作为父列表的子元素
+			// 注意：微信编辑器要求嵌套列表不要放在父列表项内部
+			const parentIndex = Array.from(newList.children).indexOf(parentItem);
+			if (parentIndex !== -1 && parentIndex < newList.children.length - 1) {
+				newList.insertBefore(newChildList, newList.children[parentIndex + 1]);
+			} else {
+				newList.appendChild(newChildList);
+			}
+		}
+		
+		return newList;
 	}
 	
 	/**
 	 * 将列表项的内容包裹在 section 标签内，这是微信编辑器的特殊需求
-	 */
-	/**
-	 * 将标记过的列表转换为微信格式
-	 * @param doc 原始文档
-	 * @returns 适合微信编辑器的 HTML 内容
-	 */
-	private transformListsForWeChat(doc: Document): string {
-		// 先找到所有列表
-		const allLists = doc.querySelectorAll('ul, ol');
-		
-		// 首先处理所有列表项的内容，将内容包裹进 section
-		const allListItems = doc.querySelectorAll('li');
-		allListItems.forEach(item => {
-			this.wrapListItemContentInSection(item);
-		});
-		
-		// 对所有列表应用微信样式
-		allLists.forEach(list => {
-			// 获取层级信息
-			const level = parseInt(list.getAttribute('data-wx-list-level') || '0');
-			const isOrdered = list.getAttribute('data-wx-list-type') === 'ordered';
-			
-			// 设置列表样式
-			(list as HTMLElement).style.margin = level === 0 ? '8px 0' : `8px 0 8px ${level * 2}em`;
-			(list as HTMLElement).style.paddingLeft = level === 0 ? '20px' : '0';
-			(list as HTMLElement).style.listStylePosition = 'outside';
-			
-			// 根据层级设置列表标记样式
-			if (isOrdered) {
-				switch (level) {
-					case 0: (list as HTMLElement).style.listStyleType = 'decimal'; break; // 数字
-					case 1: (list as HTMLElement).style.listStyleType = 'lower-alpha'; break; // 小写字母
-					case 2: (list as HTMLElement).style.listStyleType = 'lower-roman'; break; // 小写罗马数字
-					default: (list as HTMLElement).style.listStyleType = 'decimal'; // 默认数字
-				}
-			} else {
-				switch (level) {
-					case 0: (list as HTMLElement).style.listStyleType = 'disc'; break; // 实心圆
-					case 1: (list as HTMLElement).style.listStyleType = 'circle'; break; // 空心圆
-					case 2: (list as HTMLElement).style.listStyleType = 'square'; break; // 方块
-					default: (list as HTMLElement).style.listStyleType = 'disc'; // 默认实心圆
-				}
-			}
-			
-			// 添加微信特有的类
-			list.classList.add('list-paddingleft-1');
-			
-			// 处理列表项
-			const items = list.querySelectorAll(':scope > li');
-			items.forEach(item => {
-				// 设置列表项样式
-				(item as HTMLElement).style.margin = '6px 0';
-				(item as HTMLElement).style.textIndent = '0';
-				
-				// 设置列表项标记样式
-				if (isOrdered) {
-					switch (level) {
-						case 0: (item as HTMLElement).style.listStyleType = 'decimal'; break; // 数字
-						case 1: (item as HTMLElement).style.listStyleType = 'lower-alpha'; break; // 小写字母
-						case 2: (item as HTMLElement).style.listStyleType = 'lower-roman'; break; // 小写罗马数字
-						default: (item as HTMLElement).style.listStyleType = 'decimal'; // 默认数字
-					}
-				} else {
-					switch (level) {
-						case 0: (item as HTMLElement).style.listStyleType = 'disc'; break; // 实心圆
-						case 1: (item as HTMLElement).style.listStyleType = 'circle'; break; // 空心圆
-						case 2: (item as HTMLElement).style.listStyleType = 'square'; break; // 方块
-						default: (item as HTMLElement).style.listStyleType = 'disc'; // 默认实心圆
-					}
-				}
-			});
-		});
-		
-		// 重新排序嵌套列表，确保它们以正确的顺序显示
-		this.reorderNestedLists(doc);
-		
-		// 移除所有临时标记属性
-		doc.querySelectorAll('[data-wx-id], [data-wx-parent-id], [data-wx-list-level], [data-wx-list-type], [data-wx-list-index], [data-wx-has-sublist]')
-			.forEach(el => {
-				el.removeAttribute('data-wx-id');
-				el.removeAttribute('data-wx-parent-id');
-				el.removeAttribute('data-wx-list-level');
-				el.removeAttribute('data-wx-list-type');
-				el.removeAttribute('data-wx-list-index');
-				el.removeAttribute('data-wx-has-sublist');
-			});
-		
-		return doc.body.innerHTML;
-	}
-	
-	/**
-	 * 重新排序嵌套列表，保证层级关系正确
-	 * @param doc 文档对象
-	 */
-	private reorderNestedLists(doc: Document): void {
-		// 找到所有具有子列表的列表项
-		const itemsWithSublists = Array.from(doc.querySelectorAll('li[data-wx-has-sublist]'));
-		
-		// 按层级从低到高排序，确保我们先处理深层列表
-		itemsWithSublists.sort((a, b) => {
-			const levelA = parseInt(a.getAttribute('data-wx-list-level') || '0');
-			const levelB = parseInt(b.getAttribute('data-wx-list-level') || '0');
-			return levelB - levelA; // 降序排列，先处理深层的
-		});
-		
-		// 处理每个具有子列表的项
-		itemsWithSublists.forEach(item => {
-			const parentId = item.getAttribute('data-wx-id');
-			if (!parentId) return;
-			
-			// 找到该项的所有子列表
-			const childLists = Array.from(doc.querySelectorAll(`ul[data-wx-parent-id="${parentId}"], ol[data-wx-parent-id="${parentId}"]`));
-			if (childLists.length === 0) return;
-			
-			// 查找该列表项所属的列表
-			const parentList = item.parentElement;
-			if (!parentList) return;
-			
-			// 使用正确的层级关系重新布局列表
-			this.rebuildListStructure(item, childLists, parentList);
-		});
-	}
-	
-	/**
-	 * 重建列表结构，保证子列表正确放置
-	 * @param parentItem 父列表项
-	 * @param childLists 子列表数组
-	 * @param parentList 父列表元素
-	 */
-	private rebuildListStructure(parentItem: Element, childLists: Element[], parentList: Element): void {
-		// 获取父项的索引
-		const itemIndex = Array.from(parentList.children).indexOf(parentItem);
-		
-		// 确保列表是有序的
-		childLists.sort((a, b) => {
-			const indexA = parseInt(a.getAttribute('data-wx-list-index') || '0');
-			const indexB = parseInt(b.getAttribute('data-wx-list-index') || '0');
-			return indexA - indexB;
-		});
-		
-		// 在当前位置处理所有子列表
-		let insertionPoint = itemIndex + 1;
-		childLists.forEach(childList => {
-			// 如果在指定的位置有节点，就插入到该节点前面
-			if (parentList.children[insertionPoint]) {
-				parentList.insertBefore(childList, parentList.children[insertionPoint]);
-			} else {
-				// 否则新增到最后
-				parentList.appendChild(childList);
-			}
-			insertionPoint++;
-		});
-	}
-	
-	/**
-	 * 将列表项的内容包裹在 section 标签内，这是微信编辑器的特殊需求
+	 * @param listItem 要处理的列表项元素
 	 */
 	private wrapListItemContentInSection(listItem: Element): void {
 		// 已经有 section 就不需要再包裹

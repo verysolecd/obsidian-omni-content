@@ -246,25 +246,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		return processedHtml;
 	}
 
-	/**
-	 * 获取包含完整CSS的文章内容
-	 * 直接将CSS作为style标签插入，确保CSS变量不会丢失
-	 */
-	getFullArticleContent(css: string) {
-		// 获取原始HTML内容
-		const articleSection = this.getArticleSection();
-		const htmlContent = articleSection ? articleSection.outerHTML : this.articleDiv.innerHTML;
-
-		// 将CSS作为style标签插入HTML
-		const styleTag = `<style>${css}</style>`;
-		const fullContent = styleTag + htmlContent;
-
-		logger.info(`Full article content with CSS (${css.length} bytes of CSS)`);
-
-		// 处理卡片恢复等
-		return CardDataManager.getInstance().restoreCard(fullContent);
-	}
-
 	getCSS() {
 		try {
 			const theme = this.assetsManager.getTheme(this.currentTheme);
