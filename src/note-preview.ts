@@ -578,7 +578,20 @@ ${customCSS}`;
 			const colorPreview = colorWrapper.createDiv({cls: "color-preview"});
 			colorPreview.style.backgroundColor = this.settings.themeColor || "#7852ee";
 			
-			// 颜色变化事件
+			// 颜色拖动时实时更新效果 (不保存设置)
+			colorPicker.oninput = () => {
+				const newColor = colorPicker.value;
+				// 仅更新预览颜色和样式变量，不保存设置
+				colorPreview.style.backgroundColor = newColor;
+				
+				// 临时更新主题色并强制更新CSS变量
+				const originalColor = this.settings.themeColor;
+				this.settings.themeColor = newColor; // 临时更新为新颜色
+				this.updateCSSVariables(); // 更新变量应用到DOM
+				this.settings.themeColor = originalColor; // 还原设置，因为还没有保存
+			};
+			
+			// 颜色选择完成后保存设置
 			colorPicker.onchange = async () => {
 				const newColor = colorPicker.value;
 				this.settings.themeColor = newColor;
@@ -588,6 +601,7 @@ ${customCSS}`;
 				// 强制更新CSS变量
 				this.updateCSSVariables();
 				
+				// 在选择完成后重新渲染一次，确保所有内容都已更新
 				await this.renderMarkdown();
 			};
 		}
