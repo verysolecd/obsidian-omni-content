@@ -337,6 +337,9 @@ export class WeChatAdapter implements ContentAdapter {
 		// 设置微信所需的列表样式
 		newList.className = 'list-paddingleft-1';
 		
+		// 设置主题强调色 - 使用Obsidian默认主题的强调色
+		const themeAccentColor = '#7852ee';
+		
 		// 针对不同级别设置不同的样式
 		let listStyleType;
 		if (isOrdered) {
@@ -349,7 +352,13 @@ export class WeChatAdapter implements ContentAdapter {
 			}
 		}
 		
+		// 微信文章中的列表设置
 		newList.style.listStyleType = listStyleType;
+		newList.style.padding = '0 0 0 1em';
+		newList.style.margin = '0.5em 0';
+		
+		// 添加自定义属性，用于在处理列表项时应用颜色
+		newList.setAttribute('data-theme-color', themeAccentColor);
 		
 		// 存储嵌套列表，稍后处理
 		interface NestedListInfo {
@@ -375,17 +384,19 @@ export class WeChatAdapter implements ContentAdapter {
 				childList.remove();
 			}
 			
+			// 为列表项符号设置颜色
+			const bulletColor = newList.getAttribute('data-theme-color') || '#7852ee';
+			newItem.style.color = bulletColor; // 这会影响列表符号的颜色
+			
 			// 创建微信格式的内容容器
-			const paragraph = document.createElement('p');
-			const span = document.createElement('span');
-			span.setAttribute('leaf', '');
+			const section = document.createElement('section');
+			section.style.color = '#222222'; // 内容恢复为默认文本颜色
 			
-			// 获取列表项的文本内容去除HTML标签
-			span.textContent = item.textContent?.trim() || ' ';
+			// 获取列表项的文本内容
+			section.innerHTML = item.innerHTML;
 			
-			// 组装微信格式的列表项
-			paragraph.appendChild(span);
-			newItem.appendChild(paragraph);
+			// 添加到新列表项
+			newItem.appendChild(section);
 			newList.appendChild(newItem);
 		}
 		
