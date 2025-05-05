@@ -503,7 +503,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 			copyBtn.onclick = async () => {
 				await this.copyArticle();
-				new Notice("复制成功，请到公众号编辑器粘贴。");
 				uevent("copy");
 			};
 		}
