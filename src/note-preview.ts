@@ -806,9 +806,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			const op = templateSelect.createEl("option");
 			op.value = template;
 			op.text = template;
-			op.selected =
-				this.settings.useTemplate &&
-				template === this.settings.defaultTemplate;
+			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
 		});
 
 		templateSelect.onchange = async () => {
@@ -818,17 +816,17 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				this.settings.useTemplate = true;
 				this.settings.defaultTemplate = templateSelect.value;
 			}
-
-			// 通过更新静态实例保存设置
-			NMPSettings.getInstance();
-
+			
+			// 保存设置
+			this.saveSettingsToPlugin();
+			
 			// 重新渲染以应用模板
 			await this.renderMarkdown();
 		};
-
+		
 		// 添加键盘导航
 		this.addKeyboardNavigation(templateSelect);
-
+		
 		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
 			const styleGroup = leftSection.createDiv({ cls: "toolbar-group" });
@@ -845,7 +843,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			});
 
 			selectBtn.onchange = async () => {
-				this.updateStyle(selectBtn.value);
+				this.currentTheme = selectBtn.value;
+				this.settings.defaultStyle = selectBtn.value;
+				this.saveSettingsToPlugin();
+				this.setStyle(this.getCSS());
 			};
 
 			for (let s of this.assetsManager.themes) {
@@ -877,7 +878,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			});
 
 			highlightStyleBtn.onchange = async () => {
-				this.updateHighLight(highlightStyleBtn.value);
+				this.currentHighlight = highlightStyleBtn.value;
+				this.settings.defaultHighlight = highlightStyleBtn.value;
+				this.saveSettingsToPlugin();
+				this.setStyle(this.getCSS());
 			};
 
 			for (let s of this.assetsManager.highlights) {
@@ -967,13 +971,30 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.articleDiv = this.renderDiv.createEl("div");
 	}
 
+	/**
+	 * 保存设置到插件的持久化存储
+	 * 更优雅的方式来处理设置持久化
+	 */
+	private saveSettingsToPlugin(): void {
+		// 使用类型断言来解决 TypeScript 类型错误
+		const plugin = (this.app as any).plugins.plugins["omni-content"];
+		if (plugin) {
+			logger.debug("正在保存设置到持久化存储");
+			plugin.saveSettings();
+		}
+	}
+
 	updateStyle(styleName: string) {
 		this.currentTheme = styleName;
+		this.settings.defaultStyle = styleName;
+		this.saveSettingsToPlugin();
 		this.setStyle(this.getCSS());
 	}
 
 	updateHighLight(styleName: string) {
 		this.currentHighlight = styleName;
+		this.settings.defaultHighlight = styleName;
+		this.saveSettingsToPlugin();
 		this.setStyle(this.getCSS());
 	}
 
