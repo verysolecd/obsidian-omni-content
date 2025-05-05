@@ -10,9 +10,11 @@
     --primary-red: #E31937;
     /* 主题色变量 - 如果未定义则使用 primary-red */
     --primary-color: var(--primary-red);
-    --text-primary: #333333;
-    --text-secondary: #666666;
-    --text-tertiary: #999999;
+    --text-primary: #222222;
+    --text-secondary: #444444;
+    /* --text-secondary: inherit; */
+    --text-tertiary: #666666;
+    /* --text-tertiary: inherit; */
     --background-primary: #ffffff;
     --background-secondary: #f8f9fa;
     --border-color: #e5e7eb;
@@ -29,8 +31,10 @@
       --primary-red: #E31937;
       /* 主题色变量不变 */
       --text-primary: #ffffff;
-      --text-secondary: #d1d5db;
-      --text-tertiary: #a0a0a0;
+      /* --text-secondary: #d1d5db; */
+      --text-secondary: inherit;
+      /* --text-tertiary:  #a0a0a0; */
+      --text-tertiary:  inherit;
       --background-primary: #000000;
       --background-secondary: #1a1a1a;
       --border-color: #404040;

@@ -384,18 +384,13 @@ ${customCSS}`;
 			cls: "toolbar-container",
 		});
 
-		// 创建工具栏内容区域
+		// 创建工具栏内容区域 - 单列垂直布局
 		const toolbarContent = toolbarContainer.createDiv({
-			cls: "toolbar-content",
-		});
-
-		// 1. 创建左侧区域 - 主要设置
-		const leftSection = toolbarContent.createDiv({
-			cls: "toolbar-section toolbar-section-left toolbar-vertical",
+			cls: "toolbar-content toolbar-vertical",
 		});
 
 		// 1.1 模板设置组
-		const templateGroup = leftSection.createDiv({cls: "toolbar-group"});
+		const templateGroup = toolbarContent.createDiv({cls: "toolbar-group"});
 		const templateLabel = templateGroup.createDiv({cls: "toolbar-label"});
 		templateLabel.innerHTML =
 			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
@@ -444,7 +439,7 @@ ${customCSS}`;
 
 		// 1.2 样式设置组
 		if (this.settings.showStyleUI) {
-			const styleGroup = leftSection.createDiv({cls: "toolbar-group"});
+			const styleGroup = toolbarContent.createDiv({cls: "toolbar-group"});
 
 			const styleLabel = styleGroup.createDiv({cls: "toolbar-label"});
 			styleLabel.innerHTML =
@@ -475,7 +470,7 @@ ${customCSS}`;
 			this.addKeyboardNavigation(selectBtn);
 
 			// 代码高亮设置
-			const highlightGroup = leftSection.createDiv({
+			const highlightGroup = toolbarContent.createDiv({
 				cls: "toolbar-group",
 			});
 
@@ -510,7 +505,7 @@ ${customCSS}`;
 			this.addKeyboardNavigation(highlightStyleBtn);
 
 			// 主题色组
-			const colorGroup = leftSection.createDiv({cls: "toolbar-group"});
+			const colorGroup = toolbarContent.createDiv({cls: "toolbar-group"});
 			
 			const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
 			colorLabel.innerHTML =
@@ -606,13 +601,8 @@ ${customCSS}`;
 			};
 		}
 
-		// 2. 创建右侧区域 - 操作按钮
-		const rightSection = toolbarContent.createDiv({
-			cls: "toolbar-section toolbar-section-right",
-		});
-
 		// 操作按钮组
-		const actionGroup = rightSection.createDiv({cls: "toolbar-group"});
+		const actionGroup = toolbarContent.createDiv({cls: "toolbar-group"});
 
 		// 刷新按钮
 		const refreshBtn = actionGroup.createEl("button", {
