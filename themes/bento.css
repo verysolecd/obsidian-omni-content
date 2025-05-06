@@ -8,40 +8,33 @@
 /* 亮色模式变量 */
 :root {
     --primary-red: #E31937;
-    /* 主题色变量 - 如果未定义则使用 primary-red */
-    --primary-color: var(--primary-red);
-    --text-primary: #222222;
-    --text-secondary: #444444;
-    /* --text-secondary: inherit; */
-    --text-tertiary: #666666;
-    /* --text-tertiary: inherit; */
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
     --background-primary: #ffffff;
     --background-secondary: #f8f9fa;
     --border-color: #e5e7eb;
     --code-bg: #f3f4f6;
     --mark-bg: rgba(227, 25, 55, 0.1);
-    --blockquote-border: var(--primary-color, #E31937);
-    --link-color: var(--primary-color, #E31937);
-    --strong-color: var(--primary-color, #E31937);
+    --blockquote-border: #E31937;
+    --link-color: #E31937;
+    --strong-color: #E31937;
   }
   
   /* 深色模式变量 */
   @media (prefers-color-scheme: dark) {
     :root {
       --primary-red: #E31937;
-      /* 主题色变量不变 */
       --text-primary: #ffffff;
-      /* --text-secondary: #d1d5db; */
-      --text-secondary: inherit;
-      /* --text-tertiary:  #a0a0a0; */
-      --text-tertiary:  inherit;
+      --text-secondary: #d1d5db;
+      --text-tertiary: #a0a0a0;
       --background-primary: #000000;
       --background-secondary: #1a1a1a;
       --border-color: #404040;
       --code-bg: rgba(255, 255, 255, 0.05);
       --mark-bg: rgba(227, 25, 55, 0.2);
-      --blockquote-border: var(--primary-color, #E31937);
-      --link-color: var(--primary-color, #E31937);
+      --blockquote-border: #E31937;
+      --link-color: #E31937;
       --strong-color: #ffffff;
     }
   }
@@ -108,11 +101,14 @@
   .note-to-mp h4,
   .note-to-mp h5,
   .note-to-mp h6 {
-    margin-top: 1em;
-    margin-bottom: 0.5em;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    margin-left: 0;
+    margin-right: 0;
+    font-family: AvenirNext-Medium;
     font-weight: 600;
     line-height: 1.5em;
-    color: var(--primary-color, var(--primary-red));
+    color: var(--primary-red);
     transition: color 0.3s ease;
   }
   
@@ -122,26 +118,6 @@
   
   .note-to-mp h2 {
     font-size: 1.3em;
-    position: relative;
-    padding-top: 2.5em;
-    margin-top: 1em;
-    counter-increment: h2counter;
-  }
-  
-  /* 添加自动编号 - 使用伪元素创建超大序号 */
-  .note-to-mp h2::before {
-    content: counter(h2counter, decimal-leading-zero);
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 2.5em;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--primary-color, var(--primary-red));
-    opacity: 0.2;
-    pointer-events: none;
   }
   
   .note-to-mp h3 {
@@ -179,22 +155,21 @@
   
   /* 列表样式 */
   .note-to-mp ul {
-    padding-left: 1.0em !important;
-  }
-
-  .note-to-mp ol {
-    padding-left: 1.0em !important;
-    list-style-type: decimal;
+    padding-left: 1.0em;
   }
   
   .note-to-mp li::marker {
-    color: var(--primary-color, var(--primary-red));
+    color: var(--primary-red);
     transition: color 0.3s ease;
   }
   
-  .note-to-mp li {
+  .note-to-mp li > p {
     margin: 0;
-    /* margin-left: 1em !important; */
+  }
+  
+  .note-to-mp ol {
+    padding-left: 1.0em;
+    list-style-type: decimal;
   }
   
   /* 链接样式 */

@@ -1,16 +1,20 @@
 import {MarkedExtension, Tokens} from "marked";
 import {LinkDescriptionMode} from "src/settings";
 import {Extension} from "./extension";
+import {NMPSettings} from "src/settings";
 
 export class LinkRenderer extends Extension {
-	// 存储链接信息：URL和描述文本
-	allLinks: { href: string, text: string }[] = [];
+	// 存储链接信息：URL、描述文本和位置信息
+	allLinks: { href: string, text: string, position: number }[] = [];
 	// 存储需要转换为脚注的链接
-	footnoteLinks: { href: string, text: string }[] = [];
+	footnoteLinks: { href: string, text: string, position: number }[] = [];
+	// 当前处理位置计数器
+	currentPosition = 0;
 
 	async prepare() {
 		this.allLinks = [];
 		this.footnoteLinks = [];
+		this.currentPosition = 0;
 	}
 
 	// 检查是否为微信链接
@@ -43,6 +47,11 @@ export class LinkRenderer extends Extension {
 			return html;
 		}
 
+		// 按原始文档位置排序链接
+		this.footnoteLinks.sort((a, b) => a.position - b.position);
+		// 记录日志 - 此项目的logger实现可能有问题，先注释掉
+		// console.debug("排序后的脚注链接:", this.footnoteLinks);
+
 		// 生成简化的脚注列表，确保序号能正常显示
 		const links = this.footnoteLinks.map((link, i) => {
 			// 简化 HTML 结构，让浏览器正确处理 li 元素
@@ -63,8 +72,15 @@ export class LinkRenderer extends Extension {
 				name: 'link',
 				level: 'inline',
 				renderer: (token: Tokens.Link) => {
-					// 保存所有链接
-					this.allLinks.push({href: token.href, text: token.text});
+					// 记录当前位置并递增
+					const position = this.currentPosition++;
+					
+					// 保存所有链接（带位置信息）
+					this.allLinks.push({
+						href: token.href, 
+						text: token.text, 
+						position: position
+					});
 
 					// 判断是否需要转换为脚注
 					const shouldFootnote = this.shouldConvertToFootnote(token.href);
@@ -74,8 +90,12 @@ export class LinkRenderer extends Extension {
 						return `<a href="${token.href}">${token.text}</a>`;
 					}
 
-					// 需要转换为脚注，添加到脚注链接列表
-					this.footnoteLinks.push({href: token.href, text: token.text});
+					// 需要转换为脚注，添加到脚注链接列表（带位置信息）
+					this.footnoteLinks.push({
+						href: token.href, 
+						text: token.text, 
+						position: position
+					});
 
 					// 返回脚注形式的链接
 					const text = this.settings.linkDescriptionMode === LinkDescriptionMode.Empty ? "" : token.text;

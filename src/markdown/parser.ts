@@ -35,11 +35,26 @@ const customRenderer = {
 	},
 
 	listitem(text: string, task: boolean, checked: boolean): string {
+		// Add a marker to identify if this list item contains nested lists
+		const hasNestedList = text.includes('<ul') || text.includes('<ol');
+
+		if (isWeChatMode && hasNestedList) {
+			// For WeChat, we'll extract the nested list in post-processing
+			// Mark the list item so we can identify it later
+			return `<li data-has-nested="true">${text}</li>`;
+		}
 
 		return `<li>${text}</li>`;
 	},
 };
 
+// Flag to indicate if we're rendering for WeChat
+let isWeChatMode = false;
+
+// Helper to set rendering mode
+export function setWeChatMode(enabled: boolean) {
+	isWeChatMode = enabled;
+}
 
 export class MarkedParser {
 	extensions: Extension[] = [];
@@ -57,9 +72,9 @@ export class MarkedParser {
 		this.extensions.push(
 			new LocalFile(app, settings, assetsManager, callback)
 		);
-		this.extensions.push(
-			new CalloutRenderer(app, settings, assetsManager, callback)
-		);
+		// this.extensions.push(
+		// 	new CalloutRenderer(app, settings, assetsManager, callback)
+		// );
 		this.extensions.push(
 			new CodeHighlight(app, settings, assetsManager, callback)
 		);
