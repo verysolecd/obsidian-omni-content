@@ -108,14 +108,11 @@
   .note-to-mp h4,
   .note-to-mp h5,
   .note-to-mp h6 {
-    margin-top: 1.5em;
-    margin-bottom: 0.75em;
-    margin-left: 0;
-    margin-right: 0;
-    font-family: AvenirNext-Medium;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
     font-weight: 600;
     line-height: 1.5em;
-    color: var(--primary-red);
+    color: var(--primary-color, var(--primary-red));
     transition: color 0.3s ease;
   }
   
@@ -125,6 +122,26 @@
   
   .note-to-mp h2 {
     font-size: 1.3em;
+    position: relative;
+    padding-top: 2.5em;
+    margin-top: 1em;
+    counter-increment: h2counter;
+  }
+  
+  /* 添加自动编号 - 使用伪元素创建超大序号 */
+  .note-to-mp h2::before {
+    content: counter(h2counter, decimal-leading-zero);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 2.5em;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary-color, var(--primary-red));
+    opacity: 0.2;
+    pointer-events: none;
   }
   
   .note-to-mp h3 {

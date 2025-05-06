@@ -25,16 +25,22 @@ export class WeChatAdapter implements ContentAdapter {
 		// 2. 处理链接（根据设置转换为脚注或其他格式）
 		processedHtml = this.processLinks(processedHtml, settings);
 
-		// 3. 处理列表（微信公众号对列表有特殊要求）
+		// 3. 处理二级标题，添加超大序号
+		processedHtml = this.processHeadings(processedHtml);
+
+		// 4. 处理引用块（blockquote）
+		processedHtml = this.processBlockquotes(processedHtml);
+
+		// 5. 处理列表（微信公众号对列表有特殊要求）
 		processedHtml = this.processLists(processedHtml);
 
-		// 4. 处理代码块（确保代码显示正确）
+		// 6. 处理代码块（确保代码显示正确）
 		processedHtml = this.processCodeBlocks(processedHtml, settings);
 
-		// 5. 确保表格正确显示
+		// 7. 确保表格正确显示
 		processedHtml = this.processTables(processedHtml);
 
-		// 6. 处理微信公众号中的字体和样式限制
+		// 8. 处理微信公众号中的字体和样式限制
 		processedHtml = this.processStyles(processedHtml);
 
 		// 处理完成
@@ -324,6 +330,53 @@ export class WeChatAdapter implements ContentAdapter {
 		}
 	}
 
+	/**
+	 * 处理引用块（blockquote），确保在微信中正确显示
+	 * 微信公众号编辑器对blockquote有固定样式，需要强制设置样式以覆盖
+	 */
+	private processBlockquotes(html: string): string {
+		try {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			
+			// 获取主题色
+			const themeColor = this.getThemeColor();
+			
+			// 获取所有引用块
+			const blockquotes = doc.querySelectorAll('blockquote');
+			if (blockquotes.length === 0) {
+				return html; // 没有引用块，直接返回
+			}
+			
+			// 逻辑处理每个引用块
+			blockquotes.forEach(blockquote => {
+				// 重新设置引用块的样式，强制覆盖微信默认样式
+				blockquote.setAttribute('style', `
+					padding-left: 10px !important; 
+					border-left: 3px solid ${themeColor} !important; 
+					color: rgba(0, 0, 0, 0.6) !important; 
+					font-size: 15px !important; 
+					padding-top: 4px !important; 
+					margin: 1em 0 !important; 
+					text-indent: 0 !important;
+				`);
+				
+				// 处理引用块内的段落
+				const paragraphs = blockquote.querySelectorAll('p');
+				paragraphs.forEach(p => {
+					// 确保段落的文本颜色与引用块一致
+					p.style.color = 'rgba(0, 0, 0, 0.6)';
+					p.style.margin = '0';
+				});
+			});
+			
+			return doc.body.innerHTML;
+		} catch (error) {
+			logger.error("处理引用块时出错:", error);
+			return html;
+		}
+	}
+
 	protected getThemeColor() {
 		// 获取设置
 		const settings = NMPSettings.getInstance();
@@ -472,6 +525,80 @@ export class WeChatAdapter implements ContentAdapter {
 	/**
 	 * 处理样式，确保符合微信公众号的样式限制
 	 */
+	/**
+	 * 处理二级标题，为每个h2标题添加超大序号
+	 * 将序号作为标题的内容插入
+	 */
+	private processHeadings(html: string): string {
+		try {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			
+			// 获取所有二级标题
+			const h2Elements = doc.querySelectorAll('h2');
+			if (h2Elements.length === 0) {
+				return html; // 没有h2标题，直接返回
+			}
+			
+			// 获取主题色
+			const themeColor = this.getThemeColor();
+			
+			// 为每个h2标题添加序号
+			h2Elements.forEach((h2, index) => {
+				// 格式化编号为两位数 01, 02, 03...
+				const number = (index + 1).toString().padStart(2, '0');
+				
+				// 检查标题是否已有内容结构
+				const prefixSpan = h2.querySelector('.prefix');
+				const contentSpan = h2.querySelector('.content');
+				
+				// 如果标题包含prefix/content/suffix结构，则在content内插入序号
+				if (contentSpan) {
+					// 创建序号元素
+					const numberSpan = document.createElement('span');
+					numberSpan.setAttribute('leaf', '');
+					
+					// 设置样式
+					numberSpan.setAttribute('style', 'font-size: 48px; ');
+					numberSpan.textContent = number;
+					
+					// 将序号添加到标题内容开头
+					const wrapper = document.createElement('span');
+					wrapper.setAttribute('textstyle', '');
+					wrapper.appendChild(numberSpan);
+					
+					// 添加换行
+					const breakElement = document.createElement('br');
+					
+					// 插入到内容容器的开头
+					contentSpan.insertBefore(breakElement, contentSpan.firstChild);
+					contentSpan.insertBefore(wrapper, contentSpan.firstChild);
+					
+					// 将备注文本居中
+					h2.style.textAlign = 'center';
+				} else {
+					// 如果标题没有特定结构，直接添加到标题开头
+					// 保存原始内容
+					const originalContent = h2.innerHTML;
+					
+					// 创建序号HTML
+					const numberHtml = `<span textstyle="" style="font-size: 48px; text-decoration: underline; margin-bottom: 96px !important">${number}</span><br>`;
+					
+					// 替换原标题内容，序号后面跟原内容
+					h2.innerHTML = numberHtml + originalContent;
+					
+					// 将标题居中
+					h2.style.textAlign = 'center';
+				}
+			});
+
+			return doc.body.innerHTML;
+		} catch (error) {
+			logger.error("处理二级标题序号时出错:", error);
+			return html;
+		}
+	}
+
 	private processStyles(html: string): string {
 		try {
 			const parser = new DOMParser();
