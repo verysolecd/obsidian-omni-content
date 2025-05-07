@@ -154,6 +154,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				md = md.replace(FRONT_MATTER_REGEX, "");
 			}
 
+			// 处理二级标题序号
+			md = this.processHeadingNumbers(md);
+
 			this.articleHTML = await this.markedParser.parse(md);
 
 			this.setArticle(this.articleHTML);
@@ -404,17 +407,20 @@ ${customCSS}`;
 		// 4. 构建各功能模块
 		this.buildTemplateSelector(toolbarContent);
 
-		// 5. 如果启用了样式UI，构建样式相关选项
+		// 5. 构建二级标题序号设置
+		this.buildHeadingNumberSettings(toolbarContent);
+
+		// 6. 如果启用了样式UI，构建样式相关选项
 		if (this.settings.showStyleUI) {
 			this.buildThemeSelector(toolbarContent);
 			this.buildHighlightSelector(toolbarContent);
 			this.buildThemeColorSelector(toolbarContent);
 		}
 
-		// 6. 构建操作按钮组
+		// 7. 构建操作按钮组
 		this.buildActionButtons(toolbarContent);
 
-		// 7. 创建消息视图，但将其放在工具栏之外
+		// 8. 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
 	}
 	async buildUI() {
@@ -886,9 +892,120 @@ ${customCSS}`;
 	}
 
 	/**
+	 * 处理Markdown中的二级标题，根据设置添加序号
+	 * @param markdown 原始Markdown内容
+	 * @returns 处理后的Markdown内容
+	 */
+	private processHeadingNumbers(markdown: string): string {
+		// 如果未启用二级标题序号，直接返回原始内容
+		if (!this.settings.enableHeadingNumber) {
+			return markdown;
+		}
+
+		// 使用正则表达式匹配二级标题（## 开头的行）
+		const h2Regex = /^##\s+(.+?)$/gm;
+		
+		// 保存已找到的标题
+		let headings: {index: number, title: string}[] = [];
+		let match: RegExpExecArray | null;
+		
+		// 查找所有二级标题
+		while ((match = h2Regex.exec(markdown)) !== null) {
+			headings.push({
+				index: match.index,
+				title: match[1].trim()
+			});
+		}
+		
+		// 如果没有找到二级标题，直接返回原始内容
+		if (headings.length === 0) {
+			return markdown;
+		}
+		
+		// 从原始内容构建新内容，逐个替换标题
+		let result = '';
+		let lastIndex = 0;
+		
+		headings.forEach((heading, index) => {
+			// 添加当前标题之前的内容
+			result += markdown.substring(lastIndex, heading.index);
+			
+			// 格式化编号为两位数 01, 02, 03...
+			const number = (index + 1).toString().padStart(2, '0');
+			
+			// 添加带序号的二级标题
+			result += `## ${number}. ${heading.title}`;
+			
+			// 更新lastIndex为当前匹配结束位置
+			lastIndex = heading.index + 3 + heading.title.length; // 3是"## "的长度
+		});
+		
+		// 添加最后一个标题之后的内容
+		result += markdown.substring(lastIndex);
+		
+		return result;
+	}
+
+	/**
 	 * 构建操作按钮组
 	 * @param container 工具栏内容容器
 	 */
+	/**
+	 * 构建二级标题序号设置控件
+	 * @param container 工具栏内容容器
+	 */
+	private buildHeadingNumberSettings(container: HTMLElement): void {
+		// 创建设置组
+		const headingGroup = container.createDiv({ cls: "toolbar-group" });
+
+		// 创建标签
+		const headingLabel = headingGroup.createDiv({ cls: "toolbar-label" });
+		headingLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题序号</span>';
+
+		// 创建控件容器
+		const headingControlWrapper = headingGroup.createDiv({
+			cls: "setting-control-wrapper",
+		});
+
+		// 创建开关选项
+		const enableSwitch = headingControlWrapper.createDiv({
+			cls: "enable-switch",
+		});
+
+		// 创建开关按钮
+		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
+		const toggleInput = toggleSwitch.createEl("input", {
+			attr: {
+				type: "checkbox",
+				checked: this.settings.enableHeadingNumber,
+			},
+		});
+		toggleSwitch.createEl("span", { cls: "slider round" });
+
+		// 开关文本
+		const toggleText = enableSwitch.createEl("span", {
+			cls: "toggle-text",
+			text: this.settings.enableHeadingNumber
+				? "启用序号 (01.)"
+				: "禁用序号",
+		});
+
+		// 开关事件
+		toggleInput.onchange = async () => {
+			this.settings.enableHeadingNumber = toggleInput.checked;
+			toggleText.textContent = this.settings.enableHeadingNumber
+				? "启用序号 (01.)"
+				: "禁用序号";
+
+			// 保存设置
+			this.saveSettingsToPlugin();
+
+			// 重新渲染以应用新设置
+			await this.renderMarkdown();
+		};
+	}
+
 	private buildActionButtons(container: HTMLElement): void {
 		// 操作按钮组
 		const actionGroup = container.createDiv({ cls: "toolbar-group" });

@@ -34,6 +34,8 @@ export class NMPSettings {
 	enableThemeColor: boolean;
 	// 分发服务相关设置
 	distributionConfig: any;
+	// 二级标题序号设置
+	enableHeadingNumber: boolean;
 	expireat: Date | null = null;
 
 	private static instance: NMPSettings;
@@ -62,6 +64,7 @@ export class NMPSettings {
 		this.defaultTemplate = 'default'; // 默认模板名称
 		this.themeColor = '#7852ee'; // 默认主题色为紫色
 		this.enableThemeColor = false; // 默认不启用自定义主题色，使用CSS中的颜色
+		this.enableHeadingNumber = true; // 默认启用二级标题序号
 		this.distributionConfig = null; // 分发服务配置
 	}
 
@@ -92,6 +95,7 @@ export class NMPSettings {
 			themeColor,
 			enableThemeColor,
 			distributionConfig,
+			enableHeadingNumber,
 		} = data;
 
 		const settings = NMPSettings.getInstance();
@@ -143,6 +147,9 @@ export class NMPSettings {
 		if (distributionConfig) {
 			settings.distributionConfig = distributionConfig;
 		}
+		if (enableHeadingNumber !== undefined) {
+			settings.enableHeadingNumber = enableHeadingNumber;
+		}
 		settings.getExpiredDate();
 	}
 
@@ -162,9 +169,10 @@ export class NMPSettings {
 			'useCustomCss': settings.useCustomCss,
 			'useTemplate': settings.useTemplate,
 			'defaultTemplate': settings.defaultTemplate,
+			'distributionConfig': settings.distributionConfig,
 			'themeColor': settings.themeColor,
 			'enableThemeColor': settings.enableThemeColor,
-			'distributionConfig': settings.distributionConfig,
+			'enableHeadingNumber': settings.enableHeadingNumber,
 		}
 	}
 
