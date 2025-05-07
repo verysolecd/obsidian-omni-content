@@ -9,7 +9,7 @@ import {
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
 import { DistributionModal } from "src/modules/distribution-modal";
-import { ContentAdapterFactory, initializeContentAdapters } from "./adapters";
+import { PreviewAdapterFactory, initializeContentAdapters } from "./preview-adapters";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
 import { CardDataManager } from "./markdown/code";
@@ -285,7 +285,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			logger.info(colors.green("HTML (wrapped): "), articleHTML);
 
 			// 获取适配器
-			const adapter = ContentAdapterFactory.getAdapter(platform);
+			const adapter = PreviewAdapterFactory.getAdapter(platform);
 			articleHTML = adapter.adaptContent(articleHTML, this.settings);
 			logger.info(colors.green("HTML (final processed): "), articleHTML);
 			return articleHTML;

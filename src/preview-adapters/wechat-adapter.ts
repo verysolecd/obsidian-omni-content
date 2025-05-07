@@ -1,6 +1,6 @@
 import { NMPSettings } from "../settings";
 import { applyCSS, logger } from "../utils";
-import { BaseAdapter, IBaseAdapter } from "src/adapters/base-adapter";
+import { BaseAdapter, IBaseAdapter } from "src/preview-adapters/base-adapter";
 import colors from "colors";
 
 /**
@@ -64,7 +64,6 @@ export class WeChatAdapter extends BaseAdapter {
 					}
 				}
 			});
-
 			// 转回字符串
 			return doc.body.innerHTML;
 		} catch (error) {
@@ -557,7 +556,7 @@ export class WeChatAdapter extends BaseAdapter {
 	 * @param css CSS样式字符串 【css 只是个摆设，它直接从 html 拿的】
 	 * @returns 应用样式后的HTML内容
 	 */
-	public applyStyles(html: string, css: string): string {
+	public processStyles(html: string): string {
 		try {
 			// 创建临时DOM元素
 			const tempDiv = document.createElement('div');
@@ -566,7 +565,7 @@ export class WeChatAdapter extends BaseAdapter {
 
 			// 添加样式元素
 			const styleEl = document.createElement('style');
-			styleEl.textContent = css;
+			styleEl.textContent = '';
 			tempDiv.appendChild(styleEl);
 			logger.info(colors.yellow("为微信内容添加样式元素"));
 
@@ -646,13 +645,5 @@ export class WeChatAdapter extends BaseAdapter {
 		}
 	}
 
-	/**
-	 * 此方法已被 applyStyles 替代，保留以兼容现有代码
-	 * @private
-	 * @deprecated 请使用 applyStyles 方法
-	 */
-	private processStyles(articleHTML: string): string {
-		return this.applyStyles(articleHTML, "");
-	}
 
 }

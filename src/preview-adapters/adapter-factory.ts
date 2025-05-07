@@ -1,10 +1,10 @@
-import {IBaseAdapter} from "src/adapters/base-adapter";
+import {IBaseAdapter} from "src/preview-adapters/base-adapter";
 import {logger} from "src/utils";
 
 /**
  * 适配器工厂 - 负责创建适合不同平台的适配器实例
  */
-export class ContentAdapterFactory {
+export class PreviewAdapterFactory {
 	private static adapters: Map<string, IBaseAdapter> = new Map();
 
 	/**

@@ -1,4 +1,4 @@
-import {BaseAdapter} from "src/adapters/base-adapter";
+import {BaseAdapter} from "src/preview-adapters/base-adapter";
 import {CardDataManager} from "../markdown/code";
 
 /**
