@@ -203,7 +203,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			}
 
 			// 处理二级标题序号
-			md = this.processHeadingNumbers(md);
+			// md = this.processHeadingNumbers(md);
 
 			this.articleHTML = await this.markedParser.parse(md);
 

@@ -102,20 +102,26 @@
         </section>
         
         <!-- 三大主题 -->
-        <section style="text-align: center; margin-bottom: 24px;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr style="vertical-align: top;">
-                    <td style="width: 33%; text-align: center; padding: 0 12px;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 4px 0;">工程</p>
-                        <p style="color: #a0a0a0; font-size: 14px; margin: 0;">技术实践</p>
+        <section style="margin-bottom: 24px;">
+            <!-- 使用表格而非grid布局，更兼容微信 -->
+            <table style="width: 100%; border-collapse: separate; border-spacing: 12px 0;">
+                <tr>
+                    <!-- 工程区块 -->
+                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
+                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">工程</p>
+                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">技术实践</p>
                     </td>
-                    <td style="width: 33%; text-align: center; padding: 0 12px;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 4px 0;">产品</p>
-                        <p style="color: #a0a0a0; font-size: 14px; margin: 0;">设计思维</p>
+                    
+                    <!-- 产品区块 -->
+                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
+                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">产品</p>
+                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">设计思维</p>
                     </td>
-                    <td style="width: 33%; text-align: center; padding: 0 12px;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 4px 0;">创业</p>
-                        <p style="color: #a0a0a0; font-size: 14px; margin: 0;">商业洞察</p>
+                    
+                    <!-- 创业区块 -->
+                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
+                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">创业</p>
+                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">商业洞察</p>
                     </td>
                 </tr>
             </table>
