@@ -137,12 +137,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		uevent("close");
 	}
 
-	onAppIdChanged() {
-		// 清理上传过的图片
-		LocalImageManager.getInstance().cleanup();
-		CardDataManager.getInstance().cleanup();
-	}
-
 	async update() {
 		LocalImageManager.getInstance().cleanup();
 		CardDataManager.getInstance().cleanup();
@@ -164,12 +158,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	async renderMarkdown() {
 		this.articleDiv.innerHTML = await this.getArticleContent("preview");
 	}
-	/**
-	 * 复制格式化的文章到剪贴板
-	 * 使用适配器模式，不再修改全局状态
-	 */
-	async copyArticle() {
-		const content = await this.getArticleContent("wechat");
+
+	async copyArticle(platform = "wechat") {
+		const content = await this.getArticleContent(platform);
 
 		// 复制到剪贴板
 		await navigator.clipboard.write([
@@ -178,7 +169,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			}),
 		]);
 
-		new Notice("已复制到剪贴板！");
+		new Notice(`已复制到剪贴板，请去平台：${platform}！`);
 	}
 
 	/**
@@ -295,23 +286,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 			// 获取适配器
 			const adapter = ContentAdapterFactory.getAdapter(platform);
-			
-			// 获取CSS
-			const css = this.getCSS();
-
-			// 根据平台不同选择不同的处理流程
-			if (platform === "wechat") {
-				// 微信模式: 先调整内容结构，再应用样式
-				const structuredContent = adapter.adaptContent(articleHTML, this.settings);
-				// 应用样式并内联
-				articleHTML = adapter.applyStyles(structuredContent, css);
-			} else {
-				// 其他平台: 先应用样式，再调整内容结构
-				const styledContent = adapter.applyStyles(articleHTML, css);
-				articleHTML = adapter.adaptContent(styledContent, this.settings);
-			}
-
-			logger.info(colors.green("HTML (final processed): "), articleHTML.substring(0, 200) + "...");
+			articleHTML = adapter.adaptContent(articleHTML, this.settings);
+			logger.info(colors.green("HTML (final processed): "), articleHTML);
 			return articleHTML;
 		} catch (error) {
 			logger.error("获取文章内容时出错:", error);

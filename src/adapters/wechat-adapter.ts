@@ -554,7 +554,7 @@ export class WeChatAdapter extends BaseAdapter {
 	/**
 	 * 重写基类的 applyStyles 方法，为微信配置内联样式
 	 * @param html HTML内容
-	 * @param css CSS样式字符串
+	 * @param css CSS样式字符串 【css 只是个摆设，它直接从 html 拿的】
 	 * @returns 应用样式后的HTML内容
 	 */
 	public applyStyles(html: string, css: string): string {
@@ -592,7 +592,10 @@ export class WeChatAdapter extends BaseAdapter {
 					"margin",
 					"padding",
 					"border",
-					"border-radius"
+					"border-radius",
+
+					// todo: 不知道加这个有没有效果 （参考： [微信公众号图文 HTML/CSS 支持情况解析](https://www.axtonliu.ai/newsletters/ai-2/posts/wechat-article-html-css-support)）
+					"position",
 				];
 
 				for (const prop of properties) {
