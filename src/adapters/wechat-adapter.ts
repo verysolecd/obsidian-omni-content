@@ -1,6 +1,6 @@
 import { NMPSettings } from "../settings";
 import { applyCSS, logger } from "../utils";
-import { BaseAdapter, ContentAdapter } from "./content-adapter";
+import { BaseAdapter, IBaseAdapter } from "src/adapters/base-adapter";
 import colors from "colors";
 
 /**

@@ -1,5 +1,5 @@
+import {ContentAdapterFactory} from "src/adapters/preview-adapter-factory";
 import {logger} from "../utils";
-import {ContentAdapterFactory} from "./content-adapter";
 import {PreviewAdapter} from "./preview-adapter";
 import {WeChatAdapter} from "./wechat-adapter";
 import {ZhihuAdapter} from "./zhihu-adapter";
@@ -25,7 +25,8 @@ export function initializeContentAdapters(): void {
 }
 
 // 导出所有适配器和工厂
-export {type ContentAdapter, ContentAdapterFactory} from "./content-adapter";
+export {type IBaseAdapter} from "src/adapters/base-adapter";
 export {PreviewAdapter} from "./preview-adapter";
 export {WeChatAdapter} from "./wechat-adapter";
 export {ZhihuAdapter} from "./zhihu-adapter";
+export {ContentAdapterFactory} from "src/adapters/preview-adapter-factory";

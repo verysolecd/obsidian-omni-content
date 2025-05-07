@@ -1,6 +1,6 @@
 import {CardDataManager} from "../markdown/code";
 import {applyCSS, logger} from "../utils";
-import {BaseAdapter} from "./content-adapter";
+import {BaseAdapter} from "src/adapters/base-adapter";
 import colors from "colors";
 
 /**
