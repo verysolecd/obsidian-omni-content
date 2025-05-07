@@ -1,4 +1,4 @@
-import {Platform, requestUrl} from "obsidian";
+import { Platform, requestUrl } from "obsidian";
 import * as postcss from "./postcss/postcss";
 
 let PluginVersion = "0.0.0";
@@ -126,9 +126,7 @@ function applyStyle(root: HTMLElement, cssRoot: postcss.Root) {
 export function applyCSS(root: HTMLElement, css: string) {
 	// const doc = sanitizeHTMLToDom(html);
 	// const root = doc.firstChild as HTMLElement;
-	logger.info("applyCSS",
-		//  css
-		);
+	logger.info("applyCSS", css);
 
 	// 这种方式会导致样式应用问题，我们采用另一种策略
 	// const cssRoot = postcss.parse(css);
@@ -136,26 +134,35 @@ export function applyCSS(root: HTMLElement, css: string) {
 
 	// 获取常规样式 - 使用现有的DOM API
 	// 这样保持了模板功能的正常工作
-	const styles = document.createElement('div');
-	styles.style.display = 'none';
+	const styles = document.createElement("div");
+	styles.style.display = "none";
 	document.body.appendChild(styles);
 
 	// 应用样式到临时元素
-	const styleEl = document.createElement('style');
+	const styleEl = document.createElement("style");
 	styleEl.textContent = css;
 	styles.appendChild(styleEl);
 
 	// 获取计算样式并应用到元素
-	const allElements = root.querySelectorAll('*');
+	const allElements = root.querySelectorAll("*");
 	for (let i = 0; i < allElements.length; i++) {
 		const el = allElements[i] as HTMLElement;
 		const computedStyle = window.getComputedStyle(el);
-		let inlineStyles = '';
+		let inlineStyles = "";
 
 		// 提取关键样式属性
 		const properties = [
-			'color', 'background-color', 'font-family', 'font-size', 'font-weight',
-			'line-height', 'text-align', 'margin', 'padding', 'border', 'border-radius'
+			"color",
+			"background-color",
+			"font-family",
+			"font-size",
+			"font-weight",
+			"line-height",
+			"text-align",
+			"margin",
+			"padding",
+			"border",
+			"border-radius",
 		];
 
 		for (const prop of properties) {
@@ -166,7 +173,10 @@ export function applyCSS(root: HTMLElement, css: string) {
 		}
 
 		if (inlineStyles) {
-			el.setAttribute('style', (el.getAttribute('style') || '') + inlineStyles);
+			el.setAttribute(
+				"style",
+				(el.getAttribute("style") || "") + inlineStyles
+			);
 		}
 	}
 
@@ -192,17 +202,20 @@ function extractCSSVariables(css: string): string {
 		const cssRoot = postcss.parse(css);
 		let cssVars = "";
 
-		cssRoot.nodes.forEach(node => {
+		cssRoot.nodes.forEach((node) => {
 			// 提取:root规则
-			if (node.type === 'rule' && node.selector === ':root') {
+			if (node.type === "rule" && node.selector === ":root") {
 				cssVars += node.toString() + "\n";
 			}
 			// 提取@media规则
-			else if (node.type === 'atrule' && node.name === 'media') {
+			else if (node.type === "atrule" && node.name === "media") {
 				// 检查@media规则内是否有:root选择器
-				const hasRootSelector = node.nodes && node.nodes.some(
-					child => child.type === 'rule' && child.selector === ':root'
-				);
+				const hasRootSelector =
+					node.nodes &&
+					node.nodes.some(
+						(child) =>
+							child.type === "rule" && child.selector === ":root"
+					);
 				if (hasRootSelector) {
 					cssVars += node.toString() + "\n";
 				}

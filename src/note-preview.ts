@@ -1,17 +1,30 @@
-import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, WorkspaceLeaf,} from "obsidian";
-import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
-import {DistributionModal} from "src/modules/distribution-modal";
-import {ContentAdapterFactory, initializeContentAdapters} from "./adapters";
+import {
+	apiVersion,
+	EventRef,
+	ItemView,
+	Notice,
+	Platform,
+	TFile,
+	WorkspaceLeaf,
+} from "obsidian";
+import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
+import { DistributionModal } from "src/modules/distribution-modal";
+import { ContentAdapterFactory, initializeContentAdapters } from "./adapters";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import {CardDataManager} from "./markdown/code";
-import {MDRendererCallback} from "./markdown/extension";
-import {LocalImageManager} from "./markdown/local-file";
-import {MarkedParser} from "./markdown/parser";
-import {NMPSettings} from "./settings";
+import { CardDataManager } from "./markdown/code";
+import { MDRendererCallback } from "./markdown/extension";
+import { LocalImageManager } from "./markdown/local-file";
+import { MarkedParser } from "./markdown/parser";
+import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
-import {applyCSS, logger, uevent} from "./utils";
-import {DraftArticle, wxBatchGetMaterial, wxGetToken, wxUploadImage,} from "./weixin-api";
+import { applyCSS, logger, uevent } from "./utils";
+import {
+	DraftArticle,
+	wxBatchGetMaterial,
+	wxGetToken,
+	wxUploadImage,
+} from "./weixin-api";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
 	mainDiv: HTMLDivElement;
@@ -57,7 +70,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 */
 	buildToolbar(parent: HTMLDivElement) {
 		// 创建专业化的工具栏
-		this.toolbar = parent.createDiv({cls: "preview-toolbar"});
+		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
 
 		// 1. 构建品牌区域
@@ -107,7 +120,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 	async onOpen() {
 		this.buildUI();
-		this.listeners = [this.workspace.on("active-leaf-change", () => this.update()),];
+		this.listeners = [
+			this.workspace.on("active-leaf-change", () => this.update()),
+		];
 
 		// 初始化内容适配器
 		initializeContentAdapters();
@@ -134,7 +149,15 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	errorContent(error: any) {
-		return ("<h1>渲染失败!</h1><br/>" + '如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/omni-content/issues">https://github.com/sunbooshi/omni-content/issues</a>&nbsp;&nbsp;反馈<br/><br/>' + "如果方便，请提供引发错误的完整Markdown内容。<br/><br/>" + "<br/>Obsidian版本：" + apiVersion + "<br/>错误信息：<br/>" + `${error}`);
+		return (
+			"<h1>渲染失败!</h1><br/>" +
+			'如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/omni-content/issues">https://github.com/sunbooshi/omni-content/issues</a>&nbsp;&nbsp;反馈<br/><br/>' +
+			"如果方便，请提供引发错误的完整Markdown内容。<br/><br/>" +
+			"<br/>Obsidian版本：" +
+			apiVersion +
+			"<br/>错误信息：<br/>" +
+			`${error}`
+		);
 	}
 
 	/**
@@ -162,7 +185,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			const wrappedHtml = this.wrapArticleContent(this.articleHTML);
 
 			// 使用适配器处理内容 - 预览模式
-			const previewContent = this.getArticleContent("preview", wrappedHtml);
+			const previewContent = this.getArticleContent(
+				"preview",
+				wrappedHtml
+			);
 
 			// 设置最终的HTML内容
 			this.setArticleHtml(previewContent);
@@ -177,11 +203,34 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	/**
+	 * 复制格式化的文章到剪贴板
+	 * 使用适配器模式，不再修改全局状态
+	 */
+	async copyArticle() {
+		// 获取包装后的文章内容
+		const wrappedHtml = this.wrapArticleContent(this.articleHTML);
+
+		// 使用微信适配器处理内容
+		const content = this.getArticleContent("wechat", wrappedHtml);
+
+		// 复制到剪贴板
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				"text/html": new Blob([content], { type: "text/html" }),
+			}),
+		]);
+
+		new Notice("已复制到剪贴板！");
+	}
+
+	/**
 	 * 更新CSS变量 - 直接修改DOM中的CSS变量
 	 * 这是让主题色变更立即生效的关键
 	 */
 	updateCSSVariables() {
-		const noteContainer = this.articleDiv?.querySelector(".note-to-mp") as HTMLElement;
+		const noteContainer = this.articleDiv?.querySelector(
+			".note-to-mp"
+		) as HTMLElement;
 		if (!noteContainer) {
 			console.log("找不到.note-to-mp容器，无法更新CSS变量");
 			return;
@@ -190,7 +239,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 根据启用状态决定是否设置主题色变量
 		if (this.settings.enableThemeColor) {
 			// 设置自定义主题色
-			noteContainer.style.setProperty("--primary-color", this.settings.themeColor || "#7852ee");
+			noteContainer.style.setProperty(
+				"--primary-color",
+				this.settings.themeColor || "#7852ee"
+			);
 			console.log(`应用自定义主题色：${this.settings.themeColor}`);
 		} else {
 			// 删除自定义主题色，恢复使用主题文件中的颜色
@@ -223,14 +275,21 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				const templateManager = TemplateManager.getInstance();
 				// 获取文档元数据
 				const file = this.app.workspace.getActiveFile();
-				const meta: Record<string, string | string[] | number | boolean | object | undefined> = {};
+				const meta: Record<
+					string,
+					string | string[] | number | boolean | object | undefined
+				> = {};
 				if (file) {
 					const metadata = this.app.metadataCache.getFileCache(file);
 					Object.assign(meta, metadata?.frontmatter);
 				}
 				logger.debug("传递至模板的元数据:", meta);
 
-				html = templateManager.applyTemplate(html, this.settings.defaultTemplate, meta);
+				html = templateManager.applyTemplate(
+					html,
+					this.settings.defaultTemplate,
+					meta
+				);
 			} catch (error) {
 				logger.error("应用模板失败", error);
 				new Notice("应用模板失败，请检查模板设置！");
@@ -272,18 +331,13 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param sourceHtml 可选的源HTML内容，如果不提供则使用当前articleDiv的内容
 	 * @returns 适配后的文章HTML内容
 	 */
-	getArticleContent(platform = "preview", sourceHtml?: string) {
+	getArticleContent(platform = "preview", sourceHtml: string) {
 		// 获取基础HTML内容
 		let html;
-		if (sourceHtml) {
-			// 如果提供了源HTML，应用CSS到该HTML
-			const tempDiv = document.createElement('div');
-			tempDiv.innerHTML = sourceHtml;
-			html = applyCSS(tempDiv, this.getCSS());
-		} else {
-			// 否则使用当前articleDiv的内容
-			html = applyCSS(this.articleDiv, this.getCSS());
-		}
+		// 如果提供了源HTML，应用CSS到该HTML
+		const tempDiv = document.createElement("div");
+		tempDiv.innerHTML = sourceHtml;
+		html = applyCSS(tempDiv, this.getCSS());
 
 		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
 
@@ -298,8 +352,12 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		try {
 			// 获取主题和高亮样式
 			const theme = this.assetsManager.getTheme(this.currentTheme);
-			const highlight = this.assetsManager.getHighlight(this.currentHighlight);
-			const customCSS = this.settings.useCustomCss ? this.assetsManager.customCSS : "";
+			const highlight = this.assetsManager.getHighlight(
+				this.currentHighlight
+			);
+			const customCSS = this.settings.useCustomCss
+				? this.assetsManager.customCSS
+				: "";
 
 			// 根据用户选择决定是否注入主题色变量
 			let themeColorCSS = "";
@@ -328,18 +386,23 @@ ${themeCss}
 ${customCSS}`;
 		} catch (error) {
 			console.error(error);
-			new Notice(`获取样式失败${this.currentTheme}|${this.currentHighlight}，请检查主题是否正确安装。`);
+			new Notice(
+				`获取样式失败${this.currentTheme}|${this.currentHighlight}，请检查主题是否正确安装。`
+			);
 		}
 		return "";
 	}
 
 	buildMsgView(parent: HTMLDivElement) {
-		this.msgView = parent.createDiv({cls: "msg-view"});
-		const title = this.msgView.createDiv({cls: "msg-title"});
+		this.msgView = parent.createDiv({ cls: "msg-view" });
+		const title = this.msgView.createDiv({ cls: "msg-title" });
 		title.id = "msg-title";
 		title.innerText = "加载中...";
-		const okBtn = this.msgView.createEl("button", {cls: "msg-ok-btn"}, async (button) => {
-		});
+		const okBtn = this.msgView.createEl(
+			"button",
+			{ cls: "msg-ok-btn" },
+			async (button) => {}
+		);
 		okBtn.id = "msg-ok-btn";
 		okBtn.innerText = "确定";
 		okBtn.onclick = async () => {
@@ -367,7 +430,7 @@ ${customCSS}`;
 		this.container = this.containerEl.children[1];
 		this.container.empty();
 
-		this.mainDiv = this.container.createDiv({cls: "note-preview"});
+		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
 		// this.mainDiv.setAttribute(
 		// 	"style",
 		// 	"padding: 50px;"
@@ -375,9 +438,12 @@ ${customCSS}`;
 
 		this.buildToolbar(this.mainDiv);
 
-		this.renderDiv = this.mainDiv.createDiv({cls: "render-div"});
+		this.renderDiv = this.mainDiv.createDiv({ cls: "render-div" });
 		this.renderDiv.id = "render-div";
-		this.renderDiv.setAttribute("style", "-webkit-user-select: text; user-select: text; padding:10px;");
+		this.renderDiv.setAttribute(
+			"style",
+			"-webkit-user-select: text; user-select: text; padding:10px;"
+		);
 		this.styleEl = this.renderDiv.createEl("style");
 		this.styleEl.setAttr("title", "omni-content-style");
 		this.setStyle(this.getCSS());
@@ -422,7 +488,9 @@ ${customCSS}`;
 			res.cover = frontmatter["封面"];
 			res.thumb_media_id = frontmatter["封面素材ID"];
 			res.need_open_comment = frontmatter["打开评论"] ? 1 : undefined;
-			res.only_fans_can_comment = frontmatter["仅粉丝可评论"] ? 1 : undefined;
+			res.only_fans_can_comment = frontmatter["仅粉丝可评论"]
+				? 1
+				: undefined;
 			if (frontmatter["封面裁剪"]) {
 				res.pic_crop_235_1 = "0_0_1_0.5";
 				res.pic_crop_1_1 = "0_0.525_0.404_1";
@@ -481,7 +549,11 @@ ${customCSS}`;
 	}
 
 	async getToken() {
-		const res = await wxGetToken(this.settings.authKey, this.currentAppId, this.getSecret() || "");
+		const res = await wxGetToken(
+			this.settings.authKey,
+			this.currentAppId,
+			this.getSecret() || ""
+		);
 		if (res.status != 200) {
 			const data = res.json;
 			this.showMsg("获取token失败: " + data.message);
@@ -492,25 +564,6 @@ ${customCSS}`;
 			this.showMsg("获取token失败: " + res.json.message);
 		}
 		return token;
-	}
-
-	/**
-	 * 复制格式化的文章到剪贴板
-	 * 使用适配器模式，不再修改全局状态
-	 */
-	async copyArticle() {
-		// 获取包装后的文章内容
-		const wrappedHtml = this.wrapArticleContent(this.articleHTML);
-
-		// 使用微信适配器处理内容
-		const content = this.getArticleContent("wechat", wrappedHtml);
-
-		// 复制到剪贴板
-		await navigator.clipboard.write([new ClipboardItem({
-			"text/html": new Blob([content], {type: "text/html"}),
-		}),]);
-
-		new Notice("已复制到剪贴板！");
 	}
 
 	getSecret() {
@@ -532,14 +585,15 @@ ${customCSS}`;
 	 * 打开分发对话框
 	 */
 	openDistributionModal(): void {
-		const article = this.getArticleContent();
-		if (!article) {
-			new Notice("请先渲染文章内容");
-			return;
-		}
+		// todo
+		// const article = this.getArticleContent();
+		// if (!article) {
+		// 	new Notice("请先渲染文章内容");
+		// 	return;
+		// }
 
-		const modal = new DistributionModal(this.app, article);
-		modal.open();
+		// const modal = new DistributionModal(this.app, article);
+		// modal.open();
 	}
 
 	/**
@@ -554,7 +608,10 @@ ${customCSS}`;
 				const options = selectEl.options;
 				const currentIndex = selectEl.selectedIndex;
 
-				if (e.key === "ArrowDown" && currentIndex < options.length - 1) {
+				if (
+					e.key === "ArrowDown" &&
+					currentIndex < options.length - 1
+				) {
 					selectEl.selectedIndex = currentIndex + 1;
 				} else if (e.key === "ArrowUp" && currentIndex > 0) {
 					selectEl.selectedIndex = currentIndex - 1;
@@ -584,10 +641,10 @@ ${customCSS}`;
 	 */
 	private buildBrandSection(): void {
 		// 添加工具栏顶部品牌区域
-		const brandSection = this.toolbar.createDiv({cls: "brand-section"});
+		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
 
 		// 品牌Logo和名称
-		const brandLogo = brandSection.createDiv({cls: "brand-logo"});
+		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
 		brandLogo.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -596,7 +653,7 @@ ${customCSS}`;
         </svg>
     `;
 
-		const brandName = brandSection.createDiv({cls: "brand-name"});
+		const brandName = brandSection.createDiv({ cls: "brand-name" });
 		brandName.innerHTML = "手工川智能创作平台";
 	}
 
@@ -605,9 +662,10 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildTemplateSelector(container: HTMLElement): void {
-		const templateGroup = container.createDiv({cls: "toolbar-group"});
-		const templateLabel = templateGroup.createDiv({cls: "toolbar-label"});
-		templateLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+		const templateGroup = container.createDiv({ cls: "toolbar-group" });
+		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
+		templateLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
 
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
@@ -630,7 +688,9 @@ ${customCSS}`;
 			const op = templateSelect.createEl("option");
 			op.value = template;
 			op.text = template;
-			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
+			op.selected =
+				this.settings.useTemplate &&
+				template === this.settings.defaultTemplate;
 		});
 
 		templateSelect.onchange = async () => {
@@ -657,10 +717,11 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildThemeSelector(container: HTMLElement): void {
-		const styleGroup = container.createDiv({cls: "toolbar-group"});
+		const styleGroup = container.createDiv({ cls: "toolbar-group" });
 
-		const styleLabel = styleGroup.createDiv({cls: "toolbar-label"});
-		styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
+		const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
+		styleLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
 
 		const selectWrapper = styleGroup.createDiv({
 			cls: "select-wrapper",
@@ -699,7 +760,8 @@ ${customCSS}`;
 		const highlightLabel = highlightGroup.createDiv({
 			cls: "toolbar-label",
 		});
-		highlightLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
+		highlightLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
 
 		const highlightWrapper = highlightGroup.createDiv({
 			cls: "select-wrapper",
@@ -731,10 +793,11 @@ ${customCSS}`;
 	 */
 	private buildThemeColorSelector(container: HTMLElement): void {
 		// 主题色组
-		const colorGroup = container.createDiv({cls: "toolbar-group"});
+		const colorGroup = container.createDiv({ cls: "toolbar-group" });
 
-		const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
-		colorLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
+		const colorLabel = colorGroup.createDiv({ cls: "toolbar-label" });
+		colorLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
 
 		// 选择器容器
 		const colorControlWrapper = colorGroup.createDiv({
@@ -747,46 +810,58 @@ ${customCSS}`;
 		});
 
 		// 创建开关按钮
-		const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
+		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
 			},
 		});
 		toggleInput.checked = this.settings.enableThemeColor;
-		toggleSwitch.createEl("span", {cls: "slider round"});
+		toggleSwitch.createEl("span", { cls: "slider round" });
 
 		// 开关文本
 		const toggleText = enableSwitch.createEl("span", {
-			cls: "toggle-text", text: this.settings.enableThemeColor ? "启用自定义色" : "使用主题色",
+			cls: "toggle-text",
+			text: this.settings.enableThemeColor
+				? "启用自定义色"
+				: "使用主题色",
 		});
 
 		// 颜色选择器容器
 		const colorWrapper = colorControlWrapper.createDiv({
-			cls: "color-picker-wrapper", attr: {
+			cls: "color-picker-wrapper",
+			attr: {
 				style: this.settings.enableThemeColor ? "" : "opacity: 0.5;",
 			},
 		});
 
 		// 创建颜色选择器
 		const colorPicker = colorWrapper.createEl("input", {
-			cls: "toolbar-color-picker", attr: {
-				type: "color", value: this.settings.themeColor || "#7852ee", disabled: !this.settings.enableThemeColor,
+			cls: "toolbar-color-picker",
+			attr: {
+				type: "color",
+				value: this.settings.themeColor || "#7852ee",
+				disabled: !this.settings.enableThemeColor,
 			},
 		});
 
 		// 添加颜色预览
-		const colorPreview = colorWrapper.createDiv({cls: "color-preview"});
-		colorPreview.style.backgroundColor = this.settings.themeColor || "#7852ee";
+		const colorPreview = colorWrapper.createDiv({ cls: "color-preview" });
+		colorPreview.style.backgroundColor =
+			this.settings.themeColor || "#7852ee";
 
 		// 开关事件
 		toggleInput.onchange = async () => {
 			this.settings.enableThemeColor = toggleInput.checked;
-			toggleText.textContent = this.settings.enableThemeColor ? "启用自定义色" : "使用主题色";
+			toggleText.textContent = this.settings.enableThemeColor
+				? "启用自定义色"
+				: "使用主题色";
 
 			// 更新颜色选择器的禁用状态
 			colorPicker.disabled = !this.settings.enableThemeColor;
-			colorWrapper.style.opacity = this.settings.enableThemeColor ? "1" : "0.5";
+			colorWrapper.style.opacity = this.settings.enableThemeColor
+				? "1"
+				: "0.5";
 
 			this.saveSettingsToPlugin();
 
@@ -835,11 +910,12 @@ ${customCSS}`;
 	 */
 	private buildHeadingNumberSettings(container: HTMLElement): void {
 		// 创建设置组
-		const headingGroup = container.createDiv({cls: "toolbar-group"});
+		const headingGroup = container.createDiv({ cls: "toolbar-group" });
 
 		// 创建标签
-		const headingLabel = headingGroup.createDiv({cls: "toolbar-label"});
-		headingLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题设置</span>';
+		const headingLabel = headingGroup.createDiv({ cls: "toolbar-label" });
+		headingLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题设置</span>';
 
 		// 创建控件容器
 		const headingControlWrapper = headingGroup.createDiv({
@@ -852,7 +928,7 @@ ${customCSS}`;
 		});
 
 		// 创建开关按钮
-		const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
+		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
@@ -860,17 +936,22 @@ ${customCSS}`;
 		});
 		toggleInput.checked = this.settings.enableHeadingNumber;
 
-		toggleSwitch.createEl("span", {cls: "slider round"});
+		toggleSwitch.createEl("span", { cls: "slider round" });
 
 		// 开关文本
 		const toggleText = enableSwitch.createEl("span", {
-			cls: "toggle-text", text: this.settings.enableHeadingNumber ? "启用序号 (01.)" : "禁用序号",
+			cls: "toggle-text",
+			text: this.settings.enableHeadingNumber
+				? "启用序号 (01.)"
+				: "禁用序号",
 		});
 
 		// 开关事件
 		toggleInput.onchange = async () => {
 			this.settings.enableHeadingNumber = toggleInput.checked;
-			toggleText.textContent = this.settings.enableHeadingNumber ? "启用序号 (01.)" : "禁用序号";
+			toggleText.textContent = this.settings.enableHeadingNumber
+				? "启用序号 (01.)"
+				: "禁用序号";
 
 			// 保存设置
 			this.saveSettingsToPlugin();
@@ -878,40 +959,49 @@ ${customCSS}`;
 			// 重新渲染以应用新设置
 			await this.renderMarkdown();
 		};
-		
+
 		// 添加分隔符换行设置
 		const delimiterGroup = headingControlWrapper.createDiv({
-			cls: "enable-switch delimiter-switch"
+			cls: "enable-switch delimiter-switch",
 		});
-		
+
 		// 添加间距样式
 		delimiterGroup.style.marginTop = "8px";
-		
+
 		// 创建分隔符换行开关按钮
-		const delimiterToggleSwitch = delimiterGroup.createEl("label", {cls: "switch"});
+		const delimiterToggleSwitch = delimiterGroup.createEl("label", {
+			cls: "switch",
+		});
 		const delimiterToggleInput = delimiterToggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
 			},
 		});
-		delimiterToggleInput.checked = this.settings.enableHeadingDelimiterBreak;
-		
-		delimiterToggleSwitch.createEl("span", {cls: "slider round"});
-		
+		delimiterToggleInput.checked =
+			this.settings.enableHeadingDelimiterBreak;
+
+		delimiterToggleSwitch.createEl("span", { cls: "slider round" });
+
 		// 开关文本
 		const delimiterToggleText = delimiterGroup.createEl("span", {
-			cls: "toggle-text", 
-			text: this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行",
+			cls: "toggle-text",
+			text: this.settings.enableHeadingDelimiterBreak
+				? "分隔符换行 (逗号后换行)"
+				: "禁用分隔符换行",
 		});
-		
+
 		// 分隔符换行开关事件
 		delimiterToggleInput.onchange = async () => {
-			this.settings.enableHeadingDelimiterBreak = delimiterToggleInput.checked;
-			delimiterToggleText.textContent = this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行";
-			
+			this.settings.enableHeadingDelimiterBreak =
+				delimiterToggleInput.checked;
+			delimiterToggleText.textContent = this.settings
+				.enableHeadingDelimiterBreak
+				? "分隔符换行 (逗号后换行)"
+				: "禁用分隔符换行";
+
 			// 保存设置
 			this.saveSettingsToPlugin();
-			
+
 			// 重新渲染以应用新设置
 			await this.renderMarkdown();
 		};
@@ -919,12 +1009,13 @@ ${customCSS}`;
 
 	private buildActionButtons(container: HTMLElement): void {
 		// 操作按钮组
-		const actionGroup = container.createDiv({cls: "toolbar-group"});
+		const actionGroup = container.createDiv({ cls: "toolbar-group" });
 		// 刷新按钮
 		const refreshBtn = actionGroup.createEl("button", {
 			cls: "toolbar-button refresh-button",
 		});
-		refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
+		refreshBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
 
 		refreshBtn.onclick = async () => {
 			this.setStyle(this.getCSS());
@@ -937,7 +1028,8 @@ ${customCSS}`;
 			const copyBtn = actionGroup.createEl("button", {
 				cls: "toolbar-button copy-button",
 			});
-			copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
+			copyBtn.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
 
 			copyBtn.onclick = async () => {
 				await this.copyArticle();
@@ -949,7 +1041,8 @@ ${customCSS}`;
 		const distributeBtn = actionGroup.createEl("button", {
 			cls: "toolbar-button distribute-button",
 		});
-		distributeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
+		distributeBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
 
 		distributeBtn.onclick = async () => {
 			this.openDistributionModal();

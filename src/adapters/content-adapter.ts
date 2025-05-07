@@ -41,7 +41,7 @@ export abstract class BaseAdapter implements ContentAdapter {
 		processedHtml = this.process(processedHtml);
 		processedHtml = this.postprocess(processedHtml);
 
-		logger.debug(`${this.getAdapterName()}适配处理完成`);
+		logger.debug(`${this.getAdapterName()}适配处理完成: `, processedHtml);
 		return processedHtml;
 	}
 
