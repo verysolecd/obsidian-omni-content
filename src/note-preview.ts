@@ -1,20 +1,36 @@
 import colors from "colors";
-import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, WorkspaceLeaf,} from "obsidian";
-import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
-import {IProcessPlugin} from "src/plugins/base-process-plugin";
-import {PreviewAdapterFactory, initializeContentAdapters} from "./platform-adapters";
-import {BaseContentAdapter} from "./platform-adapters/base-content-adapter";
-import {PlatformType} from "./platform-adapters/types";
+import {
+	apiVersion,
+	EventRef,
+	ItemView,
+	Notice,
+	Platform,
+	TFile,
+	WorkspaceLeaf,
+} from "obsidian";
+import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
+import { IProcessPlugin } from "src/plugins/base-process-plugin";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import {CardDataManager} from "./markdown/code";
-import {MDRendererCallback} from "./markdown/extension";
-import {LocalImageManager} from "./markdown/local-file";
-import {MarkedParser} from "./markdown/parser";
-import {NMPSettings} from "./settings";
+import { CardDataManager } from "./markdown/code";
+import { MDRendererCallback } from "./markdown/extension";
+import { LocalImageManager } from "./markdown/local-file";
+import { MarkedParser } from "./markdown/parser";
+import {
+	initializeContentAdapters,
+	PreviewAdapterFactory,
+} from "./platform-adapters";
+import { BaseContentAdapter } from "./platform-adapters/base-content-adapter";
+import { PlatformType } from "./platform-adapters/types";
+import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
-import {logger, uevent} from "./utils";
-import {DraftArticle, wxBatchGetMaterial, wxGetToken, wxUploadImage,} from "./weixin-api";
+import { logger, uevent } from "./utils";
+import {
+	DraftArticle,
+	wxBatchGetMaterial,
+	wxGetToken,
+	wxUploadImage,
+} from "./weixin-api";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
 	mainDiv: HTMLDivElement;
@@ -35,7 +51,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	title: string;
 	currentAppId: string;
 	markedParser: MarkedParser;
-	currentPlatform: PlatformType = PlatformType.DEFAULT
+	currentPlatform: PlatformType = PlatformType.DEFAULT;
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -81,18 +97,18 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 4. 构建各功能模块
 		this.buildTemplateSelector(toolbarContent);
 
-		// 5. 构建平台选择器 - 新增
-		this.buildPlatformSelector(toolbarContent);
-
-		// 6. 如果启用了样式UI，构建样式相关选项
+		// 5. 如果启用了样式UI，构建样式相关选项
 		if (this.settings.showStyleUI) {
 			this.buildThemeSelector(toolbarContent);
 			this.buildHighlightSelector(toolbarContent);
 			this.buildThemeColorSelector(toolbarContent);
 		}
 
-		// 7. 构建二级标题序号设置
+		// 6. 构建二级标题序号设置
 		this.buildHeadingNumberSettings(toolbarContent);
+
+		// 7. 构建平台选择器 - 新增
+		this.buildPlatformSelector(toolbarContent);
 
 		// 8. 构建插件列表显示区域 - 新增
 		this.buildPluginListSection(toolbarContent);
@@ -153,7 +169,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	async renderMarkdown() {
-		this.articleDiv.innerHTML = await this.getArticleContent(this.currentPlatform);
+		this.articleDiv.innerHTML = await this.getArticleContent(
+			this.currentPlatform
+		);
 		// 更新插件列表显示
 		this.updatePluginList();
 	}
@@ -573,34 +591,51 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildPlatformSelector(container: HTMLElement): void {
+		// 确保适配器已经初始化
+		initializeContentAdapters();
+
 		const settingItem = container.createDiv({ cls: "setting-item" });
 		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
 		settingInfo.createDiv({ cls: "setting-item-name", text: "平台选择" });
-		settingInfo.createDiv({ 
-			cls: "setting-item-description", 
-			text: "选择要预览的目标平台，不同平台使用不同的处理插件" 
+		settingInfo.createDiv({
+			cls: "setting-item-description",
+			text: "选择要预览的目标平台，不同平台使用不同的处理插件",
 		});
 
-		const settingControl = settingItem.createDiv({ cls: "setting-item-control" });
+		const settingControl = settingItem.createDiv({
+			cls: "setting-item-control",
+		});
 
 		// 创建平台选择下拉菜单
 		const selectEl = settingControl.createEl("select", { cls: "dropdown" });
-		
+
 		// 获取所有可用的平台适配器
 		const adapters = PreviewAdapterFactory.getRegisteredAdapters();
-		
+
+		// 添加选项 - 先手动添加可用平台以确保显示
+		const platformOptions = [
+			{ value: PlatformType.DEFAULT, text: "预览(默认)" },
+			{ value: PlatformType.WECHAT, text: "微信公众号" },
+		];
+
 		// 添加选项
-		adapters.forEach((adapter, platform) => {
+		platformOptions.forEach((opt) => {
 			const option = selectEl.createEl("option", {
-				value: platform,
-				text: platform.charAt(0).toUpperCase() + platform.slice(1)
+				value: opt.value,
+				text: opt.text,
 			});
-			
-			if (platform === this.currentPlatform) {
+
+			if (opt.value === this.currentPlatform) {
 				option.selected = true;
 			}
 		});
-		
+
+		// 设置下拉菜单样式确保可见
+		selectEl.setAttr(
+			"style",
+			"width: 100%; min-width: 150px; display: block;"
+		);
+
 		// 添加事件监听器
 		selectEl.addEventListener("change", async () => {
 			this.currentPlatform = selectEl.value as PlatformType;
@@ -608,7 +643,7 @@ ${customCSS}`;
 			logger.info(`切换到平台: ${this.currentPlatform}`);
 			await this.renderMarkdown();
 		});
-		
+
 		// 增加键盘导航支持
 		this.addKeyboardNavigation(selectEl);
 	}
@@ -621,11 +656,16 @@ ${customCSS}`;
 		const settingItem = container.createDiv({ cls: "setting-item" });
 		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
 		settingInfo.createDiv({ cls: "setting-item-name", text: "处理插件" });
-		
+
 		// 创建插件列表容器
-		this.pluginListEl = settingItem.createDiv({ cls: "plugin-list-container" });
-		this.pluginListEl.setAttr("style", "max-height: 150px; overflow-y: auto; margin-top: 10px;");
-		
+		this.pluginListEl = settingItem.createDiv({
+			cls: "plugin-list-container",
+		});
+		this.pluginListEl.setAttr(
+			"style",
+			"max-height: 150px; overflow-y: auto; margin-top: 10px;"
+		);
+
 		// 初始化插件列表
 		this.updatePluginList();
 	}
@@ -635,31 +675,40 @@ ${customCSS}`;
 	 */
 	private updatePluginList(): void {
 		if (!this.pluginListEl) return;
-		
+
 		this.pluginListEl.empty();
-		
+
 		// 获取当前平台的适配器
 		const adapter = PreviewAdapterFactory.getAdapter(this.currentPlatform);
-		
+
 		// 如果适配器是BaseContentAdapter的实例，尝试获取其插件列表
 		if (adapter instanceof BaseContentAdapter) {
 			// 使用类型断言访问protected属性 - 仅用于显示目的
-			const plugins = (adapter as unknown as {plugins: IProcessPlugin[]}).plugins || [];
-			
+			const plugins =
+				(adapter as unknown as { plugins: IProcessPlugin[] }).plugins ||
+				[];
+
 			if (plugins.length > 0) {
 				// 创建插件列表
-				const listEl = this.pluginListEl.createEl("ul", { cls: "plugin-list" });
-				listEl.setAttr("style", "list-style-type: disc; padding-left: 20px; margin: 5px 0;");
-				
+				const listEl = this.pluginListEl.createEl("ul", {
+					cls: "plugin-list",
+				});
+				listEl.setAttr(
+					"style",
+					"list-style-type: disc; padding-left: 20px; margin: 5px 0;"
+				);
+
 				plugins.forEach((plugin: IProcessPlugin) => {
-					if (plugin && typeof plugin.getName === 'function') {
+					if (plugin && typeof plugin.getName === "function") {
 						const name = plugin.getName();
 						const listItem = listEl.createEl("li", { text: name });
 						listItem.setAttr("style", "margin: 2px 0;");
 					}
 				});
 			} else {
-				this.pluginListEl.createEl("p", { text: "当前平台未使用处理插件" });
+				this.pluginListEl.createEl("p", {
+					text: "当前平台未使用处理插件",
+				});
 			}
 		} else {
 			this.pluginListEl.createEl("p", { text: "无法获取插件信息" });
