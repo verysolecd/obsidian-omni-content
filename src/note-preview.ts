@@ -160,10 +160,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		);
 	}
 
-	/**
-	 * 渲染当前活跃文档的Markdown内容
-	 * 使用适配器模式处理预览内容，保持架构一致性
-	 */
 	async renderMarkdown() {
 		try {
 			const af = this.app.workspace.getActiveFile();
@@ -178,40 +174,32 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				md = md.replace(FRONT_MATTER_REGEX, "");
 			}
 
-			// 解析 Markdown 为基础 HTML
+			// 处理二级标题序号
+			// md = this.processHeadingNumbers(md);
+
 			this.articleHTML = await this.markedParser.parse(md);
 
-			// 包装HTML内容，并应用模板（如果启用）
-			const wrappedHtml = this.wrapArticleContent(this.articleHTML);
-
-			// 使用适配器处理内容 - 预览模式
-			const previewContent = this.getArticleContent(
-				"preview",
-				wrappedHtml
-			);
-
-			// 设置最终的HTML内容
-			this.setArticleHtml(previewContent);
+			this.setArticle(this.articleHTML);
 
 			// 渲染完成后更新CSS变量，确保列表标记等元素的颜色正确应用
 			this.updateCSSVariables();
 		} catch (e) {
 			console.error(e);
-			// 错误处理 - 直接设置错误内容，不经过适配器
-			this.setArticleHtml(this.errorContent(e));
+			this.setArticle(this.errorContent(e));
 		}
 	}
-
 	/**
 	 * 复制格式化的文章到剪贴板
 	 * 使用适配器模式，不再修改全局状态
 	 */
 	async copyArticle() {
-		// 获取包装后的文章内容
-		const wrappedHtml = this.wrapArticleContent(this.articleHTML);
+		// // 获取包装后的文章内容
+		// const wrappedHtml = this.wrapArticleContent(this.articleHTML);
 
-		// 使用微信适配器处理内容
-		const content = this.getArticleContent("wechat", wrappedHtml);
+		// // 使用微信适配器处理内容
+		// const content = this.getArticleContent("wechat", wrappedHtml);
+
+		const content = this.getArticleContent("wechat");
 
 		// 复制到剪贴板
 		await navigator.clipboard.write([
@@ -331,13 +319,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param sourceHtml 可选的源HTML内容，如果不提供则使用当前articleDiv的内容
 	 * @returns 适配后的文章HTML内容
 	 */
-	getArticleContent(platform = "preview", sourceHtml: string) {
+	getArticleContent(platform = "preview") {
 		// 获取基础HTML内容
 		let html;
-		// 如果提供了源HTML，应用CSS到该HTML
-		const tempDiv = document.createElement("div");
-		tempDiv.innerHTML = sourceHtml;
-		html = applyCSS(tempDiv, this.getCSS());
+		html = applyCSS(this.articleDiv, this.getCSS());
 
 		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
 
@@ -1048,5 +1033,71 @@ ${customCSS}`;
 			this.openDistributionModal();
 			uevent("distribute");
 		};
+	}
+
+	setArticle(article: string) {
+		this.articleDiv.empty();
+		let className = "note-to-mp";
+		// 兼容旧版本样式
+		// if (this.isOldTheme()) {
+		// 	className = this.currentTheme;
+		// }
+
+		let html = `<section class="${className}" id="article-section">${article}</section>`;
+
+		// 检查是否需要应用模板
+		if (this.settings.useTemplate) {
+			logger.info("应用模板：", this.settings.defaultTemplate);
+			try {
+				const templateManager = TemplateManager.getInstance();
+				// 获取文档元数据
+				const file = this.app.workspace.getActiveFile();
+				const meta: Record<
+					string,
+					string | string[] | number | boolean | object | undefined
+				> = {};
+				if (file) {
+					const metadata = this.app.metadataCache.getFileCache(file);
+					if (metadata?.frontmatter) {
+						// 将全部前置元数据复制到 meta 对象
+						Object.assign(meta, metadata.frontmatter);
+
+						// 特殊处理 epigraph 属性
+						if (metadata.frontmatter.epigraph) {
+							if (
+								typeof metadata.frontmatter.epigraph ===
+								"string"
+							) {
+								meta.epigraph = [metadata.frontmatter.epigraph];
+							} else if (
+								Array.isArray(metadata.frontmatter.epigraph)
+							) {
+								meta.epigraph = metadata.frontmatter.epigraph;
+							}
+						}
+					}
+				}
+
+				logger.debug("传递至模板的元数据:", meta);
+
+				html = templateManager.applyTemplate(
+					html,
+					this.settings.defaultTemplate,
+					meta
+				);
+			} catch (error) {
+				logger.error("应用模板失败", error);
+				new Notice("应用模板失败，请检查模板设置！");
+			}
+		}
+
+		// logger.info(`Sanitize input HTML: `, html)
+		this.articleDiv.innerHTML = html;
+		// const doc = sanitizeHTMLToDom(html);
+		// if (doc.firstChild) {
+		//     const article = doc.firstChild;
+		//     logger.info(`Sanitize output article: `, article)
+		//     this.articleDiv.appendChild(article);
+		// }
 	}
 }
