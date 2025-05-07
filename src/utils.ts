@@ -126,7 +126,7 @@ function applyStyle(root: HTMLElement, cssRoot: postcss.Root) {
 export function applyCSS(root: HTMLElement, css: string) {
 	// const doc = sanitizeHTMLToDom(html);
 	// const root = doc.firstChild as HTMLElement;
-	logger.info("applyCSS", css);
+	// logger.info("applyCSS", css);
 
 	// 这种方式会导致样式应用问题，我们采用另一种策略
 	// const cssRoot = postcss.parse(css);
@@ -146,6 +146,7 @@ export function applyCSS(root: HTMLElement, css: string) {
 	// 获取计算样式并应用到元素
 	const allElements = root.querySelectorAll("*");
 	for (let i = 0; i < allElements.length; i++) {
+		// logger.info(`applyCSS [${i}]`, allElements[i]);
 		const el = allElements[i] as HTMLElement;
 		const computedStyle = window.getComputedStyle(el);
 		let inlineStyles = "";
@@ -163,6 +164,8 @@ export function applyCSS(root: HTMLElement, css: string) {
 			"padding",
 			"border",
 			"border-radius",
+			// todo: it's not supported indeed
+			"position",
 		];
 
 		for (const prop of properties) {

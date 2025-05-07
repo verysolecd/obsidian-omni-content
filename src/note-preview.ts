@@ -25,6 +25,7 @@ import {
 	wxGetToken,
 	wxUploadImage,
 } from "./weixin-api";
+import colors from "colors";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
 	mainDiv: HTMLDivElement;
@@ -161,14 +162,13 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	async renderMarkdown() {
-		this.articleDiv.innerHTML = await this.getArticleContent("preview")
+		this.articleDiv.innerHTML = await this.getArticleContent("preview");
 	}
 	/**
 	 * 复制格式化的文章到剪贴板
 	 * 使用适配器模式，不再修改全局状态
 	 */
 	async copyArticle() {
-
 		const content = await this.getArticleContent("wechat");
 
 		// 复制到剪贴板
@@ -262,10 +262,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.styleEl.appendChild(document.createTextNode(css));
 	}
 
-	getArticleSection() {
-		return this.articleDiv.querySelector("#article-section") as HTMLElement;
-	}
-
 	/**
 	 * 获取适配指定平台的文章内容
 	 * @param platform 目标平台，默认为 'preview' 预览模式
@@ -285,49 +281,46 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			md = md.replace(FRONT_MATTER_REGEX, "");
 		}
 
-		const articleHTML = await this.markedParser.parse(md);
+		let articleHTML = await this.markedParser.parse(md);
+		logger.info(colors.green("HTML (parsed): "), articleHTML);
 
-		this.articleDiv.innerHTML = this.wrapArticleContent(articleHTML);
+		articleHTML = this.wrapArticleContent(articleHTML);
+		logger.info(colors.green("HTML (wrapped): "), articleHTML);
 
-		const html = applyCSS(this.articleDiv, this.getCSS());
-
-		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
-
-		// 使用适配器处理内容
 		const adapter = ContentAdapterFactory.getAdapter(platform);
-		const processedHtml = adapter.adaptContent(html, this.settings);
+		articleHTML = adapter.adaptContent(articleHTML, this.settings);
 
-		return processedHtml;
+		logger.info(colors.green("HTML (processed): "), articleHTML);
+		return articleHTML;
 	}
 
 	getCSS() {
-		try {
-			// 获取主题和高亮样式
-			const theme = this.assetsManager.getTheme(this.currentTheme);
-			const highlight = this.assetsManager.getHighlight(
-				this.currentHighlight
-			);
-			const customCSS = this.settings.useCustomCss
-				? this.assetsManager.customCSS
-				: "";
+		// 获取主题和高亮样式
+		const theme = this.assetsManager.getTheme(this.currentTheme);
+		const highlight = this.assetsManager.getHighlight(
+			this.currentHighlight
+		);
+		const customCSS = this.settings.useCustomCss
+			? this.assetsManager.customCSS
+			: "";
 
-			// 根据用户选择决定是否注入主题色变量
-			let themeColorCSS = "";
+		// 根据用户选择决定是否注入主题色变量
+		let themeColorCSS = "";
 
-			// 当用户启用自定义主题色时，注入变量
-			if (this.settings.enableThemeColor) {
-				themeColorCSS = `
+		// 当用户启用自定义主题色时，注入变量
+		if (this.settings.enableThemeColor) {
+			themeColorCSS = `
 :root {
   --primary-color: ${this.settings.themeColor || "#7852ee"};
 }
 `;
-			}
+		}
 
-			// 确保highlight和theme存在，否则使用默认值
-			const highlightCss = highlight?.css || "";
-			const themeCss = theme?.css || "";
+		// 确保highlight和theme存在，否则使用默认值
+		const highlightCss = highlight?.css || "";
+		const themeCss = theme?.css || "";
 
-			return `${themeColorCSS}
+		return `${themeColorCSS}
 
 ${InlineCSS}
 
@@ -336,13 +329,6 @@ ${highlightCss}
 ${themeCss}
 
 ${customCSS}`;
-		} catch (error) {
-			console.error(error);
-			new Notice(
-				`获取样式失败${this.currentTheme}|${this.currentHighlight}，请检查主题是否正确安装。`
-			);
-		}
-		return "";
 	}
 
 	buildMsgView(parent: HTMLDivElement) {

@@ -1,11 +1,13 @@
 import { NMPSettings } from "../settings";
-import { logger } from "../utils";
+import { applyCSS, logger } from "../utils";
 import { BaseAdapter, ContentAdapter } from "./content-adapter";
+import colors from "colors";
 
 /**
  * 微信公众号适配器 - 处理微信公众号特定的格式要求
  */
 export class WeChatAdapter extends BaseAdapter {
+	
 	protected getAdapterName(): string {
 		return "微信公众号";
 	}
@@ -549,41 +551,9 @@ export class WeChatAdapter extends BaseAdapter {
 		return newList;
 	}
 
-	private processStyles(html: string): string {
-		try {
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, "text/html");
-
-			// 处理字体大小和样式
-			const elements = doc.querySelectorAll("*");
-			elements.forEach((el) => {
-				// 需要将 Element 类型转换为 HTMLElement 才能访问 style 属性
-				const htmlEl = el as HTMLElement;
-				const style = window.getComputedStyle(htmlEl);
-
-				// 微信公众号支持的字体比较有限
-				if (style.fontFamily) {
-					htmlEl.style.fontFamily =
-						'-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif';
-				}
-
-				// 处理过大或过小的字体
-				const fontSize = parseInt(style.fontSize);
-				if (fontSize > 40) {
-					htmlEl.style.fontSize = "40px";
-				} else if (
-					fontSize < 12 &&
-					htmlEl.tagName !== "SUP" &&
-					htmlEl.tagName !== "SUB"
-				) {
-					htmlEl.style.fontSize = "12px";
-				}
-			});
-
-			return doc.body.innerHTML;
-		} catch (error) {
-			logger.error("处理样式时出错:", error);
-			return html;
-		}
+	private processStyles(articleHTML: string): string {
+		// todo: 处理样式
+		return ''
 	}
+
 }
