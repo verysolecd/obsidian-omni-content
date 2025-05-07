@@ -830,7 +830,7 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	/**
-	 * 构建二级标题序号设置控件
+	 * 构建二级标题设置控件，包括序号和分隔符换行设置
 	 * @param container 工具栏内容容器
 	 */
 	private buildHeadingNumberSettings(container: HTMLElement): void {
@@ -839,7 +839,7 @@ ${customCSS}`;
 
 		// 创建标签
 		const headingLabel = headingGroup.createDiv({cls: "toolbar-label"});
-		headingLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题序号</span>';
+		headingLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题设置</span>';
 
 		// 创建控件容器
 		const headingControlWrapper = headingGroup.createDiv({
@@ -878,12 +878,48 @@ ${customCSS}`;
 			// 重新渲染以应用新设置
 			await this.renderMarkdown();
 		};
+		
+		// 添加分隔符换行设置
+		const delimiterGroup = headingControlWrapper.createDiv({
+			cls: "enable-switch delimiter-switch"
+		});
+		
+		// 添加间距样式
+		delimiterGroup.style.marginTop = "8px";
+		
+		// 创建分隔符换行开关按钮
+		const delimiterToggleSwitch = delimiterGroup.createEl("label", {cls: "switch"});
+		const delimiterToggleInput = delimiterToggleSwitch.createEl("input", {
+			attr: {
+				type: "checkbox",
+			},
+		});
+		delimiterToggleInput.checked = this.settings.enableHeadingDelimiterBreak;
+		
+		delimiterToggleSwitch.createEl("span", {cls: "slider round"});
+		
+		// 开关文本
+		const delimiterToggleText = delimiterGroup.createEl("span", {
+			cls: "toggle-text", 
+			text: this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行",
+		});
+		
+		// 分隔符换行开关事件
+		delimiterToggleInput.onchange = async () => {
+			this.settings.enableHeadingDelimiterBreak = delimiterToggleInput.checked;
+			delimiterToggleText.textContent = this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行";
+			
+			// 保存设置
+			this.saveSettingsToPlugin();
+			
+			// 重新渲染以应用新设置
+			await this.renderMarkdown();
+		};
 	}
 
 	private buildActionButtons(container: HTMLElement): void {
 		// 操作按钮组
 		const actionGroup = container.createDiv({cls: "toolbar-group"});
-
 		// 刷新按钮
 		const refreshBtn = actionGroup.createEl("button", {
 			cls: "toolbar-button refresh-button",

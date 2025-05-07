@@ -36,8 +36,10 @@ export class NMPSettings {
 	enableThemeColor: boolean;
 	// 分发服务相关设置
 	distributionConfig: any;
-	// 二级标题序号设置
+	// 二级标题设置
 	enableHeadingNumber: boolean;
+	// 二级标题分隔符换行设置（遇到逗号等符号自动换行）
+	enableHeadingDelimiterBreak: boolean;
 	expireat: Date | null = null;
 
 	private static instance: NMPSettings;
@@ -69,6 +71,7 @@ export class NMPSettings {
 		this.themeColor = '#7852ee'; // 默认主题色为紫色
 		this.enableThemeColor = false; // 默认不启用自定义主题色，使用CSS中的颜色
 		this.enableHeadingNumber = true; // 默认启用二级标题序号
+		this.enableHeadingDelimiterBreak = true; // 默认启用分隔符自动换行
 		this.distributionConfig = null; // 分发服务配置
 	}
 
@@ -101,6 +104,7 @@ export class NMPSettings {
 			enableThemeColor,
 			distributionConfig,
 			enableHeadingNumber,
+			enableHeadingDelimiterBreak,
 		} = data;
 
 		const settings = NMPSettings.getInstance();
@@ -154,6 +158,9 @@ export class NMPSettings {
 		}
 		if (enableHeadingNumber !== undefined) {
 			settings.enableHeadingNumber = enableHeadingNumber;
+		}
+		if (enableHeadingDelimiterBreak !== undefined) {
+			settings.enableHeadingDelimiterBreak = enableHeadingDelimiterBreak;
 		}
 		settings.getExpiredDate();
 
