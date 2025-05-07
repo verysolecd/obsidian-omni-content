@@ -1,21 +1,25 @@
 import {CardDataManager} from "../markdown/code";
-import {NMPSettings} from "../settings";
-import {logger} from "../utils";
-import {ContentAdapter} from "./content-adapter";
+import {applyCSS, logger} from "../utils";
+import {BaseAdapter} from "./content-adapter";
+import colors from "colors";
 
 /**
  * 知乎适配器 - 处理知乎平台特定的格式要求
  */
-export class ZhihuAdapter implements ContentAdapter {
+export class ZhihuAdapter extends BaseAdapter {
 	/**
-	 * 适配知乎内容
-	 * @param html 原始HTML内容
-	 * @param settings 插件设置
-	 * @returns 适配后的HTML内容
+	 * 获取适配器名称
 	 */
-	adaptContent(html: string, settings: NMPSettings): string {
-		logger.debug("应用知乎适配器处理HTML");
-
+	protected getAdapterName(): string {
+		return "知乎";
+	}
+	
+	/**
+	 * 处理HTML内容
+	 * @param html 原始HTML内容 
+	 * @returns 处理后的HTML内容
+	 */
+	protected process(html: string): string {
 		let processedHtml = html;
 
 		// 知乎特定处理开始
@@ -27,14 +31,48 @@ export class ZhihuAdapter implements ContentAdapter {
 		processedHtml = this.processLinks(processedHtml);
 
 		// 3. 处理代码块（确保代码在知乎上正确显示）
-		processedHtml = this.processCodeBlocks(processedHtml, settings);
+		processedHtml = this.processCodeBlocks(processedHtml);
 
-		// 4. 其他知乎特定处理...
+		// 4. 处理标题
+		processedHtml = this.processHeadings(processedHtml);
+
+		// 5. 其他知乎特定处理...
 
 		// 最后，恢复代码卡片
 		processedHtml = CardDataManager.getInstance().restoreCard(processedHtml);
 
 		return processedHtml;
+	}
+	
+	/**
+	 * 应用样式到HTML内容，知乎版本
+	 * @param html HTML内容
+	 * @param css CSS样式字符串
+	 * @returns 应用样式后的HTML内容
+	 */
+	public applyStyles(html: string, css: string): string {
+		try {
+			// 创建临时DOM元素
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = html;
+			document.body.appendChild(tempDiv);
+			
+			// 使用 applyCSS 工具函数应用样式
+			applyCSS(tempDiv, css);
+			
+			// 知乎可能需要特定的样式处理，比如代码块、引用等
+			// TODO: 添加知乎特定样式处理
+			
+			// 获取处理后的HTML并清理临时元素
+			const result = tempDiv.innerHTML;
+			document.body.removeChild(tempDiv);
+			
+			logger.info(colors.blue("已应用知乎样式"));
+			return result;
+		} catch (error) {
+			logger.error("应用知乎样式时出错:", error);
+			return html;
+		}
 	}
 
 	/**
@@ -56,9 +94,11 @@ export class ZhihuAdapter implements ContentAdapter {
 	/**
 	 * 处理代码块，确保在知乎中正确显示
 	 */
-	private processCodeBlocks(html: string, settings: NMPSettings): string {
+	private processCodeBlocks(html: string): string {
 		// 知乎代码块处理
-		// TODO: 使用 settings.defaultHighlight 来决定代码高亮样式
+		// 使用 this.currentSettings.defaultHighlight 来决定代码高亮样式
+		const highlightStyle = this.currentSettings.defaultHighlight;
+		logger.debug(`知乎代码块处理使用高亮样式: ${highlightStyle}`);
 		return html;
 	}
 }

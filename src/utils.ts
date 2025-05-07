@@ -146,7 +146,7 @@ export function applyCSS(root: HTMLElement, css: string) {
 	// 获取计算样式并应用到元素
 	const allElements = root.querySelectorAll("*");
 	for (let i = 0; i < allElements.length; i++) {
-		// logger.info(`applyCSS [${i}]`, allElements[i]);
+		// logger.info(`applyCSS [${i}]`, allElements[i]);	 
 		const el = allElements[i] as HTMLElement;
 		const computedStyle = window.getComputedStyle(el);
 		let inlineStyles = "";

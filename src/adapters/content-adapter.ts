@@ -12,6 +12,14 @@ export interface ContentAdapter {
 	 * @returns 适配后的HTML内容
 	 */
 	adaptContent(html: string, settings: NMPSettings): string;
+	
+	/**
+	 * 应用样式到HTML内容
+	 * @param html HTML内容
+	 * @param css CSS样式字符串
+	 * @returns 应用样式后的HTML内容
+	 */
+	applyStyles(html: string, css: string): string;
 }
 
 // 添加基础适配器抽象类
@@ -22,6 +30,30 @@ export abstract class BaseAdapter implements ContentAdapter {
 	constructor() {
 		// 初始化时获取设置单例
 		this.currentSettings = NMPSettings.getInstance();
+	}
+	
+	/**
+	 * 应用样式到HTML内容，默认实现，子类可覆盖
+	 * @param html HTML内容
+	 * @param css CSS样式字符串
+	 * @returns 应用样式后的HTML内容
+	 */
+	public applyStyles(html: string, css: string): string {
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = html;
+		document.body.appendChild(tempDiv);
+
+		// 创建样式元素
+		const styleEl = document.createElement('style');
+		styleEl.textContent = css;
+		tempDiv.appendChild(styleEl);
+
+		// 获取渲染后的HTML
+		const result = tempDiv.innerHTML;
+		
+		// 清理临时元素
+		document.body.removeChild(tempDiv);
+		return result;
 	}
 
 	/**

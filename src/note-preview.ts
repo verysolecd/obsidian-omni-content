@@ -18,7 +18,7 @@ import { LocalImageManager } from "./markdown/local-file";
 import { MarkedParser } from "./markdown/parser";
 import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
-import { applyCSS, logger, uevent } from "./utils";
+import { logger, uevent } from "./utils";
 import {
 	DraftArticle,
 	wxBatchGetMaterial,
@@ -270,6 +270,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 */
 	async getArticleContent(platform = "preview") {
 		try {
+			// 获取当前激活的文件内容
 			const af = this.app.workspace.getActiveFile();
 			let md = "";
 			if (af && af.extension.toLocaleLowerCase() === "md") {
@@ -278,6 +279,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			} else {
 				md = "没有可渲染的笔记或文件不支持渲染";
 			}
+
+			// 移除前端内容
 			if (md.startsWith("---")) {
 				md = md.replace(FRONT_MATTER_REGEX, "");
 			}
@@ -290,113 +293,22 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			articleHTML = this.wrapArticleContent(articleHTML);
 			logger.info(colors.green("HTML (wrapped): "), articleHTML);
 
-			// 获取 CSS
+			// 获取适配器
+			const adapter = ContentAdapterFactory.getAdapter(platform);
+			
+			// 获取CSS
 			const css = this.getCSS();
 
-			// 预览模式和微信模式的处理逻辑不同
-			if (platform === "preview") {
-				// 预览模式: 先应用CSS，再用适配器处理
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = articleHTML;
-				document.body.appendChild(tempDiv);
-				
-				// 应用 CSS
-				applyCSS(tempDiv, css);
-				articleHTML = tempDiv.innerHTML;
-				
-				// 清理临时元素
-				document.body.removeChild(tempDiv);
-				
-				// 使用适配器处理内容
-				const adapter = ContentAdapterFactory.getAdapter(platform);
-				articleHTML = adapter.adaptContent(articleHTML, this.settings);
-			} else if (platform === "wechat") {
-				// 微信模式: 先用适配器处理内容结构，再对最终内容应用样式
-				const adapter = ContentAdapterFactory.getAdapter(platform);
-				
-				// 先进行内容结构调整，但不应用样式
-				const contentProcessed = adapter.adaptContent(articleHTML, this.settings);
-				
-				// 创建临时 DOM 元素并应用样式
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = contentProcessed;
-				document.body.appendChild(tempDiv);
-				
-				// 添加样式元素
-				const styleEl = document.createElement('style');
-				styleEl.textContent = css;
-				tempDiv.appendChild(styleEl);
-				logger.info(colors.yellow("为微信内容添加样式元素"));
-				
-				// 直接在这里处理样式，而不依赖适配器的 processStyles 方法
-				// 获取所有非样式元素
-				const allElements = tempDiv.querySelectorAll("*:not(style)");
-				logger.info(colors.yellow("处理WeChat内容元素数量:"), allElements.length);
-				
-				// 应用计算样式到每个元素
-				for (let i = 0; i < allElements.length; i++) {
-					const el = allElements[i] as HTMLElement;
-					const computedStyle = window.getComputedStyle(el);
-					let inlineStyles = "";
-
-					// 提取关键样式属性
-					const properties = [
-						"color",
-						"background-color",
-						"font-family",
-						"font-size", 
-						"font-weight",
-						"text-align",
-						"line-height",
-						"margin",
-						"padding",
-						"border",
-						"border-radius",
-					];
-
-					for (const prop of properties) {
-						const value = computedStyle.getPropertyValue(prop);
-						if (value && value !== "" && value !== "none") {
-							// 微信公众号支持的字体比较有限
-							if (prop === "font-family") {
-								inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
-								continue;
-							}
-
-							// 处理过大或过小的字体
-							if (prop === "font-size") {
-								const fontSize = parseInt(value);
-								if (fontSize > 40) {
-									inlineStyles += `font-size: 40px; `;
-									continue;
-								} else if (fontSize < 12 && el.tagName !== "SUP" && el.tagName !== "SUB") {
-									inlineStyles += `font-size: 12px; `;
-									continue;
-								}
-							}
-
-							inlineStyles += `${prop}: ${value}; `;
-						}
-					}
-
-					// 应用内联样式
-					if (inlineStyles) {
-						const existingStyle = el.getAttribute("style") || "";
-						el.setAttribute("style", existingStyle + inlineStyles);
-					}
-				}
-				
-				// 移除所有 style 标签，微信不支持
-				const styleElements = tempDiv.querySelectorAll('style');
-				styleElements.forEach(el => el.remove());
-				
-				// 获取处理后的HTML并清理临时元素
-				articleHTML = tempDiv.innerHTML;
-				document.body.removeChild(tempDiv);
+			// 根据平台不同选择不同的处理流程
+			if (platform === "wechat") {
+				// 微信模式: 先调整内容结构，再应用样式
+				const structuredContent = adapter.adaptContent(articleHTML, this.settings);
+				// 应用样式并内联
+				articleHTML = adapter.applyStyles(structuredContent, css);
 			} else {
-				// 其他平台的适配器
-				const adapter = ContentAdapterFactory.getAdapter(platform);
-				articleHTML = adapter.adaptContent(articleHTML, this.settings);
+				// 其他平台: 先应用样式，再调整内容结构
+				const styledContent = adapter.applyStyles(articleHTML, css);
+				articleHTML = adapter.adaptContent(styledContent, this.settings);
 			}
 
 			logger.info(colors.green("HTML (final processed): "), articleHTML.substring(0, 200) + "...");

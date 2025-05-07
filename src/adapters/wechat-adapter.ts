@@ -551,39 +551,32 @@ export class WeChatAdapter extends BaseAdapter {
 		return newList;
 	}
 
-	private processStyles(articleHTML: string): string {
+	/**
+	 * 重写基类的 applyStyles 方法，为微信配置内联样式
+	 * @param html HTML内容
+	 * @param css CSS样式字符串
+	 * @returns 应用样式后的HTML内容
+	 */
+	public applyStyles(html: string, css: string): string {
 		try {
-			// 确保在文档中创建并挂载元素，这样才能获取计算样式
+			// 创建临时DOM元素
 			const tempDiv = document.createElement('div');
-			tempDiv.innerHTML = articleHTML;
+			tempDiv.innerHTML = html;
 			document.body.appendChild(tempDiv);
 
-			// 微信不支持外联 style 标签，需要将所有样式内联到元素中
-			// 获取所有 style 标签内容，然后移除它们
-			const styleElements = tempDiv.querySelectorAll('style');
-			let combinedCSS = '';
-			styleElements.forEach(el => {
-				combinedCSS += el.textContent || '';
-				el.remove();
-			});
+			// 添加样式元素
+			const styleEl = document.createElement('style');
+			styleEl.textContent = css;
+			tempDiv.appendChild(styleEl);
+			logger.info(colors.yellow("为微信内容添加样式元素"));
 
-			// 创建一个临时样式元素来应用收集到的CSS规则
-			if (combinedCSS) {
-				const tempStyle = document.createElement('style');
-				tempStyle.textContent = combinedCSS;
-				tempDiv.appendChild(tempStyle);
-			}
-
-			// 应用计算样式到每个元素
-			const allElements = tempDiv.querySelectorAll("*");
+			// 获取所有非样式元素
+			const allElements = tempDiv.querySelectorAll("*:not(style)");
 			logger.info(colors.yellow("处理微信样式元素数量:"), allElements.length);
 
+			// 应用计算样式到每个元素
 			for (let i = 0; i < allElements.length; i++) {
 				const el = allElements[i] as HTMLElement;
-				
-				// 跳过样式元素
-				if (el.tagName.toLowerCase() === 'style') continue;
-				
 				const computedStyle = window.getComputedStyle(el);
 				let inlineStyles = "";
 
@@ -634,16 +627,29 @@ export class WeChatAdapter extends BaseAdapter {
 				}
 			}
 
-			// 获取处理后的HTML并移除临时元素
+			// 移除所有 style 标签，微信不支持
+			const styleElements = tempDiv.querySelectorAll('style');
+			styleElements.forEach(el => el.remove());
+
+			// 获取处理后的HTML并清理临时元素
 			const result = tempDiv.innerHTML;
 			document.body.removeChild(tempDiv);
 
 			logger.info(colors.yellow("应用内联样式后的微信内容:"), result.substring(0, 200) + "...");
 			return result;
 		} catch (error) {
-			logger.error("处理微信样式时出错:", error);
-			return articleHTML;
+			logger.error("应用微信样式时出错:", error);
+			return html;
 		}
+	}
+
+	/**
+	 * 此方法已被 applyStyles 替代，保留以兼容现有代码
+	 * @private
+	 * @deprecated 请使用 applyStyles 方法
+	 */
+	private processStyles(articleHTML: string): string {
+		return this.applyStyles(articleHTML, "");
 	}
 
 }
