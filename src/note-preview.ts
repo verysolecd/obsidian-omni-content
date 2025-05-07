@@ -978,18 +978,13 @@ ${customCSS}`;
 
 		// 创建开关按钮
 		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
-		logger.info("checkbox创建前状态:", this.settings.enableHeadingNumber);
-
-		// 只设置 type 属性，不设置 checked 属性
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
 			},
 		});
-
-		// 用 DOM 属性而非 HTML 属性设置选中状态
 		toggleInput.checked = this.settings.enableHeadingNumber;
-		logger.info("checkbox创建后状态:", toggleInput.checked);
+		
 		toggleSwitch.createEl("span", { cls: "slider round" });
 
 		// 开关文本
