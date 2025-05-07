@@ -552,8 +552,98 @@ export class WeChatAdapter extends BaseAdapter {
 	}
 
 	private processStyles(articleHTML: string): string {
-		// todo: 处理样式
-		return ''
+		try {
+			// 确保在文档中创建并挂载元素，这样才能获取计算样式
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = articleHTML;
+			document.body.appendChild(tempDiv);
+
+			// 微信不支持外联 style 标签，需要将所有样式内联到元素中
+			// 获取所有 style 标签内容，然后移除它们
+			const styleElements = tempDiv.querySelectorAll('style');
+			let combinedCSS = '';
+			styleElements.forEach(el => {
+				combinedCSS += el.textContent || '';
+				el.remove();
+			});
+
+			// 创建一个临时样式元素来应用收集到的CSS规则
+			if (combinedCSS) {
+				const tempStyle = document.createElement('style');
+				tempStyle.textContent = combinedCSS;
+				tempDiv.appendChild(tempStyle);
+			}
+
+			// 应用计算样式到每个元素
+			const allElements = tempDiv.querySelectorAll("*");
+			logger.info(colors.yellow("处理微信样式元素数量:"), allElements.length);
+
+			for (let i = 0; i < allElements.length; i++) {
+				const el = allElements[i] as HTMLElement;
+				
+				// 跳过样式元素
+				if (el.tagName.toLowerCase() === 'style') continue;
+				
+				const computedStyle = window.getComputedStyle(el);
+				let inlineStyles = "";
+
+				// 提取关键样式属性
+				const properties = [
+					"color",
+					"background-color",
+					"font-family",
+					"font-size",
+					"font-weight",
+					"text-align",
+					"line-height",
+					"margin",
+					"padding",
+					"border",
+					"border-radius"
+				];
+
+				for (const prop of properties) {
+					const value = computedStyle.getPropertyValue(prop);
+					if (value && value !== "" && value !== "none") {
+						// 微信公众号支持的字体比较有限
+						if (prop === "font-family") {
+							inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
+							continue;
+						}
+
+						// 处理过大或过小的字体
+						if (prop === "font-size") {
+							const fontSize = parseInt(value);
+							if (fontSize > 40) {
+								inlineStyles += `font-size: 40px; `;
+								continue;
+							} else if (fontSize < 12 && el.tagName !== "SUP" && el.tagName !== "SUB") {
+								inlineStyles += `font-size: 12px; `;
+								continue;
+							}
+						}
+
+						inlineStyles += `${prop}: ${value}; `;
+					}
+				}
+
+				// 应用内联样式
+				if (inlineStyles) {
+					const existingStyle = el.getAttribute("style") || "";
+					el.setAttribute("style", existingStyle + inlineStyles);
+				}
+			}
+
+			// 获取处理后的HTML并移除临时元素
+			const result = tempDiv.innerHTML;
+			document.body.removeChild(tempDiv);
+
+			logger.info(colors.yellow("应用内联样式后的微信内容:"), result.substring(0, 200) + "...");
+			return result;
+		} catch (error) {
+			logger.error("处理微信样式时出错:", error);
+			return articleHTML;
+		}
 	}
 
 }
