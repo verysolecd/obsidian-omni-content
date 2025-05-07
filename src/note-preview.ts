@@ -1,17 +1,31 @@
-import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, Workspace, WorkspaceLeaf,} from "obsidian";
-import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
-import {DistributionModal} from "src/modules/distribution-modal";
-import {ContentAdapterFactory, initializeContentAdapters} from "./adapters";
+import {
+	apiVersion,
+	EventRef,
+	ItemView,
+	Notice,
+	Platform,
+	TFile,
+	Workspace,
+	WorkspaceLeaf,
+} from "obsidian";
+import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
+import { DistributionModal } from "src/modules/distribution-modal";
+import { ContentAdapterFactory, initializeContentAdapters } from "./adapters";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import {CardDataManager} from "./markdown/code";
-import {MDRendererCallback} from "./markdown/extension";
-import {LocalImageManager} from "./markdown/local-file";
-import {MarkedParser} from "./markdown/parser";
-import {NMPSettings} from "./settings";
+import { CardDataManager } from "./markdown/code";
+import { MDRendererCallback } from "./markdown/extension";
+import { LocalImageManager } from "./markdown/local-file";
+import { MarkedParser } from "./markdown/parser";
+import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
-import {applyCSS, logger, uevent} from "./utils";
-import {DraftArticle, wxBatchGetMaterial, wxGetToken, wxUploadImage} from "./weixin-api";
+import { applyCSS, logger, uevent } from "./utils";
+import {
+	DraftArticle,
+	wxBatchGetMaterial,
+	wxGetToken,
+	wxUploadImage,
+} from "./weixin-api";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
 	workspace: Workspace;
@@ -47,7 +61,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				const options = selectEl.options;
 				const currentIndex = selectEl.selectedIndex;
 
-				if (e.key === "ArrowDown" && currentIndex < options.length - 1) {
+				if (
+					e.key === "ArrowDown" &&
+					currentIndex < options.length - 1
+				) {
 					selectEl.selectedIndex = currentIndex + 1;
 				} else if (e.key === "ArrowUp" && currentIndex > 0) {
 					selectEl.selectedIndex = currentIndex - 1;
@@ -140,7 +157,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			this.articleHTML = await this.markedParser.parse(md);
 
 			this.setArticle(this.articleHTML);
-			
+
 			// 渲染完成后更新CSS变量，确保列表标记等元素的颜色正确应用
 			this.updateCSSVariables();
 		} catch (e) {
@@ -162,28 +179,33 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * 这是让主题色变更立即生效的关键
 	 */
 	updateCSSVariables() {
-		const noteContainer = this.articleDiv?.querySelector(".note-to-mp") as HTMLElement;
+		const noteContainer = this.articleDiv?.querySelector(
+			".note-to-mp"
+		) as HTMLElement;
 		if (!noteContainer) {
 			console.log("找不到.note-to-mp容器，无法更新CSS变量");
 			return;
 		}
-		
+
 		// 根据启用状态决定是否设置主题色变量
 		if (this.settings.enableThemeColor) {
 			// 设置自定义主题色
-			noteContainer.style.setProperty("--primary-color", this.settings.themeColor || "#7852ee");
+			noteContainer.style.setProperty(
+				"--primary-color",
+				this.settings.themeColor || "#7852ee"
+			);
 			console.log(`应用自定义主题色：${this.settings.themeColor}`);
 		} else {
 			// 删除自定义主题色，恢复使用主题文件中的颜色
 			noteContainer.style.removeProperty("--primary-color");
 			console.log("恢复使用主题文件中的颜色");
 		}
-		
+
 		// 额外强制更新列表标记的样式
-		const listItems = noteContainer.querySelectorAll('li');
-		listItems.forEach(item => {
+		const listItems = noteContainer.querySelectorAll("li");
+		listItems.forEach((item) => {
 			// 触发微小的样式变化来强制浏览器重绘
-			(item as HTMLElement).style.display = 'list-item';
+			(item as HTMLElement).style.display = "list-item";
 		});
 	}
 
@@ -267,7 +289,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param platform 目标平台，默认为 'preview' 预览模式
 	 * @returns 适配后的文章HTML内容
 	 */
-	getArticleContent(platform = 'preview') {
+	getArticleContent(platform = "preview") {
 		// 获取基础HTML内容
 		const html = applyCSS(this.articleDiv, this.getCSS());
 		logger.info(`获取平台 ${platform} 的内容，应用CSS`);
@@ -289,24 +311,24 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			const customCSS = this.settings.useCustomCss
 				? this.assetsManager.customCSS
 				: "";
-			
+
 			// 根据用户选择决定是否注入主题色变量
-			let themeColorCSS = '';
-			
+			let themeColorCSS = "";
+
 			// 当用户启用自定义主题色时，注入变量
 			if (this.settings.enableThemeColor) {
 				themeColorCSS = `
 :root {
-  --primary-color: ${this.settings.themeColor || '#7852ee'};
+  --primary-color: ${this.settings.themeColor || "#7852ee"};
 }
 `;
 			}
-			
-			// 确保highlight和theme存在，否则使用默认值
-const highlightCss = highlight?.css || '';
-const themeCss = theme?.css || '';
 
-return `${themeColorCSS}
+			// 确保highlight和theme存在，否则使用默认值
+			const highlightCss = highlight?.css || "";
+			const themeCss = theme?.css || "";
+
+			return `${themeColorCSS}
 
 ${InlineCSS}
 
@@ -325,15 +347,14 @@ ${customCSS}`;
 	}
 
 	buildMsgView(parent: HTMLDivElement) {
-		this.msgView = parent.createDiv({cls: "msg-view"});
-		const title = this.msgView.createDiv({cls: "msg-title"});
+		this.msgView = parent.createDiv({ cls: "msg-view" });
+		const title = this.msgView.createDiv({ cls: "msg-title" });
 		title.id = "msg-title";
 		title.innerText = "加载中...";
 		const okBtn = this.msgView.createEl(
 			"button",
-			{cls: "msg-ok-btn"},
-			async (button) => {
-			}
+			{ cls: "msg-ok-btn" },
+			async (button) => {}
 		);
 		okBtn.id = "msg-ok-btn";
 		okBtn.innerText = "确定";
@@ -358,300 +379,49 @@ ${customCSS}`;
 		this.msgView.setAttr("style", "display: flex;");
 	}
 
+	/**
+	 * 构建工具栏
+	 * @param parent 父容器元素
+	 */
 	buildToolbar(parent: HTMLDivElement) {
 		// 创建专业化的工具栏
-		this.toolbar = parent.createDiv({cls: "preview-toolbar"});
+		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
 
-		// 添加工具栏顶部品牌区域
-		const brandSection = this.toolbar.createDiv({cls: "brand-section"});
+		// 1. 构建品牌区域
+		this.buildBrandSection();
 
-		// 品牌Logo和名称
-		const brandLogo = brandSection.createDiv({cls: "brand-logo"});
-		brandLogo.innerHTML = `
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				<path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				<path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			</svg>
-		`;
-
-		const brandName = brandSection.createDiv({cls: "brand-name"});
-		brandName.innerHTML = "手工川智能创作平台";
-
-		// 创建主工具栏容器
+		// 2. 创建主工具栏容器
 		const toolbarContainer = this.toolbar.createDiv({
 			cls: "toolbar-container",
 		});
 
-		// 创建工具栏内容区域 - 单列垂直布局
+		// 3. 创建工具栏内容区域 - 单列垂直布局
 		const toolbarContent = toolbarContainer.createDiv({
 			cls: "toolbar-content toolbar-vertical",
 		});
 
-		// 1.1 模板设置组
-		const templateGroup = toolbarContent.createDiv({cls: "toolbar-group"});
-		const templateLabel = templateGroup.createDiv({cls: "toolbar-label"});
-		templateLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+		// 4. 构建各功能模块
+		this.buildTemplateSelector(toolbarContent);
 
-		const templateManager = TemplateManager.getInstance();
-		const templates = templateManager.getTemplateNames();
-
-		const templateWrapper = templateGroup.createDiv({
-			cls: "select-wrapper",
-		});
-		const templateSelect = templateWrapper.createEl("select", {
-			cls: "toolbar-select",
-		});
-
-		// 添加"不使用模板"选项
-		const emptyOption = templateSelect.createEl("option");
-		emptyOption.value = "";
-		emptyOption.text = "不使用模板";
-		emptyOption.selected = !this.settings.useTemplate;
-
-		// 添加模板选项
-		templates.forEach((template) => {
-			const op = templateSelect.createEl("option");
-			op.value = template;
-			op.text = template;
-			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
-		});
-
-		templateSelect.onchange = async () => {
-			if (templateSelect.value === "") {
-				this.settings.useTemplate = false;
-			} else {
-				this.settings.useTemplate = true;
-				this.settings.defaultTemplate = templateSelect.value;
-			}
-
-			// 保存设置
-			this.saveSettingsToPlugin();
-
-			// 重新渲染以应用模板
-			await this.renderMarkdown();
-		};
-
-		// 添加键盘导航
-		this.addKeyboardNavigation(templateSelect);
-
-		// 1.2 样式设置组
+		// 5. 如果启用了样式UI，构建样式相关选项
 		if (this.settings.showStyleUI) {
-			const styleGroup = toolbarContent.createDiv({cls: "toolbar-group"});
-
-			const styleLabel = styleGroup.createDiv({cls: "toolbar-label"});
-			styleLabel.innerHTML =
-				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
-
-			const selectWrapper = styleGroup.createDiv({
-				cls: "select-wrapper",
-			});
-			const selectBtn = selectWrapper.createEl("select", {
-				cls: "toolbar-select",
-			});
-
-			selectBtn.onchange = async () => {
-				this.currentTheme = selectBtn.value;
-				this.settings.defaultStyle = selectBtn.value;
-				this.saveSettingsToPlugin();
-				this.setStyle(this.getCSS());
-			};
-
-			for (let s of this.assetsManager.themes) {
-				const op = selectBtn.createEl("option");
-				op.value = s.className;
-				op.text = s.name;
-				op.selected = s.className == this.settings.defaultStyle;
-			}
-
-			// 添加键盘导航
-			this.addKeyboardNavigation(selectBtn);
-
-			// 代码高亮设置
-			const highlightGroup = toolbarContent.createDiv({
-				cls: "toolbar-group",
-			});
-
-			const highlightLabel = highlightGroup.createDiv({
-				cls: "toolbar-label",
-			});
-			highlightLabel.innerHTML =
-				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
-
-			const highlightWrapper = highlightGroup.createDiv({
-				cls: "select-wrapper",
-			});
-			const highlightStyleBtn = highlightWrapper.createEl("select", {
-				cls: "toolbar-select",
-			});
-
-			highlightStyleBtn.onchange = async () => {
-				this.currentHighlight = highlightStyleBtn.value;
-				this.settings.defaultHighlight = highlightStyleBtn.value;
-				this.saveSettingsToPlugin();
-				this.setStyle(this.getCSS());
-			};
-
-			for (let s of this.assetsManager.highlights) {
-				const op = highlightStyleBtn.createEl("option");
-				op.value = s.name;
-				op.text = s.name;
-				op.selected = s.name == this.settings.defaultHighlight;
-			}
-
-			// 添加键盘导航
-			this.addKeyboardNavigation(highlightStyleBtn);
-
-			// 主题色组
-			const colorGroup = toolbarContent.createDiv({cls: "toolbar-group"});
-			
-			const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
-			colorLabel.innerHTML =
-				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
-
-			// 选择器容器
-			const colorControlWrapper = colorGroup.createDiv({cls: "color-control-wrapper"});
-			
-			// 添加开关选项
-			const enableSwitch = colorControlWrapper.createDiv({cls: "enable-switch"});
-			
-			// 创建开关按钮
-			const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
-			const toggleInput = toggleSwitch.createEl("input", {
-				attr: {
-					type: "checkbox", 
-					checked: this.settings.enableThemeColor
-				}
-			});
-			toggleSwitch.createEl("span", {cls: "slider round"});
-			
-			// 开关文本
-			const toggleText = enableSwitch.createEl("span", {
-				cls: "toggle-text",
-				text: this.settings.enableThemeColor ? "启用自定义色" : "使用主题色"
-			});
-			
-			// 开关事件
-			toggleInput.onchange = async () => {
-				this.settings.enableThemeColor = toggleInput.checked;
-				toggleText.textContent = this.settings.enableThemeColor ? "启用自定义色" : "使用主题色";
-				
-				// 更新颜色选择器的禁用状态
-				colorPicker.disabled = !this.settings.enableThemeColor;
-				colorWrapper.style.opacity = this.settings.enableThemeColor ? "1" : "0.5";
-				
-				this.saveSettingsToPlugin();
-				
-				// 强制更新CSS变量
-				this.updateCSSVariables();
-				
-				// 重新渲染文档
-				await this.renderMarkdown();
-			};
-			
-			// 颜色选择器容器
-			const colorWrapper = colorControlWrapper.createDiv({
-				cls: "color-picker-wrapper",
-				attr: {
-					style: this.settings.enableThemeColor ? "" : "opacity: 0.5;"
-				}
-			});
-			
-			// 创建颜色选择器
-			const colorPicker = colorWrapper.createEl("input", {
-				cls: "toolbar-color-picker",
-				attr: {
-					type: "color",
-					value: this.settings.themeColor || "#7852ee",
-					disabled: !this.settings.enableThemeColor
-				}
-			});
-			
-			// 添加颜色预览
-			const colorPreview = colorWrapper.createDiv({cls: "color-preview"});
-			colorPreview.style.backgroundColor = this.settings.themeColor || "#7852ee";
-			
-			// 颜色拖动时实时更新效果 (不保存设置)
-			colorPicker.oninput = () => {
-				const newColor = colorPicker.value;
-				// 仅更新预览颜色和样式变量，不保存设置
-				colorPreview.style.backgroundColor = newColor;
-				
-				// 临时更新主题色并强制更新CSS变量
-				const originalColor = this.settings.themeColor;
-				this.settings.themeColor = newColor; // 临时更新为新颜色
-				this.updateCSSVariables(); // 更新变量应用到DOM
-				this.settings.themeColor = originalColor; // 还原设置，因为还没有保存
-			};
-			
-			// 颜色选择完成后保存设置
-			colorPicker.onchange = async () => {
-				const newColor = colorPicker.value;
-				this.settings.themeColor = newColor;
-				colorPreview.style.backgroundColor = newColor;
-				this.saveSettingsToPlugin();
-				
-				// 强制更新CSS变量
-				this.updateCSSVariables();
-				
-				// 在选择完成后重新渲染一次，确保所有内容都已更新
-				await this.renderMarkdown();
-			};
+			this.buildThemeSelector(toolbarContent);
+			this.buildHighlightSelector(toolbarContent);
+			this.buildThemeColorSelector(toolbarContent);
 		}
 
-		// 操作按钮组
-		const actionGroup = toolbarContent.createDiv({cls: "toolbar-group"});
+		// 6. 构建操作按钮组
+		this.buildActionButtons(toolbarContent);
 
-		// 刷新按钮
-		const refreshBtn = actionGroup.createEl("button", {
-			cls: "toolbar-button refresh-button",
-		});
-		refreshBtn.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
-
-		refreshBtn.onclick = async () => {
-			this.setStyle(this.getCSS());
-			await this.renderMarkdown();
-			uevent("refresh");
-		};
-
-		// 复制按钮
-		if (Platform.isDesktop) {
-			const copyBtn = actionGroup.createEl("button", {
-				cls: "toolbar-button copy-button",
-			});
-			copyBtn.innerHTML =
-				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
-
-			copyBtn.onclick = async () => {
-				await this.copyArticle();
-				uevent("copy");
-			};
-		}
-
-		// 分发按钮
-		const distributeBtn = actionGroup.createEl("button", {
-			cls: "toolbar-button distribute-button",
-		});
-		distributeBtn.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
-
-		distributeBtn.onclick = async () => {
-			this.openDistributionModal();
-			uevent("distribute");
-		};
-
-		// 创建消息视图，但将其放在工具栏之外
+		// 7. 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
 	}
-
 	async buildUI() {
 		this.container = this.containerEl.children[1];
 		this.container.empty();
 
-		this.mainDiv = this.container.createDiv({cls: "note-preview"});
+		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
 		// this.mainDiv.setAttribute(
 		// 	"style",
 		// 	"padding: 50px;"
@@ -659,7 +429,7 @@ ${customCSS}`;
 
 		this.buildToolbar(this.mainDiv);
 
-		this.renderDiv = this.mainDiv.createDiv({cls: "render-div"});
+		this.renderDiv = this.mainDiv.createDiv({ cls: "render-div" });
 		this.renderDiv.id = "render-div";
 		this.renderDiv.setAttribute(
 			"style",
@@ -808,12 +578,12 @@ ${customCSS}`;
 	 */
 	async copyArticle() {
 		// 直接获取为微信平台适配的内容
-		const content = this.getArticleContent('wechat');
+		const content = this.getArticleContent("wechat");
 
 		// 复制到剪贴板
 		await navigator.clipboard.write([
 			new ClipboardItem({
-				"text/html": new Blob([content], {type: "text/html"}),
+				"text/html": new Blob([content], { type: "text/html" }),
 			}),
 		]);
 
@@ -847,5 +617,319 @@ ${customCSS}`;
 
 		const modal = new DistributionModal(this.app, article);
 		modal.open();
+	}
+
+	/**
+	 * 构建品牌区域
+	 */
+	private buildBrandSection(): void {
+		// 添加工具栏顶部品牌区域
+		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
+
+		// 品牌Logo和名称
+		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
+		brandLogo.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+
+		const brandName = brandSection.createDiv({ cls: "brand-name" });
+		brandName.innerHTML = "手工川智能创作平台";
+	}
+
+	/**
+	 * 构建模板选择器
+	 * @param container 工具栏内容容器
+	 */
+	private buildTemplateSelector(container: HTMLElement): void {
+		const templateGroup = container.createDiv({ cls: "toolbar-group" });
+		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
+		templateLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+
+		const templateManager = TemplateManager.getInstance();
+		const templates = templateManager.getTemplateNames();
+
+		const templateWrapper = templateGroup.createDiv({
+			cls: "select-wrapper",
+		});
+		const templateSelect = templateWrapper.createEl("select", {
+			cls: "toolbar-select",
+		});
+
+		// 添加"不使用模板"选项
+		const emptyOption = templateSelect.createEl("option");
+		emptyOption.value = "";
+		emptyOption.text = "不使用模板";
+		emptyOption.selected = !this.settings.useTemplate;
+
+		// 添加模板选项
+		templates.forEach((template) => {
+			const op = templateSelect.createEl("option");
+			op.value = template;
+			op.text = template;
+			op.selected =
+				this.settings.useTemplate &&
+				template === this.settings.defaultTemplate;
+		});
+
+		templateSelect.onchange = async () => {
+			if (templateSelect.value === "") {
+				this.settings.useTemplate = false;
+			} else {
+				this.settings.useTemplate = true;
+				this.settings.defaultTemplate = templateSelect.value;
+			}
+
+			// 保存设置
+			this.saveSettingsToPlugin();
+
+			// 重新渲染以应用模板
+			await this.renderMarkdown();
+		};
+
+		// 添加键盘导航
+		this.addKeyboardNavigation(templateSelect);
+	}
+
+	/**
+	 * 构建主题选择器
+	 * @param container 工具栏内容容器
+	 */
+	private buildThemeSelector(container: HTMLElement): void {
+		const styleGroup = container.createDiv({ cls: "toolbar-group" });
+
+		const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
+		styleLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
+
+		const selectWrapper = styleGroup.createDiv({
+			cls: "select-wrapper",
+		});
+		const selectBtn = selectWrapper.createEl("select", {
+			cls: "toolbar-select",
+		});
+
+		selectBtn.onchange = async () => {
+			this.currentTheme = selectBtn.value;
+			this.settings.defaultStyle = selectBtn.value;
+			this.saveSettingsToPlugin();
+			this.setStyle(this.getCSS());
+		};
+
+		for (let s of this.assetsManager.themes) {
+			const op = selectBtn.createEl("option");
+			op.value = s.className;
+			op.text = s.name;
+			op.selected = s.className == this.settings.defaultStyle;
+		}
+
+		// 添加键盘导航
+		this.addKeyboardNavigation(selectBtn);
+	}
+
+	/**
+	 * 构建代码高亮选择器
+	 * @param container 工具栏内容容器
+	 */
+	private buildHighlightSelector(container: HTMLElement): void {
+		// 代码高亮设置
+		const highlightGroup = container.createDiv({
+			cls: "toolbar-group",
+		});
+
+		const highlightLabel = highlightGroup.createDiv({
+			cls: "toolbar-label",
+		});
+		highlightLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
+
+		const highlightWrapper = highlightGroup.createDiv({
+			cls: "select-wrapper",
+		});
+		const highlightStyleBtn = highlightWrapper.createEl("select", {
+			cls: "toolbar-select",
+		});
+
+		highlightStyleBtn.onchange = async () => {
+			this.currentHighlight = highlightStyleBtn.value;
+			this.settings.defaultHighlight = highlightStyleBtn.value;
+			this.saveSettingsToPlugin();
+			this.setStyle(this.getCSS());
+		};
+
+		for (let s of this.assetsManager.highlights) {
+			const op = highlightStyleBtn.createEl("option");
+			op.value = s.name;
+			op.text = s.name;
+			op.selected = s.name == this.settings.defaultHighlight;
+		}
+
+		// 添加键盘导航
+		this.addKeyboardNavigation(highlightStyleBtn);
+	}
+
+	/**
+	 * 构建主题色选择器
+	 * @param container 工具栏内容容器
+	 */
+	private buildThemeColorSelector(container: HTMLElement): void {
+		// 主题色组
+		const colorGroup = container.createDiv({ cls: "toolbar-group" });
+
+		const colorLabel = colorGroup.createDiv({ cls: "toolbar-label" });
+		colorLabel.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
+
+		// 选择器容器
+		const colorControlWrapper = colorGroup.createDiv({
+			cls: "color-control-wrapper",
+		});
+
+		// 添加开关选项
+		const enableSwitch = colorControlWrapper.createDiv({
+			cls: "enable-switch",
+		});
+
+		// 创建开关按钮
+		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
+		const toggleInput = toggleSwitch.createEl("input", {
+			attr: {
+				type: "checkbox",
+				checked: this.settings.enableThemeColor,
+			},
+		});
+		toggleSwitch.createEl("span", { cls: "slider round" });
+
+		// 开关文本
+		const toggleText = enableSwitch.createEl("span", {
+			cls: "toggle-text",
+			text: this.settings.enableThemeColor
+				? "启用自定义色"
+				: "使用主题色",
+		});
+
+		// 颜色选择器容器
+		const colorWrapper = colorControlWrapper.createDiv({
+			cls: "color-picker-wrapper",
+			attr: {
+				style: this.settings.enableThemeColor ? "" : "opacity: 0.5;",
+			},
+		});
+
+		// 创建颜色选择器
+		const colorPicker = colorWrapper.createEl("input", {
+			cls: "toolbar-color-picker",
+			attr: {
+				type: "color",
+				value: this.settings.themeColor || "#7852ee",
+				disabled: !this.settings.enableThemeColor,
+			},
+		});
+
+		// 添加颜色预览
+		const colorPreview = colorWrapper.createDiv({ cls: "color-preview" });
+		colorPreview.style.backgroundColor =
+			this.settings.themeColor || "#7852ee";
+
+		// 开关事件
+		toggleInput.onchange = async () => {
+			this.settings.enableThemeColor = toggleInput.checked;
+			toggleText.textContent = this.settings.enableThemeColor
+				? "启用自定义色"
+				: "使用主题色";
+
+			// 更新颜色选择器的禁用状态
+			colorPicker.disabled = !this.settings.enableThemeColor;
+			colorWrapper.style.opacity = this.settings.enableThemeColor
+				? "1"
+				: "0.5";
+
+			this.saveSettingsToPlugin();
+
+			// 强制更新CSS变量
+			this.updateCSSVariables();
+
+			// 重新渲染文档
+			await this.renderMarkdown();
+		};
+
+		// 颜色拖动时实时更新效果 (不保存设置)
+		colorPicker.oninput = () => {
+			const newColor = colorPicker.value;
+			// 仅更新预览颜色和样式变量，不保存设置
+			colorPreview.style.backgroundColor = newColor;
+
+			// 临时更新主题色并强制更新CSS变量
+			const originalColor = this.settings.themeColor;
+			this.settings.themeColor = newColor; // 临时更新为新颜色
+			this.updateCSSVariables(); // 更新变量应用到DOM
+			this.settings.themeColor = originalColor; // 还原设置，因为还没有保存
+		};
+
+		// 颜色选择完成后保存设置
+		colorPicker.onchange = async () => {
+			const newColor = colorPicker.value;
+			this.settings.themeColor = newColor;
+			colorPreview.style.backgroundColor = newColor;
+			this.saveSettingsToPlugin();
+
+			// 强制更新CSS变量
+			this.updateCSSVariables();
+
+			// 在选择完成后重新渲染一次，确保所有内容都已更新
+			await this.renderMarkdown();
+		};
+	}
+
+	/**
+	 * 构建操作按钮组
+	 * @param container 工具栏内容容器
+	 */
+	private buildActionButtons(container: HTMLElement): void {
+		// 操作按钮组
+		const actionGroup = container.createDiv({ cls: "toolbar-group" });
+
+		// 刷新按钮
+		const refreshBtn = actionGroup.createEl("button", {
+			cls: "toolbar-button refresh-button",
+		});
+		refreshBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
+
+		refreshBtn.onclick = async () => {
+			this.setStyle(this.getCSS());
+			await this.renderMarkdown();
+			uevent("refresh");
+		};
+
+		// 复制按钮
+		if (Platform.isDesktop) {
+			const copyBtn = actionGroup.createEl("button", {
+				cls: "toolbar-button copy-button",
+			});
+			copyBtn.innerHTML =
+				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
+
+			copyBtn.onclick = async () => {
+				await this.copyArticle();
+				uevent("copy");
+			};
+		}
+
+		// 分发按钮
+		const distributeBtn = actionGroup.createEl("button", {
+			cls: "toolbar-button distribute-button",
+		});
+		distributeBtn.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
+
+		distributeBtn.onclick = async () => {
+			this.openDistributionModal();
+			uevent("distribute");
+		};
 	}
 }
