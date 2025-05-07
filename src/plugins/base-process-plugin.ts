@@ -1,4 +1,4 @@
-import {IProcessPlugin} from "src/plugins/processors/interface";
+import {IProcessPlugin} from "src/plugins/interface";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 

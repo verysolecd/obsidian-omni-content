@@ -1,6 +1,6 @@
-import { HeadingsPlugin } from "src/plugins/processors/headings-plugin";
-import { IProcessPlugin } from "src/plugins/processors/interface";
-import { BaseAdapter } from "src/preview-adapters/base-adapter";
+import { HeadingsPlugin } from "src/plugins/headings-plugin";
+import { IProcessPlugin } from "src/plugins/interface";
+import { BaseAdapter } from "src/platform-adapters/base-adapter";
 
 /**
  * 预览模式适配器 - 用于OmniContent内部预览的正常渲染

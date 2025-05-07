@@ -1,4 +1,4 @@
-import {IBaseAdapter} from "src/preview-adapters/base-adapter";
+import {IBaseAdapter} from "src/platform-adapters/base-adapter";
 import {logger} from "src/utils";
 
 /**

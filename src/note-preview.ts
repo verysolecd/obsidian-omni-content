@@ -9,7 +9,7 @@ import {
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
 import { DistributionModal } from "src/modules/distribution-modal";
-import { PreviewAdapterFactory, initializeContentAdapters } from "./preview-adapters";
+import { PreviewAdapterFactory, initializeContentAdapters } from "./platform-adapters";
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
 import { CardDataManager } from "./markdown/code";

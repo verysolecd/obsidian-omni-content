@@ -1,14 +1,14 @@
-import { CodeBlocksPlugin } from "src/plugins/processors/code-blocks-plugin";
-import { HeadingsPlugin } from "src/plugins/processors/headings-plugin";
-import { ImagesPlugin } from "src/plugins/processors/images-plugin";
-import { LinksPlugin } from "src/plugins/processors/links-plugin";
-import { ListsPlugin } from "src/plugins/processors/lists-plugin";
-import { StylesPlugin } from "src/plugins/processors/styles-plugin";
-import { TablesPlugin } from "src/plugins/processors/tables-plugin";
+import { CodeBlocksPlugin } from "src/plugins/code-blocks-plugin";
+import { HeadingsPlugin } from "src/plugins/headings-plugin";
+import { ImagesPlugin } from "src/plugins/images-plugin";
+import { LinksPlugin } from "src/plugins/links-plugin";
+import { ListsPlugin } from "src/plugins/lists-plugin";
+import { StylesPlugin } from "src/plugins/styles-plugin";
+import { TablesPlugin } from "src/plugins/tables-plugin";
 // BlockquotesPlugin导入但未使用，在注释中提到了它但目前不启用
 // import {BlockquotesPlugin} from "src/plugins/processors/blockquotes-plugin";
-import { IProcessPlugin } from "src/plugins/processors/interface";
-import { BaseAdapter } from "src/preview-adapters/base-adapter";
+import { IProcessPlugin } from "src/plugins/interface";
+import { BaseAdapter } from "src/platform-adapters/base-adapter";
 
 /**
  * 微信公众号适配器 - 处理微信公众号特定的格式要求

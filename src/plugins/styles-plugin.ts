@@ -1,4 +1,4 @@
-import {BaseProcessPlugin} from "src/plugins/processors/base-process-plugin";
+import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 import colors from "colors";
