@@ -94,31 +94,138 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			cls: "toolbar-content toolbar-vertical",
 		});
 
-		// 4. 构建各功能模块
-		this.buildTemplateSelector(toolbarContent);
+		// 4. 初始化相关服务和数据
+		initializeContentAdapters(); // 确保适配器已初始化
 
-		// 5. 如果启用了样式UI，构建样式相关选项
+		// 5. 构建手风琴组件容器
+		const accordionContainer = toolbarContent.createDiv({
+			cls: "accordion-container",
+		});
+		// 为手风琴容器添加基础样式
+		accordionContainer.setAttr("style", "width: 100%; display: flex; flex-direction: column; gap: 5px;");
+
+		// 6. 构建主要机功组件包括平台选择器
+		this.buildBasicAccordionSection(accordionContainer, "基本设置", () => {
+			const container = document.createElement("div");
+			this.buildTemplateSelector(container);
+			this.buildPlatformSelector(container);
+			return container;
+		});
+
+		// 7. 构建平台特定设置组件
+		this.buildPlatformSpecificAccordion(accordionContainer);
+
+		// 8. 如果启用了样式UI，构建样式相关设置组件
 		if (this.settings.showStyleUI) {
-			this.buildThemeSelector(toolbarContent);
-			this.buildHighlightSelector(toolbarContent);
-			this.buildThemeColorSelector(toolbarContent);
+			this.buildBasicAccordionSection(accordionContainer, "样式设置", () => {
+				const container = document.createElement("div");
+				this.buildThemeSelector(container);
+				this.buildHighlightSelector(container);
+				this.buildThemeColorSelector(container);
+				return container;
+			});
 		}
 
-		// 6. 构建二级标题序号设置
-		this.buildHeadingNumberSettings(toolbarContent);
+		// 9. 显示当前平台的插件列表
+		this.buildBasicAccordionSection(accordionContainer, "处理插件", () => {
+			const container = document.createElement("div");
+			this.buildPluginListSection(container);
+			return container;
+		});
 
-		// 7. 构建平台选择器 - 新增
-		this.buildPlatformSelector(toolbarContent);
-
-		// 8. 构建插件列表显示区域 - 新增
-		this.buildPluginListSection(toolbarContent);
-
-		// 9. 构建操作按钮组
+		// 10. 构建操作按钮组
 		this.buildActionButtons(toolbarContent);
 
-		// 10. 创建消息视图，但将其放在工具栏之外
+		// 11. 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
 	}
+
+	/**
+	 * 构建基础手风琴部分
+	 * @param container 父容器
+	 * @param title 标题
+	 * @param contentBuilder 内容生成函数
+	 */
+	private buildBasicAccordionSection(container: HTMLElement, title: string, contentBuilder: () => HTMLElement): void {
+		// 创建手风琴包装器
+		const accordion = container.createDiv({ cls: "accordion-section" });
+		accordion.setAttr("style", "margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;");
+
+		// 创建标题栏
+		const header = accordion.createDiv({ cls: "accordion-header" });
+		header.setAttr("style", "padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;");
+		header.createDiv({ cls: "accordion-title", text: title });
+
+		// 创建展开/收缩图标
+		const icon = header.createDiv({ cls: "accordion-icon" });
+		icon.setAttr("style", "transition: transform 0.3s;");
+		icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+		// 创建内容区域
+		const content = accordion.createDiv({ cls: "accordion-content" });
+		content.setAttr("style", "padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;");
+
+		// 生成并添加内容
+		const contentEl = contentBuilder();
+		content.appendChild(contentEl);
+
+		// 添加点击事件
+		header.addEventListener("click", () => {
+			// 切换展开/收缩状态
+			const isExpanded = content.style.maxHeight !== "0px" && content.style.maxHeight !== "";
+			
+			if (isExpanded) {
+				content.style.maxHeight = "0px";
+				icon.style.transform = "rotate(0deg)";
+			} else {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+			}
+		});
+
+		// 默认展开第一个部分
+		if (container.querySelectorAll(".accordion-section").length === 1) {
+			window.setTimeout(() => {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+			}, 0);
+		}
+	}
+
+	/**
+	 * 构建平台特定设置的手风琴组件
+	 * 根据当前选择的平台和激活的插件来显示相关设置
+	 */
+	private buildPlatformSpecificAccordion(container: HTMLElement): void {
+		// 初始化适配器
+		initializeContentAdapters();
+
+		// 获取当前平台的适配器
+		const adapter = PreviewAdapterFactory.getAdapter(this.currentPlatform);
+
+		// 检查适配器是否使用了特定插件
+		let hasHeadingPlugin = false;
+		
+		if (adapter instanceof BaseContentAdapter) {
+			const plugins = (adapter as unknown as { plugins: IProcessPlugin[] }).plugins || [];
+			
+			// 检查是否启用了标题插件
+			hasHeadingPlugin = plugins.some(p => 
+				p && typeof p.getName === 'function' && 
+				(p.getName().toLowerCase().includes('heading') || p.getName().toLowerCase().includes('标题'))
+			);
+		}
+
+		// 如果存在标题插件，则显示标题设置部分
+		if (hasHeadingPlugin) {
+			this.buildBasicAccordionSection(container, "平台特定设置", () => {
+				const settingsContainer = document.createElement("div");
+				this.buildHeadingNumberSettings(settingsContainer);
+				return settingsContainer;
+			});
+		}
+	}
+	
 
 	getViewType() {
 		return VIEW_TYPE_NOTE_PREVIEW;
