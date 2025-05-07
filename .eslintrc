@@ -20,6 +20,7 @@
       "no-prototype-builtins": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-var-requires": "warn",
-      "prefer-const": "off"
+      "prefer-const": "off",
+		"@typescript-eslint/no-inferrable-types": "off"
     } 
   }

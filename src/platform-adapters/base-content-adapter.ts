@@ -1,11 +1,11 @@
-import {IProcessPlugin} from "src/plugins/interface";
-import {NMPSettings} from "../settings";
-import {logger} from "../utils";
+import {IProcessPlugin} from "src/plugins/base-process-plugin";
+import {NMPSettings} from "src/settings";
+import {logger} from "src/utils";
 
 /**
  * 内容适配器接口 - 负责将HTML内容适配到不同平台的格式要求
  */
-export interface IBaseAdapter {
+export interface IContentAdapter {
 	/**
 	 * 适配内容方法
 	 * @param html 原始HTML内容
@@ -15,8 +15,10 @@ export interface IBaseAdapter {
 	adaptContent(html: string, settings: NMPSettings): string;
 }
 
-// 添加基础适配器抽象类
-export abstract class BaseAdapter implements IBaseAdapter {
+/**
+ * 基础内容适配器抽象类 - 提供对HTML内容的处理能力
+ */
+export abstract class BaseContentAdapter implements IContentAdapter {
 	// 插件列表
 	protected plugins: IProcessPlugin[] = [];
 
@@ -45,7 +47,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 		processedHtml = this.process(processedHtml);
 		processedHtml = this.postprocess(processedHtml);
 
-		logger.debug(`${this.getAdapterName()}适配处理完成: `, processedHtml);
+		logger.debug(`${this.getAdapterName()}适配处理完成`);
 		return processedHtml;
 	}
 
@@ -54,7 +56,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	 * @param plugin 要添加的插件
 	 * @returns 当前适配器实例，支持链式调用
 	 */
-	public addPlugin(plugin: IProcessPlugin): BaseAdapter {
+	public addPlugin(plugin: IProcessPlugin): BaseContentAdapter {
 		logger.debug(`添加处理插件: ${plugin.getName()}`);
 		this.plugins.push(plugin);
 		return this;
@@ -65,7 +67,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	 * @param plugins 要添加的插件数组
 	 * @returns 当前适配器实例，支持链式调用
 	 */
-	public addPlugins(plugins: IProcessPlugin[]): BaseAdapter {
+	public addPlugins(plugins: IProcessPlugin[]): BaseContentAdapter {
 		plugins.forEach(plugin => this.addPlugin(plugin));
 		return this;
 	}
@@ -75,9 +77,9 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	 * @param pluginName 要移除的插件名称
 	 * @returns 当前适配器实例，支持链式调用
 	 */
-	public removePlugin(pluginName: string): BaseAdapter {
+	public removePlugin(pluginName: string): BaseContentAdapter {
 		this.plugins = this.plugins.filter(plugin => plugin.getName() !== pluginName);
-		logger.debug(`移除微信处理插件: ${pluginName}`);
+		logger.debug(`移除处理插件: ${pluginName}`);
 		return this;
 	}
 
@@ -85,9 +87,9 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	 * 清空所有插件
 	 * @returns 当前适配器实例，支持链式调用
 	 */
-	public clearPlugins(): BaseAdapter {
+	public clearPlugins(): BaseContentAdapter {
 		this.plugins = [];
-		logger.debug("清空所有微信处理插件");
+		logger.debug("清空所有处理插件");
 		return this;
 	}
 
@@ -104,14 +106,10 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	}
 
 	/**
-	 * 后处理HTML - 子类可以覆盖
+	 * 处理HTML - 默认实现为应用所有插件
 	 */
-	protected postprocess(html: string): string {
-		return html;
-	}
-
 	protected process(html: string): string {
-		logger.debug(`开始处理微信内容，使用 ${this.plugins.length} 个插件`);
+		logger.debug(`开始处理内容，使用 ${this.plugins.length} 个插件`);
 
 		// 通过插件链依次处理HTML内容
 		return this.plugins.reduce((processedHtml, plugin) => {
@@ -120,5 +118,10 @@ export abstract class BaseAdapter implements IBaseAdapter {
 		}, html);
 	}
 
+	/**
+	 * 后处理HTML - 子类可以覆盖
+	 */
+	protected postprocess(html: string): string {
+		return html;
+	}
 }
-
