@@ -1,4 +1,6 @@
+
 import {wxKeyInfo} from './weixin-api';
+import { logger } from './utils';
 
 export enum LinkFootnoteMode {
 	None = 'none',
@@ -43,8 +45,10 @@ export class NMPSettings {
 	// 静态方法，用于获取实例
 	public static getInstance(): NMPSettings {
 		if (!NMPSettings.instance) {
+			logger.info("创建NMPSettings实例");
 			NMPSettings.instance = new NMPSettings();
 		}
+		logger.info("返回NMPSettings实例");
 		return NMPSettings.instance;
 	}
 
@@ -74,6 +78,7 @@ export class NMPSettings {
 	}
 
 	public static loadSettings(data: any) {
+		logger.info("加载设置: ", data);
 		if (!data) {
 			return
 		}
@@ -151,6 +156,9 @@ export class NMPSettings {
 			settings.enableHeadingNumber = enableHeadingNumber;
 		}
 		settings.getExpiredDate();
+
+		logger.info("返回设置: ", settings);
+		return settings;
 	}
 
 	public static allSettings() {
@@ -174,6 +182,8 @@ export class NMPSettings {
 			'enableThemeColor': settings.enableThemeColor,
 			'enableHeadingNumber': settings.enableHeadingNumber,
 		}
+
+
 	}
 
 	getExpiredDate() {

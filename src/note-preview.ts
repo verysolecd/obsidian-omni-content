@@ -28,7 +28,6 @@ import {
 } from "./weixin-api";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
-	workspace: Workspace;
 	mainDiv: HTMLDivElement;
 	toolbar: HTMLDivElement;
 	renderDiv: HTMLDivElement;
@@ -44,10 +43,69 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	assetsManager: AssetsManager;
 	articleHTML: string;
 	title: string;
-	currentTheme: string;
-	currentHighlight: string;
 	currentAppId: string;
 	markedParser: MarkedParser;
+
+	constructor(leaf: WorkspaceLeaf) {
+		super(leaf);
+		this.settings = NMPSettings.getInstance();
+		this.assetsManager = AssetsManager.getInstance();
+		this.markedParser = new MarkedParser(this.app, this);
+	}
+
+	get currentTheme() {
+		return this.settings.defaultStyle;
+	}
+
+	get currentHighlight() {
+		return this.settings.defaultHighlight;
+	}
+
+	get workspace() {
+		return this.app.workspace;
+	}
+
+	/**
+	 * 构建工具栏
+	 * @param parent 父容器元素
+	 */
+	buildToolbar(parent: HTMLDivElement) {
+		// 创建专业化的工具栏
+		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
+		this.toolbar.addClasses(["modern-toolbar"]);
+
+		// 1. 构建品牌区域
+		this.buildBrandSection();
+
+		// 2. 创建主工具栏容器
+		const toolbarContainer = this.toolbar.createDiv({
+			cls: "toolbar-container",
+		});
+
+		// 3. 创建工具栏内容区域 - 单列垂直布局
+		const toolbarContent = toolbarContainer.createDiv({
+			cls: "toolbar-content toolbar-vertical",
+		});
+
+		// 4. 构建各功能模块
+		this.buildTemplateSelector(toolbarContent);
+
+		// 6. 如果启用了样式UI，构建样式相关选项
+		if (this.settings.showStyleUI) {
+			this.buildThemeSelector(toolbarContent);
+			this.buildHighlightSelector(toolbarContent);
+			this.buildThemeColorSelector(toolbarContent);
+		}
+
+		// 5. 构建二级标题序号设置
+		this.buildHeadingNumberSettings(toolbarContent);
+
+		// 7. 构建操作按钮组
+		this.buildActionButtons(toolbarContent);
+
+		// 8. 创建消息视图，但将其放在工具栏之外
+		this.buildMsgView(parent);
+	}
 
 	/**
 	 * 添加键盘导航事件到select元素
@@ -74,16 +132,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				selectEl.dispatchEvent(new Event("change"));
 			}
 		});
-	}
-
-	constructor(leaf: WorkspaceLeaf) {
-		super(leaf);
-		this.workspace = this.app.workspace;
-		this.settings = NMPSettings.getInstance();
-		this.assetsManager = AssetsManager.getInstance();
-		this.currentTheme = this.settings.defaultStyle;
-		this.currentHighlight = this.settings.defaultHighlight;
-		this.markedParser = new MarkedParser(this.app, this);
 	}
 
 	getViewType() {
@@ -382,47 +430,6 @@ ${customCSS}`;
 		this.msgView.setAttr("style", "display: flex;");
 	}
 
-	/**
-	 * 构建工具栏
-	 * @param parent 父容器元素
-	 */
-	buildToolbar(parent: HTMLDivElement) {
-		// 创建专业化的工具栏
-		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
-		this.toolbar.addClasses(["modern-toolbar"]);
-
-		// 1. 构建品牌区域
-		this.buildBrandSection();
-
-		// 2. 创建主工具栏容器
-		const toolbarContainer = this.toolbar.createDiv({
-			cls: "toolbar-container",
-		});
-
-		// 3. 创建工具栏内容区域 - 单列垂直布局
-		const toolbarContent = toolbarContainer.createDiv({
-			cls: "toolbar-content toolbar-vertical",
-		});
-
-		// 4. 构建各功能模块
-		this.buildTemplateSelector(toolbarContent);
-
-		// 5. 构建二级标题序号设置
-		this.buildHeadingNumberSettings(toolbarContent);
-
-		// 6. 如果启用了样式UI，构建样式相关选项
-		if (this.settings.showStyleUI) {
-			this.buildThemeSelector(toolbarContent);
-			this.buildHighlightSelector(toolbarContent);
-			this.buildThemeColorSelector(toolbarContent);
-		}
-
-		// 7. 构建操作按钮组
-		this.buildActionButtons(toolbarContent);
-
-		// 8. 创建消息视图，但将其放在工具栏之外
-		this.buildMsgView(parent);
-	}
 	async buildUI() {
 		this.container = this.containerEl.children[1];
 		this.container.empty();
@@ -461,14 +468,12 @@ ${customCSS}`;
 	}
 
 	updateStyle(styleName: string) {
-		this.currentTheme = styleName;
 		this.settings.defaultStyle = styleName;
 		this.saveSettingsToPlugin();
 		this.setStyle(this.getCSS());
 	}
 
 	updateHighLight(styleName: string) {
-		this.currentHighlight = styleName;
 		this.settings.defaultHighlight = styleName;
 		this.saveSettingsToPlugin();
 		this.setStyle(this.getCSS());
@@ -720,7 +725,6 @@ ${customCSS}`;
 		});
 
 		selectBtn.onchange = async () => {
-			this.currentTheme = selectBtn.value;
 			this.settings.defaultStyle = selectBtn.value;
 			this.saveSettingsToPlugin();
 			this.setStyle(this.getCSS());
@@ -761,7 +765,6 @@ ${customCSS}`;
 		});
 
 		highlightStyleBtn.onchange = async () => {
-			this.currentHighlight = highlightStyleBtn.value;
 			this.settings.defaultHighlight = highlightStyleBtn.value;
 			this.saveSettingsToPlugin();
 			this.setStyle(this.getCSS());
@@ -805,9 +808,9 @@ ${customCSS}`;
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
-				checked: this.settings.enableThemeColor,
 			},
 		});
+		toggleInput.checked = this.settings.enableThemeColor;
 		toggleSwitch.createEl("span", { cls: "slider round" });
 
 		// 开关文本
@@ -904,45 +907,45 @@ ${customCSS}`;
 
 		// 使用正则表达式匹配二级标题（## 开头的行）
 		const h2Regex = /^##\s+(.+?)$/gm;
-		
+
 		// 保存已找到的标题
-		let headings: {index: number, title: string}[] = [];
+		let headings: { index: number; title: string }[] = [];
 		let match: RegExpExecArray | null;
-		
+
 		// 查找所有二级标题
 		while ((match = h2Regex.exec(markdown)) !== null) {
 			headings.push({
 				index: match.index,
-				title: match[1].trim()
+				title: match[1].trim(),
 			});
 		}
-		
+
 		// 如果没有找到二级标题，直接返回原始内容
 		if (headings.length === 0) {
 			return markdown;
 		}
-		
+
 		// 从原始内容构建新内容，逐个替换标题
-		let result = '';
+		let result = "";
 		let lastIndex = 0;
-		
+
 		headings.forEach((heading, index) => {
 			// 添加当前标题之前的内容
 			result += markdown.substring(lastIndex, heading.index);
-			
+
 			// 格式化编号为两位数 01, 02, 03...
-			const number = (index + 1).toString().padStart(2, '0');
-			
+			const number = (index + 1).toString().padStart(2, "0");
+
 			// 添加带序号的二级标题
 			result += `## ${number}. ${heading.title}`;
-			
+
 			// 更新lastIndex为当前匹配结束位置
 			lastIndex = heading.index + 3 + heading.title.length; // 3是"## "的长度
 		});
-		
+
 		// 添加最后一个标题之后的内容
 		result += markdown.substring(lastIndex);
-		
+
 		return result;
 	}
 
@@ -975,12 +978,18 @@ ${customCSS}`;
 
 		// 创建开关按钮
 		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
+		logger.info("checkbox创建前状态:", this.settings.enableHeadingNumber);
+
+		// 只设置 type 属性，不设置 checked 属性
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
-				checked: this.settings.enableHeadingNumber,
 			},
 		});
+
+		// 用 DOM 属性而非 HTML 属性设置选中状态
+		toggleInput.checked = this.settings.enableHeadingNumber;
+		logger.info("checkbox创建后状态:", toggleInput.checked);
 		toggleSwitch.createEl("span", { cls: "slider round" });
 
 		// 开关文本

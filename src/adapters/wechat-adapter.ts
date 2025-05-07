@@ -6,6 +6,14 @@ import {ContentAdapter} from "./content-adapter";
  * 微信公众号适配器 - 处理微信公众号特定的格式要求
  */
 export class WeChatAdapter implements ContentAdapter {
+	// 保存设置实例以在其他方法中使用
+	private currentSettings: NMPSettings;
+
+	constructor() {
+		// 初始化时获取设置单例
+		this.currentSettings = NMPSettings.getInstance();
+	}
+
 	/**
 	 * 适配微信公众号内容
 	 * @param html 原始HTML内容
@@ -14,6 +22,9 @@ export class WeChatAdapter implements ContentAdapter {
 	 */
 	adaptContent(html: string, settings: NMPSettings): string {
 		logger.debug("应用微信公众号适配器处理HTML");
+
+		// 更新当前设置
+		this.currentSettings = settings;
 
 		let processedHtml = html;
 
@@ -25,7 +36,7 @@ export class WeChatAdapter implements ContentAdapter {
 		// 2. 处理链接（根据设置转换为脚注或其他格式）
 		processedHtml = this.processLinks(processedHtml, settings);
 
-		// 3. 处理二级标题，添加超大序号
+		// 3. 处理二级标题，根据设置决定是否添加序号
 		processedHtml = this.processHeadings(processedHtml);
 
 		// 4. 处理引用块（blockquote）
@@ -526,11 +537,17 @@ export class WeChatAdapter implements ContentAdapter {
 	 * 处理样式，确保符合微信公众号的样式限制
 	 */
 	/**
-	 * 处理二级标题，为每个h2标题添加超大序号
-	 * 将序号作为标题的内容插入
+	 * 处理二级标题，根据设置决定是否为标题添加序号
+	 * 当启用时，将序号作为标题的内容插入
 	 */
 	private processHeadings(html: string): string {
 		try {
+			// 如果用户关闭了二级标题序号功能，直接返回原始 HTML
+			if (!this.currentSettings.enableHeadingNumber) {
+				logger.debug("二级标题序号功能已关闭，不添加序号");
+				return html;
+			}
+			
 			const parser = new DOMParser();
 			const doc = parser.parseFromString(html, 'text/html');
 			
@@ -542,6 +559,8 @@ export class WeChatAdapter implements ContentAdapter {
 			
 			// 获取主题色
 			const themeColor = this.getThemeColor();
+			
+			logger.debug(`处理 ${h2Elements.length} 个二级标题，添加序号`);
 			
 			// 为每个h2标题添加序号
 			h2Elements.forEach((h2, index) => {
