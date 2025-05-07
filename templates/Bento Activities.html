@@ -101,30 +101,31 @@
             </section>
         </section>
         
-        <!-- 三大主题 -->
-        <section style="margin-bottom: 24px;">
-            <!-- 使用表格而非grid布局，更兼容微信 -->
-            <table style="width: 100%; border-collapse: separate; border-spacing: 12px 0;">
-                <tr>
-                    <!-- 工程区块 -->
-                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">工程</p>
-                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">技术实践</p>
-                    </td>
-                    
-                    <!-- 产品区块 -->
-                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">产品</p>
-                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">设计思维</p>
-                    </td>
-                    
-                    <!-- 创业区块 -->
-                    <td style="width: 33%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(227, 25, 55, 0.3); padding: 16px; border-radius: 8px; text-align: center;">
-                        <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">创业</p>
-                        <p style="color: #d1d5db; font-size: 14px; margin: 0;">商业洞察</p>
-                    </td>
-                </tr>
-            </table>
+        <!-- 三大主题 - 精致排版样式 -->
+        <section style="text-align: center; margin-bottom: 24px; padding: 16px 0; display: flex; align-items: center;">
+            <!-- 使用内联元素和分隔线替代表格 -->
+            <section style="display: inline-block; text-align: center; width: 32%; vertical-align: top;">
+                <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">工程</p>
+                <p style="color: #d1d5db; font-size: 14px; margin: 0;">技术实践</p>
+            </section>
+            
+            <!-- 第一条分隔线 -->
+            <section style="display: inline-block; width: 1px; height: 40px; background-color: rgba(227, 25, 55, 0.5); margin: 0 1%; vertical-align: middle;"></section>
+            
+            <!-- 产品区块 -->
+            <section style="display: inline-block; text-align: center; width: 32%; vertical-align: top;">
+                <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">产品</p>
+                <p style="color: #d1d5db; font-size: 14px; margin: 0;">设计思维</p>
+            </section>
+            
+            <!-- 第二条分隔线 -->
+            <section style="display: inline-block; width: 1px; height: 40px; background-color: rgba(227, 25, 55, 0.5); margin: 0 1%; vertical-align: middle;"></section>
+            
+            <!-- 创业区块 -->
+            <section style="display: inline-block; text-align: center; width: 32%; vertical-align: top;">
+                <p style="color: #E31937; font-weight: bold; margin: 0 0 8px 0; font-size: 18px;">创业</p>
+                <p style="color: #d1d5db; font-size: 14px; margin: 0;">商业洞察</p>
+            </section>
         </section>
         
         <!-- CTA -->
