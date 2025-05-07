@@ -1,3 +1,4 @@
+import {IProcessPlugin} from "src/plugins/processors/interface";
 import {NMPSettings} from "../settings";
 import {logger} from "../utils";
 
@@ -16,6 +17,9 @@ export interface IBaseAdapter {
 
 // 添加基础适配器抽象类
 export abstract class BaseAdapter implements IBaseAdapter {
+	// 插件列表
+	protected plugins: IProcessPlugin[] = [];
+
 	// 保存设置实例以在其他方法中使用
 	protected currentSettings: NMPSettings;
 
@@ -46,6 +50,48 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	}
 
 	/**
+	 * 添加处理插件
+	 * @param plugin 要添加的插件
+	 * @returns 当前适配器实例，支持链式调用
+	 */
+	public addPlugin(plugin: IProcessPlugin): BaseAdapter {
+		logger.debug(`添加处理插件: ${plugin.getName()}`);
+		this.plugins.push(plugin);
+		return this;
+	}
+
+	/**
+	 * 批量添加处理插件
+	 * @param plugins 要添加的插件数组
+	 * @returns 当前适配器实例，支持链式调用
+	 */
+	public addPlugins(plugins: IProcessPlugin[]): BaseAdapter {
+		plugins.forEach(plugin => this.addPlugin(plugin));
+		return this;
+	}
+
+	/**
+	 * 移除处理插件
+	 * @param pluginName 要移除的插件名称
+	 * @returns 当前适配器实例，支持链式调用
+	 */
+	public removePlugin(pluginName: string): BaseAdapter {
+		this.plugins = this.plugins.filter(plugin => plugin.getName() !== pluginName);
+		logger.debug(`移除微信处理插件: ${pluginName}`);
+		return this;
+	}
+
+	/**
+	 * 清空所有插件
+	 * @returns 当前适配器实例，支持链式调用
+	 */
+	public clearPlugins(): BaseAdapter {
+		this.plugins = [];
+		logger.debug("清空所有微信处理插件");
+		return this;
+	}
+
+	/**
 	 * 获取适配器名称 - 子类必须实现
 	 */
 	protected abstract getAdapterName(): string;
@@ -56,11 +102,6 @@ export abstract class BaseAdapter implements IBaseAdapter {
 	protected preprocess(html: string): string {
 		return html;
 	}
-
-	/**
-	 * 处理HTML - 子类必须实现
-	 */
-	protected abstract process(html: string): string;
 
 	/**
 	 * 后处理HTML - 子类可以覆盖
@@ -124,8 +165,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 		try {
 			// 检查是否需要处理标题
 			const needProcessNumber = this.currentSettings.enableHeadingNumber;
-			const needProcessDelimiter =
-				this.currentSettings.enableHeadingDelimiterBreak;
+			const needProcessDelimiter = this.currentSettings.enableHeadingDelimiterBreak;
 
 			if (needProcessDelimiter || needProcessNumber) {
 				const parser = new DOMParser();
@@ -160,6 +200,16 @@ export abstract class BaseAdapter implements IBaseAdapter {
 		}
 	}
 
+	protected process(html: string): string {
+		logger.debug(`开始处理微信内容，使用 ${this.plugins.length} 个插件`);
+
+		// 通过插件链依次处理HTML内容
+		return this.plugins.reduce((processedHtml, plugin) => {
+			logger.debug(`应用插件: ${plugin.getName()}`);
+			return plugin.process(processedHtml, this.currentSettings);
+		}, html);
+	}
+
 	private processHeadingNumber(contentSpan: Element, index: number) {
 		// 格式化编号为两位数 01, 02, 03...
 		const number = (index + 1).toString().padStart(2, "0");
@@ -184,10 +234,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 		// 先插入序号（应该位于第一行）
 		contentSpan.insertBefore(wrapper, contentSpan.firstChild);
 		// 再插入换行（压在序号下面）
-		contentSpan.insertBefore(
-			breakElement,
-			contentSpan.childNodes[1] || null
-		);
+		contentSpan.insertBefore(breakElement, contentSpan.childNodes[1] || null);
 	}
 
 	/**
@@ -200,11 +247,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 			const delimiterRegex = /[,，、；：;:页|与]/g;
 
 			// 遍历所有文本节点
-			const walker = document.createTreeWalker(
-				element,
-				NodeFilter.SHOW_TEXT,
-				null
-			);
+			const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
 
 			// 存储需要处理的节点和位置
 			const nodesToProcess: { node: Node; positions: number[] }[] = [];
@@ -223,15 +266,14 @@ export abstract class BaseAdapter implements IBaseAdapter {
 
 				if (matches.length > 0) {
 					nodesToProcess.push({
-						node: currentNode,
-						positions: matches,
+						node: currentNode, positions: matches,
 					});
 				}
 			}
 
 			// 第二遍从后向前处理节点(避免处理过程中影响位置)
 			for (let i = nodesToProcess.length - 1; i >= 0; i--) {
-				const { node, positions } = nodesToProcess[i];
+				const {node, positions} = nodesToProcess[i];
 				const parent = node.parentNode;
 
 				if (!parent) continue;
@@ -250,9 +292,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 
 					// 创建分隔符后的文本
 					if (pos < lastPos) {
-						const textAfter = document.createTextNode(
-							text.substring(pos, lastPos)
-						);
+						const textAfter = document.createTextNode(text.substring(pos, lastPos));
 						parent.insertBefore(textAfter, parent.firstChild);
 					}
 
@@ -265,9 +305,7 @@ export abstract class BaseAdapter implements IBaseAdapter {
 
 				// 添加分隔符前的文本
 				if (lastPos > 0) {
-					const textBefore = document.createTextNode(
-						text.substring(0, lastPos)
-					);
+					const textBefore = document.createTextNode(text.substring(0, lastPos));
 					parent.insertBefore(textBefore, parent.firstChild);
 				}
 			}
@@ -277,5 +315,6 @@ export abstract class BaseAdapter implements IBaseAdapter {
 			logger.error("处理标题分隔符时出错:", error);
 		}
 	}
+
 }
 

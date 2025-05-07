@@ -1,154 +1,158 @@
-import { NMPSettings } from "../settings";
-import { applyCSS, logger } from "../utils";
-import { BaseAdapter, IBaseAdapter } from "src/preview-adapters/base-adapter";
 import colors from "colors";
+import {ImagesPlugin} from "src/plugins/processors/images-plugin";
+import {LinksPlugin} from "src/plugins/processors/links-plugin";
+import {BaseAdapter} from "src/preview-adapters/base-adapter";
+import {NMPSettings} from "../settings";
+import {logger} from "../utils";
 
 /**
  * 微信公众号适配器 - 处理微信公众号特定的格式要求
+ * 采用插件模式设计，可以灵活添加或移除处理步骤
  */
 export class WeChatAdapter extends BaseAdapter {
-	
+
+
+	plugins = [new ImagesPlugin(), new LinksPlugin(), new HeadingsPlugin(), new ListsPlugin(), new CodeBlocksPlugin(), new TablesPlugin(), new StylesPlugin()
+		// 目前默认不启用 BlockquotesPlugin
+		// new BlockquotesPlugin(),
+	]
+
+	/**
+	 * 重写基类的 applyStyles 方法，为微信配置内联样式
+	 * @param html HTML内容
+	 * @param css CSS样式字符串 【css 只是个摆设，它直接从 html 拿的】
+	 * @returns 应用样式后的HTML内容
+	 */
+	public processStyles(html: string): string {
+		try {
+			// 创建临时DOM元素
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = html;
+			document.body.appendChild(tempDiv);
+
+			// 添加样式元素
+			const styleEl = document.createElement('style');
+			styleEl.textContent = '';
+			tempDiv.appendChild(styleEl);
+			logger.info(colors.yellow("为微信内容添加样式元素"));
+
+			// 获取所有非样式元素
+			const allElements = tempDiv.querySelectorAll("*:not(style)");
+			logger.info(colors.yellow("处理微信样式元素数量:"), allElements.length);
+
+			// 应用计算样式到每个元素
+			for (let i = 0; i < allElements.length; i++) {
+				const el = allElements[i] as HTMLElement;
+				const computedStyle = window.getComputedStyle(el);
+				let inlineStyles = "";
+
+				// 提取关键样式属性
+				const properties = ["color", "background-color", "font-family", "font-size", "font-weight", "text-align", "line-height", "margin", "padding", "border", "border-radius",
+
+					// todo: 不知道加这个有没有效果 （参考： [微信公众号图文 HTML/CSS 支持情况解析](https://www.axtonliu.ai/newsletters/ai-2/posts/wechat-article-html-css-support)）
+					"position",];
+
+				for (const prop of properties) {
+					const value = computedStyle.getPropertyValue(prop);
+					if (value && value !== "" && value !== "none") {
+						// 微信公众号支持的字体比较有限
+						if (prop === "font-family") {
+							inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
+							continue;
+						}
+
+						// 处理过大或过小的字体
+						if (prop === "font-size") {
+							const fontSize = parseInt(value);
+							if (fontSize > 40) {
+								inlineStyles += `font-size: 40px; `;
+								continue;
+							} else if (fontSize < 12 && el.tagName !== "SUP" && el.tagName !== "SUB") {
+								inlineStyles += `font-size: 12px; `;
+								continue;
+							}
+						}
+
+						inlineStyles += `${prop}: ${value}; `;
+					}
+				}
+
+				// 应用内联样式
+				if (inlineStyles) {
+					const existingStyle = el.getAttribute("style") || "";
+					el.setAttribute("style", existingStyle + inlineStyles);
+				}
+			}
+
+			// 移除所有 style 标签，微信不支持
+			const styleElements = tempDiv.querySelectorAll('style');
+			styleElements.forEach(el => el.remove());
+
+			// 获取处理后的HTML并清理临时元素
+			const result = tempDiv.innerHTML;
+			document.body.removeChild(tempDiv);
+
+			logger.info(colors.yellow("应用内联样式后的微信内容:"), result.substring(0, 200) + "...");
+			return result;
+		} catch (error) {
+			logger.error("应用微信样式时出错:", error);
+			return html;
+		}
+	}
+
 	protected getAdapterName(): string {
 		return "微信公众号";
 	}
 
-	protected process(html: string): string {
-		
-		let processedHtml = html;
+	protected getThemeColor() {
+		// 获取设置
+		const settings = NMPSettings.getInstance();
 
-		// 针对微信的专门处理
-		processedHtml = this.processImages(processedHtml);
-		processedHtml = this.processLinks(processedHtml);
-		processedHtml = this.processHeadings(processedHtml);
-		// processedHtml = this.processBlockquotes(processedHtml);
-		processedHtml = this.processLists(processedHtml);
-		processedHtml = this.processCodeBlocks(processedHtml);
-		processedHtml = this.processTables(processedHtml);
-		processedHtml = this.processStyles(processedHtml);
+		// 动态获取当前主题颜色
+		let themeAccentColor: string;
 
-		return processedHtml;
-	}
+		// 如果启用了自定义主题色，使用用户设置的颜色
+		if (settings.enableThemeColor) {
+			themeAccentColor = settings.themeColor || "#7852ee";
+			logger.debug("使用自定义主题色：", themeAccentColor);
+		} else {
+			// 从当前激活的DOM中获取实际使用的主题颜色
+			// 尝试获取主题的primary-red变量
+			try {
+				// 尝试从文档中获取计算后的CSS变量值
+				const testElement = document.createElement("div");
+				testElement.style.display = "none";
+				testElement.className = "note-to-mp";
+				document.body.appendChild(testElement);
 
-	/**
-	 * 处理图片，添加微信所需的属性
-	 */
-	private processImages(html: string): string {
-		// 微信公众号图片需要特定处理
-		// 1. 添加data-src属性
-		// 2. 确保图片有正确的样式和对齐方式
-		try {
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, "text/html");
+				// 获取计算后的样式
+				const computedStyle = window.getComputedStyle(testElement);
+				// todo: 可否实现复制后保留原样式
+				const primaryColor = computedStyle
+					.getPropertyValue("--primary-color")
+					.trim();
+				// || computedStyle.getPropertyValue('--primary-red').trim();
 
-			// 查找所有图片元素
-			const images = doc.querySelectorAll("img");
-
-			images.forEach((img) => {
-				const src = img.getAttribute("src");
-				if (src) {
-					// 设置data-src属性，微信编辑器需要
-					img.setAttribute("data-src", src);
-
-					// 设置图片默认样式
-					if (!img.hasAttribute("style")) {
-						img.setAttribute(
-							"style",
-							"max-width: 100%; height: auto;"
-						);
-					}
-
-					// 确保图片居中显示
-					const parent = img.parentElement;
-					if (parent && parent.tagName !== "CENTER") {
-						parent.style.textAlign = "center";
-					}
+				logger.debug("获取到的主题色：", primaryColor);
+				if (primaryColor) {
+					themeAccentColor = primaryColor;
+				} else {
+					// 如果无法获取，默认使用手工川主题的红色
+					themeAccentColor = "#E31937";
 				}
-			});
-			// 转回字符串
-			return doc.body.innerHTML;
-		} catch (error) {
-			logger.error("处理图片时出错:", error);
-			return html;
-		}
-	}
 
-	/**
-	 * 处理链接，根据设置转换为脚注或其他格式
-	 */
-	private processLinks(html: string): string {
-		// 如果不需要处理链接，直接返回
-		if (this.currentSettings.linkFootnoteMode === "none") {
-			return html;
-		}
-
-		try {
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, "text/html");
-
-			// 查找所有链接
-			const links = doc.querySelectorAll("a");
-			const footnotes: string[] = [];
-
-			links.forEach((link) => {
-				const href = link.getAttribute("href");
-				if (!href) return;
-
-				// 判断是否需要转换此链接
-				const shouldConvert =
-					this.currentSettings.linkFootnoteMode === "all" ||
-					(this.currentSettings.linkFootnoteMode === "non-wx" &&
-						!href.includes("weixin.qq.com"));
-
-				if (shouldConvert) {
-					// 创建脚注标记
-					const footnoteRef = document.createElement("sup");
-					footnoteRef.textContent = `[${footnotes.length + 1}]`;
-					footnoteRef.style.color = "#3370ff";
-
-					// 替换链接为脚注引用
-					link.after(footnoteRef);
-
-					// 根据设置决定脚注内容格式
-					let footnoteContent = "";
-					if (this.currentSettings.linkDescriptionMode === "raw") {
-						footnoteContent = `[${footnotes.length + 1}] ${
-							link.textContent
-						}: ${href}`;
-					} else {
-						footnoteContent = `[${footnotes.length + 1}] ${href}`;
-					}
-
-					footnotes.push(footnoteContent);
-
-					// 移除链接标签，保留内部文本
-					const linkText = link.textContent;
-					link.replaceWith(linkText || "");
-				}
-			});
-
-			// 如果有脚注，添加到文档末尾
-			if (footnotes.length > 0) {
-				const hr = document.createElement("hr");
-				const footnoteSection = document.createElement("section");
-				footnoteSection.style.fontSize = "14px";
-				footnoteSection.style.color = "#888";
-				footnoteSection.style.marginTop = "30px";
-
-				footnotes.forEach((note) => {
-					const p = document.createElement("p");
-					p.innerHTML = note;
-					footnoteSection.appendChild(p);
-				});
-
-				doc.body.appendChild(hr);
-				doc.body.appendChild(footnoteSection);
+				// 清理测试元素
+				document.body.removeChild(testElement);
+			} catch (e) {
+				// 如果出错，回退到默认值
+				themeAccentColor = "#E31937";
+				logger.error("无法获取主题色变量，使用默认值", e);
 			}
 
-			return doc.body.innerHTML;
-		} catch (error) {
-			logger.error("处理链接时出错:", error);
-			return html;
+			logger.debug("使用主题中的颜色：", themeAccentColor);
 		}
+
+		return themeAccentColor;
 	}
 
 	/**
@@ -177,12 +181,7 @@ export class WeChatAdapter extends BaseAdapter {
 					if (this.currentSettings.lineNumber) {
 						const lines = codeBlock.innerHTML.split("\n");
 						const numberedLines = lines
-							.map(
-								(line, index) =>
-									`<span class="line-number">${
-										index + 1
-									}</span>${line}`
-							)
+							.map((line, index) => `<span class="line-number">${index + 1}</span>${line}`)
 							.join("\n");
 
 						// 添加行号样式
@@ -285,12 +284,7 @@ export class WeChatAdapter extends BaseAdapter {
 			// 找到所有顶级列表（不在其他列表内的列表）
 			const topLevelLists = allLists.filter((list) => {
 				const parent = list.parentElement;
-				return (
-					parent &&
-					parent.tagName !== "LI" &&
-					parent.tagName !== "UL" &&
-					parent.tagName !== "OL"
-				);
+				return (parent && parent.tagName !== "LI" && parent.tagName !== "UL" && parent.tagName !== "OL");
 			});
 
 			// 创建一个新容器来接收转换后的列表
@@ -301,11 +295,7 @@ export class WeChatAdapter extends BaseAdapter {
 			// 处理每个顶级列表
 			for (const list of topLevelLists) {
 				// 转换原列表为微信兼容格式
-				const newList = this.transformList(
-					list as HTMLUListElement,
-					0,
-					themeAccentColor
-				);
+				const newList = this.transformList(list as HTMLUListElement, 0, themeAccentColor);
 
 				// 找到原列表的位置
 				const parent = list.parentElement;
@@ -351,9 +341,7 @@ export class WeChatAdapter extends BaseAdapter {
 			// 逻辑处理每个引用块
 			blockquotes.forEach((blockquote) => {
 				// 重新设置引用块的样式，强制覆盖微信默认样式
-				blockquote.setAttribute(
-					"style",
-					`
+				blockquote.setAttribute("style", `
 					padding-left: 10px !important; 
 					border-left: 3px solid ${themeColor} !important; 
 					color: rgba(0, 0, 0, 0.6) !important; 
@@ -361,8 +349,7 @@ export class WeChatAdapter extends BaseAdapter {
 					padding-top: 4px !important; 
 					margin: 1em 0 !important; 
 					text-indent: 0 !important;
-				`
-				);
+				`);
 
 				// 处理引用块内的段落
 				const paragraphs = blockquote.querySelectorAll("p");
@@ -380,66 +367,11 @@ export class WeChatAdapter extends BaseAdapter {
 		}
 	}
 
-	protected getThemeColor() {
-		// 获取设置
-		const settings = NMPSettings.getInstance();
-
-		// 动态获取当前主题颜色
-		let themeAccentColor: string;
-
-		// 如果启用了自定义主题色，使用用户设置的颜色
-		if (settings.enableThemeColor) {
-			themeAccentColor = settings.themeColor || "#7852ee";
-			logger.debug("使用自定义主题色：", themeAccentColor);
-		} else {
-			// 从当前激活的DOM中获取实际使用的主题颜色
-			// 尝试获取主题的primary-red变量
-			try {
-				// 尝试从文档中获取计算后的CSS变量值
-				const testElement = document.createElement("div");
-				testElement.style.display = "none";
-				testElement.className = "note-to-mp";
-				document.body.appendChild(testElement);
-
-				// 获取计算后的样式
-				const computedStyle = window.getComputedStyle(testElement);
-				// todo: 可否实现复制后保留原样式
-				const primaryColor = computedStyle
-					.getPropertyValue("--primary-color")
-					.trim();
-				// || computedStyle.getPropertyValue('--primary-red').trim();
-
-				logger.debug("获取到的主题色：", primaryColor);
-				if (primaryColor) {
-					themeAccentColor = primaryColor;
-				} else {
-					// 如果无法获取，默认使用手工川主题的红色
-					themeAccentColor = "#E31937";
-				}
-
-				// 清理测试元素
-				document.body.removeChild(testElement);
-			} catch (e) {
-				// 如果出错，回退到默认值
-				themeAccentColor = "#E31937";
-				logger.error("无法获取主题色变量，使用默认值", e);
-			}
-
-			logger.debug("使用主题中的颜色：", themeAccentColor);
-		}
-
-		return themeAccentColor;
-	}
-
 	/**
 	 * 转换列表为微信兼容格式
 	 * @param list 要转换的列表元素
 	 */
-	private transformList(
-		list: HTMLUListElement | HTMLOListElement,
-		level = 0,
-		themeAccentColor = ""
-	): HTMLUListElement {
+	private transformList(list: HTMLUListElement | HTMLOListElement, level = 0, themeAccentColor = ""): HTMLUListElement {
 		const isOrdered = list.tagName.toLowerCase() === "ol";
 
 		// 创建新的微信格式列表
@@ -482,6 +414,7 @@ export class WeChatAdapter extends BaseAdapter {
 			parentItem: HTMLLIElement;
 			list: HTMLUListElement | HTMLOListElement;
 		}
+
 		const nestedLists: NestedListInfo[] = [];
 
 		// 处理列表项
@@ -491,13 +424,10 @@ export class WeChatAdapter extends BaseAdapter {
 			const newItem = document.createElement("li");
 
 			// 查找并存储任何嵌套列表
-			const childLists = Array.from(
-				item.querySelectorAll(":scope > ul, :scope > ol")
-			);
+			const childLists = Array.from(item.querySelectorAll(":scope > ul, :scope > ol"));
 			for (const childList of childLists) {
 				nestedLists.push({
-					parentItem: newItem,
-					list: childList as HTMLUListElement | HTMLOListElement,
+					parentItem: newItem, list: childList as HTMLUListElement | HTMLOListElement,
 				});
 				// 从原列表项中移除嵌套列表
 				childList.remove();
@@ -521,128 +451,21 @@ export class WeChatAdapter extends BaseAdapter {
 		}
 
 		// 处理嵌套列表
-		for (const { parentItem, list: childList } of nestedLists) {
+		for (const {parentItem, list: childList} of nestedLists) {
 			// 递归转换子列表
-			const newChildList = this.transformList(
-				childList,
-				level + 1,
-				themeAccentColor
-			);
+			const newChildList = this.transformList(childList, level + 1, themeAccentColor);
 
 			// 在父列表项后添加嵌套列表直接作为父列表的子元素
 			// 注意：微信编辑器要求嵌套列表不要放在父列表项内部
-			const parentIndex = Array.from(newList.children).indexOf(
-				parentItem
-			);
-			if (
-				parentIndex !== -1 &&
-				parentIndex < newList.children.length - 1
-			) {
-				newList.insertBefore(
-					newChildList,
-					newList.children[parentIndex + 1]
-				);
+			const parentIndex = Array.from(newList.children).indexOf(parentItem);
+			if (parentIndex !== -1 && parentIndex < newList.children.length - 1) {
+				newList.insertBefore(newChildList, newList.children[parentIndex + 1]);
 			} else {
 				newList.appendChild(newChildList);
 			}
 		}
 
 		return newList;
-	}
-
-	/**
-	 * 重写基类的 applyStyles 方法，为微信配置内联样式
-	 * @param html HTML内容
-	 * @param css CSS样式字符串 【css 只是个摆设，它直接从 html 拿的】
-	 * @returns 应用样式后的HTML内容
-	 */
-	public processStyles(html: string): string {
-		try {
-			// 创建临时DOM元素
-			const tempDiv = document.createElement('div');
-			tempDiv.innerHTML = html;
-			document.body.appendChild(tempDiv);
-
-			// 添加样式元素
-			const styleEl = document.createElement('style');
-			styleEl.textContent = '';
-			tempDiv.appendChild(styleEl);
-			logger.info(colors.yellow("为微信内容添加样式元素"));
-
-			// 获取所有非样式元素
-			const allElements = tempDiv.querySelectorAll("*:not(style)");
-			logger.info(colors.yellow("处理微信样式元素数量:"), allElements.length);
-
-			// 应用计算样式到每个元素
-			for (let i = 0; i < allElements.length; i++) {
-				const el = allElements[i] as HTMLElement;
-				const computedStyle = window.getComputedStyle(el);
-				let inlineStyles = "";
-
-				// 提取关键样式属性
-				const properties = [
-					"color",
-					"background-color",
-					"font-family",
-					"font-size",
-					"font-weight",
-					"text-align",
-					"line-height",
-					"margin",
-					"padding",
-					"border",
-					"border-radius",
-
-					// todo: 不知道加这个有没有效果 （参考： [微信公众号图文 HTML/CSS 支持情况解析](https://www.axtonliu.ai/newsletters/ai-2/posts/wechat-article-html-css-support)）
-					"position",
-				];
-
-				for (const prop of properties) {
-					const value = computedStyle.getPropertyValue(prop);
-					if (value && value !== "" && value !== "none") {
-						// 微信公众号支持的字体比较有限
-						if (prop === "font-family") {
-							inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
-							continue;
-						}
-
-						// 处理过大或过小的字体
-						if (prop === "font-size") {
-							const fontSize = parseInt(value);
-							if (fontSize > 40) {
-								inlineStyles += `font-size: 40px; `;
-								continue;
-							} else if (fontSize < 12 && el.tagName !== "SUP" && el.tagName !== "SUB") {
-								inlineStyles += `font-size: 12px; `;
-								continue;
-							}
-						}
-
-						inlineStyles += `${prop}: ${value}; `;
-					}
-				}
-
-				// 应用内联样式
-				if (inlineStyles) {
-					const existingStyle = el.getAttribute("style") || "";
-					el.setAttribute("style", existingStyle + inlineStyles);
-				}
-			}
-
-			// 移除所有 style 标签，微信不支持
-			const styleElements = tempDiv.querySelectorAll('style');
-			styleElements.forEach(el => el.remove());
-
-			// 获取处理后的HTML并清理临时元素
-			const result = tempDiv.innerHTML;
-			document.body.removeChild(tempDiv);
-
-			logger.info(colors.yellow("应用内联样式后的微信内容:"), result.substring(0, 200) + "...");
-			return result;
-		} catch (error) {
-			logger.error("应用微信样式时出错:", error);
-			return html;
-		}
 	}
 
 
