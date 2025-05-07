@@ -1,10 +1,10 @@
 import {App, FileSystemAdapter, Notice, PluginSettingTab, Setting, TextAreaComponent,} from "obsidian";
-import {DistributionService, PlatformType} from "./distribution";
 import OmniContentPlugin from "./main";
 import {cleanMathCache} from "./markdown/math";
 import {LinkDescriptionMode, LinkFootnoteMode, NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
 import {logger} from "./utils";
+import { PlatformType } from "./platform-adapters/types";
 
 export class OmniContentSettingTab extends PluginSettingTab {
 	plugin: OmniContentPlugin;
@@ -278,9 +278,6 @@ export class OmniContentSettingTab extends PluginSettingTab {
 			cls: "setting-item-description"
 		});
 
-		// 初始化分发服务
-		const distributionService = DistributionService.getInstance();
-
 		// 加载现有配置
 		const distributionConfig = this.settings.distributionConfig || {};
 		if (!this.settings.distributionConfig) {
@@ -307,172 +304,7 @@ export class OmniContentSettingTab extends PluginSettingTab {
 					distributionConfig[PlatformType.WECHAT].enabled = value;
 					this.settings.distributionConfig = distributionConfig;
 					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
 					logger.info("已更新微信公众号分发设置");
-				});
-			});
-
-		// 知乎平台配置
-		const zhihuConfig = distributionConfig[PlatformType.ZHIHU] || {};
-		const zhihuAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
-		zhihuAuthSection.createEl("h3", {text: "知乎"});
-
-		new Setting(zhihuAuthSection)
-			.setName("启用知乎分发")
-			.addToggle(toggle => {
-				toggle.setValue(zhihuConfig.enabled || false);
-				toggle.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.ZHIHU]) {
-						distributionConfig[PlatformType.ZHIHU] = {};
-					}
-					distributionConfig[PlatformType.ZHIHU].enabled = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-					logger.info("已更新知乎分发设置");
-				});
-			});
-
-		new Setting(zhihuAuthSection)
-			.setName("知乎 Cookie")
-			.setDesc("从浏览器复制的知乎登录态 Cookie 字符串")
-			.addTextArea(text => {
-				text.setValue(zhihuConfig.cookie || "");
-				text.inputEl.style.minHeight = "80px";
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.ZHIHU]) {
-						distributionConfig[PlatformType.ZHIHU] = {};
-					}
-					distributionConfig[PlatformType.ZHIHU].cookie = value;
-					distributionConfig[PlatformType.ZHIHU].token = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-				});
-			});
-
-		// 小红书平台配置
-		const xhsConfig = distributionConfig[PlatformType.XIAOHONGSHU] || {};
-		const xhsAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
-		xhsAuthSection.createEl("h3", {text: "小红书"});
-
-		new Setting(xhsAuthSection)
-			.setName("启用小红书分发")
-			.addToggle(toggle => {
-				toggle.setValue(xhsConfig.enabled || false);
-				toggle.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.XIAOHONGSHU]) {
-						distributionConfig[PlatformType.XIAOHONGSHU] = {};
-					}
-					distributionConfig[PlatformType.XIAOHONGSHU].enabled = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-					logger.info("已更新小红书分发设置");
-				});
-			});
-
-		new Setting(xhsAuthSection)
-			.setName("小红书 Cookie")
-			.setDesc("从浏览器复制的小红书登录态 Cookie 字符串")
-			.addTextArea(text => {
-				text.setValue(xhsConfig.cookie || "");
-				text.inputEl.style.minHeight = "80px";
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.XIAOHONGSHU]) {
-						distributionConfig[PlatformType.XIAOHONGSHU] = {};
-					}
-					distributionConfig[PlatformType.XIAOHONGSHU].cookie = value;
-					distributionConfig[PlatformType.XIAOHONGSHU].token = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-				});
-			});
-
-		// Twitter平台配置
-		const twitterConfig = distributionConfig[PlatformType.TWITTER] || {};
-		const twitterAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
-		twitterAuthSection.createEl("h3", {text: "Twitter"});
-
-		new Setting(twitterAuthSection)
-			.setName("启用Twitter分发")
-			.addToggle(toggle => {
-				toggle.setValue(twitterConfig.enabled || false);
-				toggle.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.TWITTER]) {
-						distributionConfig[PlatformType.TWITTER] = {};
-					}
-					distributionConfig[PlatformType.TWITTER].enabled = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-					logger.info("已更新Twitter分发设置");
-				});
-			});
-
-		new Setting(twitterAuthSection)
-			.setName("Twitter API Key")
-			.setDesc("Twitter API 开发者密钥")
-			.addText(text => {
-				text.setValue(twitterConfig.apiKey || "");
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.TWITTER]) {
-						distributionConfig[PlatformType.TWITTER] = {};
-					}
-					distributionConfig[PlatformType.TWITTER].apiKey = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-				});
-			});
-
-		new Setting(twitterAuthSection)
-			.setName("Twitter API Secret")
-			.setDesc("Twitter API 开发者密钥")
-			.addText(text => {
-				text.setValue(twitterConfig.apiSecret || "");
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.TWITTER]) {
-						distributionConfig[PlatformType.TWITTER] = {};
-					}
-					distributionConfig[PlatformType.TWITTER].apiSecret = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-				});
-			});
-
-		new Setting(twitterAuthSection)
-			.setName("Twitter Access Token")
-			.setDesc("Twitter API 访问令牌")
-			.addText(text => {
-				text.setValue(twitterConfig.accessToken || "");
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.TWITTER]) {
-						distributionConfig[PlatformType.TWITTER] = {};
-					}
-					distributionConfig[PlatformType.TWITTER].accessToken = value;
-					distributionConfig[PlatformType.TWITTER].token = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
-				});
-			});
-
-		new Setting(twitterAuthSection)
-			.setName("Twitter Access Token Secret")
-			.setDesc("Twitter API 访问令牌密钥")
-			.addText(text => {
-				text.setValue(twitterConfig.accessTokenSecret || "");
-				text.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.TWITTER]) {
-						distributionConfig[PlatformType.TWITTER] = {};
-					}
-					distributionConfig[PlatformType.TWITTER].accessTokenSecret = value;
-					this.settings.distributionConfig = distributionConfig;
-					await this.plugin.saveSettings();
-					distributionService.loadConfig(distributionConfig);
 				});
 			});
 

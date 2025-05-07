@@ -1,7 +1,6 @@
 import {App, Plugin, PluginManifest, WorkspaceLeaf} from "obsidian";
 import {VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
 import AssetsManager from "./assets";
-import {DistributionService} from "./distribution";
 import {NotePreview} from "./note-preview";
 import {OmniContentSettingTab} from "./setting-tab";
 import {NMPSettings} from "./settings";
@@ -30,18 +29,6 @@ export default class OmniContentPlugin extends Plugin {
 		templateManager.setup(this.app);
 		await templateManager.loadTemplates();
 
-		// 初始化分发服务
-		const distributionService = DistributionService.getInstance();
-		distributionService.setup(this.app);
-
-		// 加载分发服务配置
-		const distributionConfig = this.settings
-			? this.settings.distributionConfig
-			: null;
-		if (distributionConfig) {
-			distributionService.loadConfig(distributionConfig);
-			logger.info("分发服务配置已加载");
-		}
 
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
@@ -77,15 +64,6 @@ export default class OmniContentPlugin extends Plugin {
 		if (!this.settings) {
 			this.settings = NMPSettings.getInstance();
 			console.warn("Settings was undefined in saveSettings, initialized it");
-		}
-
-		// 保存分发服务配置
-		try {
-			const distributionService = DistributionService.getInstance();
-			const distributionConfig = distributionService.saveConfig();
-			this.settings.distributionConfig = distributionConfig;
-		} catch (error) {
-			console.error("Error while saving distribution config:", error);
 		}
 
 		// 保存所有设置

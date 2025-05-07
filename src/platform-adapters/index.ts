@@ -2,6 +2,7 @@ import {PreviewAdapterFactory} from "src/platform-adapters/adapter-factory";
 import {logger} from "../utils";
 import {DefaultContentAdapter} from "src/platform-adapters/default-content-adapter";
 import {WeChatAdapter} from "./wechat-adapter";
+import { PlatformType } from "./types";
 
 /**
  * 初始化并注册所有内容适配器
@@ -10,10 +11,10 @@ export function initializeContentAdapters(): void {
 	logger.info("正在初始化内容适配器...");
 
 	// 注册预览适配器（默认适配器）
-	PreviewAdapterFactory.registerAdapter('preview', new DefaultContentAdapter());
+	PreviewAdapterFactory.registerAdapter(PlatformType.DEFAULT, new DefaultContentAdapter());
 
 	// 注册微信公众号适配器
-	PreviewAdapterFactory.registerAdapter('wechat', new WeChatAdapter());
+	PreviewAdapterFactory.registerAdapter(PlatformType.WECHAT, new WeChatAdapter());
 
 	// 可以在这里注册更多平台的适配器
 
