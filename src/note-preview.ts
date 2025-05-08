@@ -723,15 +723,11 @@ ${customCSS}`;
 		// 添加点击事件
 		header.addEventListener("click", () => {
 			// 切换展开/收缩状态
-			const isExpanded =
-				content.style.maxHeight !== "0px" &&
-				content.style.maxHeight !== "";
+			const isExpanded = content.style.display !== "none" && content.style.display !== "";
 
 			if (isExpanded) {
 				// 收起内容区域
-				content.style.maxHeight = "0px";
-				content.style.opacity = "0";
-				content.style.padding = "0 16px";
+				content.style.display = "none";
 				icon.style.transform = "rotate(0deg)";
 				// 移除标题栏的激活状态
 				header.style.borderBottomColor = "transparent";
@@ -745,9 +741,8 @@ ${customCSS}`;
 				}
 			} else {
 				// 展开内容区域
-				content.style.maxHeight = content.scrollHeight + "px";
-				content.style.opacity = "1";
-				content.style.padding = "16px 16px"; // 展开时增加垂直内边距
+				content.style.display = "block";
+				content.style.padding = "16px"; // 使用单一的padding值更简洁
 				icon.style.transform = "rotate(180deg)";
 				// 添加标题栏的激活状态
 				header.style.borderBottomColor = "var(--background-modifier-border)";
@@ -764,6 +759,9 @@ ${customCSS}`;
 
 		// 根据保存的设置或默认规则来设置初始状态
 		window.setTimeout(() => {
+			// 默认隐藏所有内容
+			content.style.display = "none";
+			
 			// 如果应该展开（设置中有记录或者是第一个部分）
 			if (
 				shouldExpand ||
@@ -771,12 +769,15 @@ ${customCSS}`;
 					1 &&
 					this.settings.expandedAccordionSections.length === 0)
 			) {
-				content.style.maxHeight = content.scrollHeight + "px";
-				content.style.opacity = "1";
-				content.style.padding = "16px 16px";
+				// 展开内容区域
+				content.style.display = "block";
+				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
 				// 添加标题栏的激活状态
 				header.style.borderBottomColor = "var(--background-modifier-border)";
+				
+				// 记录展开状态
+				logger.debug(`初始化手风琴组件展开状态: ${sectionId}`);
 
 				// 如果还没有添加到设置中，则添加
 				if (
@@ -1090,16 +1091,16 @@ ${customCSS}`;
 
 		// 添加点击事件
 		header.addEventListener("click", () => {
-			// 切换展开/收缩状态
-			const isExpanded =
-				content.style.maxHeight !== "0px" &&
-				content.style.maxHeight !== "";
+			// 切换展开/收缩状态 - 使用display属性判断
+			const isExpanded = content.style.display !== "none" && content.style.display !== "";
 
 			if (isExpanded) {
-				content.style.maxHeight = "0px";
+				// 收起内容区域
+				content.style.display = "none";
 				icon.style.transform = "rotate(0deg)";
+				header.style.borderBottomColor = "transparent";
 
-				// 从设置中移除该插件的展开状态
+				// 从设置中移除该部分
 				const index =
 					this.settings.expandedAccordionSections.indexOf(pluginId);
 				if (index > -1) {
@@ -1107,10 +1108,13 @@ ${customCSS}`;
 					this.saveSettingsToPlugin();
 				}
 			} else {
-				content.style.maxHeight = content.scrollHeight + "px";
+				// 展开内容区域
+				content.style.display = "block";
+				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
+				header.style.borderBottomColor = "var(--background-modifier-border)";
 
-				// 添加插件展开状态到设置中
+				// 添加到设置中
 				if (
 					!this.settings.expandedAccordionSections.includes(pluginId)
 				) {
@@ -1122,9 +1126,17 @@ ${customCSS}`;
 
 		// 根据保存的设置来设置初始状态
 		window.setTimeout(() => {
+			// 默认隐藏内容
+			content.style.display = "none";
+			
 			if (shouldExpand) {
-				content.style.maxHeight = content.scrollHeight + "px";
+				// 如果应该展开，则设置显示状态
+				content.style.display = "block";
+				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
+				header.style.borderBottomColor = "var(--background-modifier-border)";
+				
+				logger.debug(`初始化插件手风琴展开: ${pluginId}`);
 			}
 		}, 0);
 	}
