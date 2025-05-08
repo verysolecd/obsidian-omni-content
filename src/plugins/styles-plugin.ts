@@ -58,11 +58,11 @@ export class StylesPlugin extends BaseProcessPlugin {
                 for (const prop of properties) {
                     const value = computedStyle.getPropertyValue(prop);
                     if (value && value !== "" && value !== "none") {
-                        // 微信公众号支持的字体比较有限
-                        if (prop === "font-family") {
-                            inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
-                            continue;
-                        }
+                        // // 微信公众号支持的字体比较有限
+                        // if (prop === "font-family") {
+                        //     inlineStyles += `font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", sans-serif; `;
+                        //     continue;
+                        // }
 
                         // 处理过大或过小的字体
                         if (prop === "font-size") {
