@@ -1156,7 +1156,7 @@ ${customCSS}`;
 		});
 		brandSection.setAttribute(
 			"style",
-			"flex: 0 0 auto; padding: 16px; background: linear-gradient(135deg, var(--background-secondary-alt) 0%, var(--background-secondary) 100%); border-bottom: 1px solid var(--background-modifier-border);"
+			"flex: 0 0 auto; padding: 16px; background: linear-gradient(135deg, var(--background-secondary-alt) 0%, var(--background-secondary) 100%); border-bottom: 1px solid var(--background-modifier-border); "
 		);
 
 		// 创建品牌区域内容容器
@@ -1165,7 +1165,7 @@ ${customCSS}`;
 		});
 		brandContent.setAttribute(
 			"style",
-			"display: flex; align-items: center; justify-content: space-between;"
+			"display: flex; align-items: center; justify-content: space-between; width: 100%;"
 		);
 
 		// 创建左侧品牌包装器
@@ -1234,7 +1234,7 @@ ${customCSS}`;
 		brandName.innerHTML = "手工川智能创作平台";
 		brandName.setAttribute(
 			"style",
-			"font-size: 14px; color: var(--text-muted); font-weight: 500; margin-left: 8px;"
+			"font-size: 14px; background: linear-gradient(90deg, #4f6ef2 0%, #8a65d9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding: 4px 10px; border: 1px solid rgba(106, 106, 240, 0.3); border-radius: 12px; font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);"
 		);
 	}
 
