@@ -1156,7 +1156,7 @@ ${customCSS}`;
 		});
 		brandSection.setAttribute(
 			"style",
-			"flex: 0 0 auto; padding: 10px; border-bottom: 1px solid var(--background-modifier-border);"
+			"flex: 0 0 auto; padding: 16px; background: linear-gradient(135deg, var(--background-secondary-alt) 0%, var(--background-secondary) 100%); border-bottom: 1px solid var(--background-modifier-border);"
 		);
 
 		// 创建品牌区域内容容器
@@ -1168,33 +1168,74 @@ ${customCSS}`;
 			"display: flex; align-items: center; justify-content: space-between;"
 		);
 
+		// 创建左侧品牌包装器
+		const brandLeftSide = brandContent.createDiv({
+			cls: "brand-left-side",
+		});
+		brandLeftSide.setAttribute(
+			"style",
+			"display: flex; align-items: center;"
+		);
+
+		// 创建 Logo 区域
+		const logoContainer = brandLeftSide.createDiv({
+			cls: "logo-container",
+		});
+		logoContainer.setAttribute(
+			"style",
+			"width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6b46c1 0%, #4a6bf5 100%); border-radius: 8px; margin-right: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"
+		);
+
+		// 添加 Logo 内容 - 简单的 "O" 字母
+		logoContainer.innerHTML = `
+			<div style="color: white; font-weight: bold; font-size: 20px; font-family: 'Arial Black', sans-serif;">O</div>
+		`;
+
+		// 创建品牌名称和版本号容器
+		const titleContainer = brandLeftSide.createDiv({
+			cls: "title-container",
+		});
+		titleContainer.setAttribute(
+			"style",
+			"display: flex; flex-direction: column;"
+		);
+
 		// 创建品牌标题
-		brandContent.createDiv({
+		const brandTitle = titleContainer.createDiv({
 			cls: "preview-title",
 			text: "Omnient",
 		});
+		brandTitle.setAttribute(
+			"style",
+			"font-size: 18px; font-weight: bold; background: linear-gradient(90deg, #6b46c1 0%, #4a6bf5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);"
+		);
 
-		// 	// 创建版本号
-		const brandVersion = brandContent.createSpan({
-			cls: "preview-version",
-			text: "V0.3.0",
+		// 创建版本号包装器
+		const versionContainer = titleContainer.createDiv({
+			cls: "version-container",
 		});
-		brandVersion.setAttr("style", "margin-left: 2px;");
+		versionContainer.setAttribute(
+			"style",
+			"display: flex; align-items: center; margin-top: 2px;"
+		);
 
-		// 	// 创建品牌内容：Logo + 名称
-		// 	const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
-		// 	brandLogo.innerHTML = `
-		//     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-		//         <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		//         <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		//         <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		//     </svg>
-		// `;
+		// 添加版本标记
+		const versionBadge = versionContainer.createDiv({
+			cls: "version-badge",
+		});
+		versionBadge.setAttribute(
+			"style",
+			"padding: 1px 6px; font-size: 11px; font-weight: bold; color: white; background: linear-gradient(90deg, #4a6bf5 0%, #6b46c1 100%); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); line-height: 1.4;"
+		);
+		versionBadge.textContent = "V0.3.0";
 
 		// 创建平台名称
 		const brandName = brandContent.createDiv({ cls: "brand-name" });
 		brandName.innerHTML = "手工川智能创作平台";
-		brandName.setAttr("style", "margin-left: 8px;");
+		brandName.setAttribute(
+			"style",
+			"font-size: 14px; color: var(--text-muted); font-weight: 500; margin-left: 8px;"
+		);
 	}
 
 	/**
