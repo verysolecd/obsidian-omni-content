@@ -3,7 +3,7 @@ import { IProcessPlugin } from "src/plugins/base-process-plugin";
 import { CodeBlocksPlugin } from "src/plugins/code-blocks-plugin";
 import { HeadingsPlugin } from "src/plugins/headings-plugin";
 import { ImagesPlugin } from "src/plugins/images-plugin";
-import { LinksPlugin } from "src/plugins/links-plugin";
+import { WechatLinkPlugin } from "src/plugins/wechat-link-plugin";
 import { ListsPlugin } from "src/plugins/lists-plugin";
 import { StylesPlugin } from "src/plugins/styles-plugin";
 import { TablesPlugin } from "src/plugins/tables-plugin";
@@ -18,7 +18,7 @@ export class WeChatAdapter extends BaseContentAdapter {
 	protected plugins: IProcessPlugin[] = [
 		new ImagesPlugin(),
 
-		new LinksPlugin(),
+		new WechatLinkPlugin(),
 		new HeadingsPlugin(),
 		new ListsPlugin(),
 		new CodeBlocksPlugin(),

@@ -5,9 +5,9 @@ import {logger} from "src/utils";
 /**
  * 链接处理插件 - 根据设置将链接转换为脚注或其他格式
  */
-export class LinksPlugin extends BaseProcessPlugin {
+export class WechatLinkPlugin extends BaseProcessPlugin {
 	getName(): string {
-		return "链接处理插件";
+		return "微信链接处理插件";
 	}
 
 	process(html: string, settings: NMPSettings): string {
@@ -28,11 +28,26 @@ export class LinksPlugin extends BaseProcessPlugin {
 				const href = link.getAttribute("href");
 				if (!href) return;
 
+				// 检查是否已经是脚注格式的链接
+				// 1. 检查是否已经是脚注引用（如 #fn-123）
+				const isFootnoteRef = href.startsWith('#fn-');
+				
+				// 2. 检查是否是脚注中的返回链接（如 #fnref-123）
+				const isFootnoteBackRef = href.startsWith('#fnref-');
+				
+				// 3. 检查是否是服务于脚注系统的链接
+				const parentIsSup = link.parentElement?.tagName === 'SUP';
+				const hasFootnoteClass = link.classList.contains('footnote-ref') || 
+										link.classList.contains('footnote-backref');
+				
+				// 如果已经是脚注相关的链接，直接跳过
+				if (isFootnoteRef || isFootnoteBackRef || hasFootnoteClass || parentIsSup) {
+					logger.debug("Skip processing footnote link:", href);
+					return;
+				}
+
 				// 判断是否需要转换此链接
-				const shouldConvert =
-					settings.linkFootnoteMode === "all" ||
-					(settings.linkFootnoteMode === "non-wx" &&
-						!href.includes("weixin.qq.com"));
+				const shouldConvert = !href.includes("weixin.qq.com");
 
 				if (shouldConvert) {
 					// 创建脚注标记
