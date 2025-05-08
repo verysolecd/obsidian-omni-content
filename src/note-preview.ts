@@ -676,16 +676,28 @@ ${customCSS}`;
 		accordion.setAttr("id", sectionId);
 		accordion.setAttr(
 			"style",
-			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;"
+			"margin-bottom: 12px; border: 1px solid var(--background-modifier-border); border-radius: 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);"
 		);
 
 		// 创建标题栏
 		const header = accordion.createDiv({ cls: "accordion-header" });
 		header.setAttr(
 			"style",
-			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
+			"padding: 12px 16px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent; transition: background-color 0.2s, border-color 0.2s;"
 		);
-		header.createDiv({ cls: "accordion-title", text: title });
+		// 鼠标悬停效果
+		header.addEventListener("mouseenter", () => {
+			header.style.backgroundColor = "var(--background-secondary-alt)";
+		});
+		header.addEventListener("mouseleave", () => {
+			header.style.backgroundColor = "var(--background-secondary)";
+		});
+		
+		const titleEl = header.createDiv({ cls: "accordion-title", text: title });
+		titleEl.setAttr(
+			"style",
+			"font-weight: 500; font-size: 14px;"
+		);
 
 		// 创建展开/收缩图标
 		const icon = header.createDiv({ cls: "accordion-icon" });
@@ -697,7 +709,7 @@ ${customCSS}`;
 		const content = accordion.createDiv({ cls: "accordion-content" });
 		content.setAttr(
 			"style",
-			"padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;"
+			"padding: 0 10px; transition: 0.3s ease-out;"
 		);
 
 		// 生成并添加内容
@@ -716,8 +728,13 @@ ${customCSS}`;
 				content.style.maxHeight !== "";
 
 			if (isExpanded) {
+				// 收起内容区域
 				content.style.maxHeight = "0px";
+				content.style.opacity = "0";
+				content.style.padding = "0 16px";
 				icon.style.transform = "rotate(0deg)";
+				// 移除标题栏的激活状态
+				header.style.borderBottomColor = "transparent";
 
 				// 从设置中移除该部分
 				const index =
@@ -727,8 +744,13 @@ ${customCSS}`;
 					this.saveSettingsToPlugin();
 				}
 			} else {
+				// 展开内容区域
 				content.style.maxHeight = content.scrollHeight + "px";
+				content.style.opacity = "1";
+				content.style.padding = "16px 16px"; // 展开时增加垂直内边距
 				icon.style.transform = "rotate(180deg)";
+				// 添加标题栏的激活状态
+				header.style.borderBottomColor = "var(--background-modifier-border)";
 
 				// 添加到设置中
 				if (
@@ -750,7 +772,11 @@ ${customCSS}`;
 					this.settings.expandedAccordionSections.length === 0)
 			) {
 				content.style.maxHeight = content.scrollHeight + "px";
+				content.style.opacity = "1";
+				content.style.padding = "16px 16px";
 				icon.style.transform = "rotate(180deg)";
+				// 添加标题栏的激活状态
+				header.style.borderBottomColor = "var(--background-modifier-border)";
 
 				// 如果还没有添加到设置中，则添加
 				if (
@@ -815,7 +841,6 @@ ${customCSS}`;
 	private buildPlatformSelector(container: HTMLElement): void {
 		const settingItem = container.createDiv({ cls: "setting-item" });
 		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
-		settingInfo.createDiv({ cls: "setting-item-name", text: "平台选择" });
 		settingInfo.createDiv({
 			cls: "setting-item-description",
 			text: "选择要预览的目标平台，不同平台使用不同的处理插件",
@@ -936,7 +961,7 @@ ${customCSS}`;
 		accordion.setAttr("id", pluginId);
 		accordion.setAttr(
 			"style",
-			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;"
+			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px;"
 		);
 
 		// 创建标题栏
@@ -957,7 +982,7 @@ ${customCSS}`;
 		const content = accordion.createDiv({ cls: "accordion-content" });
 		content.setAttr(
 			"style",
-			"padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;"
+			"padding: 0 10px; transition: 0.3s ease-out;"
 		);
 
 		// 构建插件配置区域
