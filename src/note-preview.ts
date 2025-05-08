@@ -8,7 +8,10 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
-import { IProcessPlugin, PluginMetaConfig } from "src/plugins/base-process-plugin";
+import {
+	IProcessPlugin,
+	PluginMetaConfig,
+} from "src/plugins/base-process-plugin";
 
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
@@ -832,8 +835,6 @@ ${customCSS}`;
 		this.updatePluginList();
 	}
 
-
-
 	/**
 	 * 构建手风琴组件
 	 * @param container 父容器
@@ -845,8 +846,15 @@ ${customCSS}`;
 		plugin: IProcessPlugin,
 		pluginName: string
 	): void {
+		// 创建唯一标识符，用于状态存储
+		const pluginId = `plugin-${pluginName
+			.replace(/\s+/g, "-")
+			.toLowerCase()}`;
+
 		// 创建手风琴包装器
 		const accordion = container.createDiv({ cls: "accordion-section" });
+		// 添加唯一ID属性便于识别
+		accordion.setAttr("id", pluginId);
 		accordion.setAttr(
 			"style",
 			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;"
@@ -881,6 +889,10 @@ ${customCSS}`;
 			"style",
 			"display: flex; flex-direction: column; gap: 10px;"
 		);
+
+		// 检查设置中是否存储了扩展状态
+		const shouldExpand =
+			this.settings.expandedAccordionSections.includes(pluginId);
 
 		// 添加插件配置项
 		// 从插件读取元配置和当前配置值
@@ -982,11 +994,35 @@ ${customCSS}`;
 			if (isExpanded) {
 				content.style.maxHeight = "0px";
 				icon.style.transform = "rotate(0deg)";
+
+				// 从设置中移除该插件的展开状态
+				const index =
+					this.settings.expandedAccordionSections.indexOf(pluginId);
+				if (index > -1) {
+					this.settings.expandedAccordionSections.splice(index, 1);
+					this.saveSettingsToPlugin();
+				}
 			} else {
 				content.style.maxHeight = content.scrollHeight + "px";
 				icon.style.transform = "rotate(180deg)";
+
+				// 添加插件展开状态到设置中
+				if (
+					!this.settings.expandedAccordionSections.includes(pluginId)
+				) {
+					this.settings.expandedAccordionSections.push(pluginId);
+					this.saveSettingsToPlugin();
+				}
 			}
 		});
+
+		// 根据保存的设置来设置初始状态
+		window.setTimeout(() => {
+			if (shouldExpand) {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+			}
+		}, 0);
 	}
 
 	/**
