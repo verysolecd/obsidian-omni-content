@@ -149,7 +149,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		});
 
 		// 9. 显示当前平台的插件列表
-		this.buildBasicAccordionSection(accordionContainer, "处理插件", () => {
+		this.buildBasicAccordionSection(accordionContainer, "插件设置", () => {
 			const container = document.createElement("div");
 			this.buildPluginListSection(container);
 			return container;
@@ -1216,24 +1216,24 @@ ${customCSS}`;
 		// 创建品牌标题
 		brandContent.createDiv({
 			cls: "preview-title",
-			text: "全能内容",
+			text: "Omnient",
 		});
 
-		// 创建版本号
-		brandContent.createSpan({
-			cls: "preview-version",
-			text: "v1.0.0",
-		});
+	// 	// 创建版本号
+	// 	brandContent.createSpan({
+	// 		cls: "preview-version",
+	// 		text: "v1.0.0",
+	// 	});
 
-		// 创建品牌内容：Logo + 名称
-		const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
-		brandLogo.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-    `;
+	// 	// 创建品牌内容：Logo + 名称
+	// 	const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
+	// 	brandLogo.innerHTML = `
+    //     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    //         <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    //         <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    //         <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    //     </svg>
+    // `;
 
 		// 创建平台名称
 		const brandName = brandContent.createDiv({ cls: "brand-name" });
