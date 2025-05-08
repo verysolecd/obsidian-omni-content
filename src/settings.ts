@@ -150,7 +150,7 @@ export class NMPSettings implements SettingsData {
 		const settingsObj: Record<string, unknown> = {};
 		Object.entries(this).forEach(([key, value]) => {
 			// 排除某些不需要导出的属性
-			if (!['instance', 'expireat', 'expandedAccordionSections'].includes(key)) {
+			if (!['instance', 'expireat'].includes(key)) {
 				settingsObj[key] = value;
 			}
 		});
