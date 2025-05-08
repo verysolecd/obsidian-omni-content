@@ -16,6 +16,12 @@ export class LinkRenderer extends Extension {
 		this.footnoteLinks = [];
 		this.currentPosition = 0;
 	}
+	
+	// 检查是否为邮箱格式
+	isEmailAddress(text: string): boolean {
+		// 简单的邮箱格式检测
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
+	}
 
 	// 检查是否为微信链接
 	isWechatLink(href: string): boolean {
@@ -76,6 +82,26 @@ export class LinkRenderer extends Extension {
 
 					// 记录当前位置并递增
 					const position = this.currentPosition++;
+					
+					// 检查链接文本或链接地址是否为邮箱
+					const isMailtoLink = token.href.startsWith('mailto:');
+					const textIsEmail = this.isEmailAddress(token.text);
+					
+					// 1. 如果是邮箱链接（mailto:），且设置要求保护邮箱，则返回纯文本
+					if (isMailtoLink || textIsEmail) {
+						// 提取邮箱地址内容
+						const emailText = isMailtoLink 
+							? token.href.replace('mailto:', '') 
+							: token.text;
+						
+						// 如果邮箱看起来像是脚注引用格式的一部分 (如 example@domain.com[1])，保持纯文本
+						if (token.text.includes('[') && token.text.includes(']')) {
+							return token.text;
+						}
+						
+						// 其他情况下，保持为普通邮箱文本
+						return emailText;
+					}
 					
 					// 保存所有链接（带位置信息）
 					this.allLinks.push({

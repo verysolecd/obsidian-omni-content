@@ -7,6 +7,7 @@ import {CodeRenderer} from "./code";
 import {CodeHighlight} from "./code-highlight";
 import {EmbedBlockMark} from "./embed-block-mark";
 import {Extension, MDRendererCallback} from "./extension";
+import {FootnoteRenderer} from "./footnote";
 import {SVGIcon} from "./icons";
 import {LinkRenderer} from "./link";
 import {LocalFile} from "./local-file";
@@ -16,6 +17,7 @@ import {TextHighlight} from "./text-highlight";
 const markedOptiones = {
 	gfm: true,
 	breaks: true,
+	mangle: false,   // 禁用自动检测并转换邮箱地址为链接
 };
 
 const customRenderer = {
@@ -28,33 +30,7 @@ const customRenderer = {
 		return "<hr>";
 	},
 
-	list(body: string, ordered: boolean, start: number | ""): string {
-		const type = ordered ? "ol" : "ul";
-		const startatt = ordered && start !== 1 ? ' start="' + start + '"' : "";
-		return `<${type}${startatt}>${body}</${type}>`;
-	},
-
-	listitem(text: string, task: boolean, checked: boolean): string {
-		// Add a marker to identify if this list item contains nested lists
-		const hasNestedList = text.includes('<ul') || text.includes('<ol');
-
-		if (isWeChatMode && hasNestedList) {
-			// For WeChat, we'll extract the nested list in post-processing
-			// Mark the list item so we can identify it later
-			return `<li data-has-nested="true">${text}</li>`;
-		}
-
-		return `<li>${text}</li>`;
-	},
 };
-
-// Flag to indicate if we're rendering for WeChat
-let isWeChatMode = false;
-
-// Helper to set rendering mode
-export function setWeChatMode(enabled: boolean) {
-	isWeChatMode = enabled;
-}
 
 export class MarkedParser {
 	extensions: Extension[] = [];
@@ -72,9 +48,9 @@ export class MarkedParser {
 		this.extensions.push(
 			new LocalFile(app, settings, assetsManager, callback)
 		);
-		// this.extensions.push(
-		// 	new CalloutRenderer(app, settings, assetsManager, callback)
-		// );
+		this.extensions.push(
+			new CalloutRenderer(app, settings, assetsManager, callback)
+		);
 		this.extensions.push(
 			new CodeHighlight(app, settings, assetsManager, callback)
 		);
@@ -84,9 +60,12 @@ export class MarkedParser {
 		this.extensions.push(
 			new SVGIcon(app, settings, assetsManager, callback)
 		);
-		// this.extensions.push(
-		// 	new LinkRenderer(app, settings, assetsManager, callback)
-		// );
+		this.extensions.push(
+			new LinkRenderer(app, settings, assetsManager, callback)
+		);
+		this.extensions.push(
+			new FootnoteRenderer(app, settings, assetsManager, callback)
+		);
 		this.extensions.push(
 			new TextHighlight(app, settings, assetsManager, callback)
 		);
@@ -126,8 +105,23 @@ export class MarkedParser {
 	async parse(content: string) {
 		if (!this.marked) await this.buildMarked();
 		await this.prepare();
-		let html = await this.marked.parse(content);
+
+		// 预处理 Markdown 内容，处理脚注定义
+		let processedContent = content;
+		const footnoteRenderer = this.extensions.find(ext => ext instanceof FootnoteRenderer) as FootnoteRenderer | undefined;
+		if (footnoteRenderer) {
+			processedContent = footnoteRenderer.preprocessText(content);
+		}
+
+		// 解析处理后的内容
+		let html = await this.marked.parse(processedContent);
 		html = await this.postprocess(html);
+
+		// 如果有脚注处理器，在发布前确保脚注引用正确
+		if (footnoteRenderer) {
+			await footnoteRenderer.beforePublish();
+		}
+
 		return html;
 	}
 }
