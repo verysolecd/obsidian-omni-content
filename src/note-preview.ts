@@ -94,9 +94,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			cls: "toolbar-content toolbar-vertical",
 		});
 
-		// 4. 初始化相关服务和数据
-		initializeContentAdapters(); // 确保适配器已初始化
-
 		// 5. 构建手风琴组件容器
 		const accordionContainer = toolbarContent.createDiv({
 			cls: "accordion-container",
@@ -114,9 +111,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			this.buildPlatformSelector(container);
 			return container;
 		});
-
-		// 7. 构建平台特定设置组件
-		this.buildPlatformSpecificAccordion(accordionContainer);
 
 		// 8. 如果启用了样式UI，构建样式相关设置组件
 		if (this.settings.showStyleUI) {
@@ -256,45 +250,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		}, 0);
 
 		return accordion;
-	}
-
-	/**
-	 * 构建平台特定设置的手风琴组件
-	 * 根据当前选择的平台和激活的插件来显示相关设置
-	 */
-	private buildPlatformSpecificAccordion(container: HTMLElement): void {
-		// 初始化适配器
-		initializeContentAdapters();
-
-		// 获取当前平台的适配器
-		const adapter = PreviewAdapterFactory.getAdapter(this.currentPlatform);
-
-		// 检查适配器是否使用了特定插件
-		let hasHeadingPlugin = false;
-
-		if (adapter instanceof BaseContentAdapter) {
-			const plugins =
-				(adapter as unknown as { plugins: IProcessPlugin[] }).plugins ||
-				[];
-
-			// 检查是否启用了标题插件
-			hasHeadingPlugin = plugins.some(
-				(p) =>
-					p &&
-					typeof p.getName === "function" &&
-					(p.getName().toLowerCase().includes("heading") ||
-						p.getName().toLowerCase().includes("标题"))
-			);
-		}
-
-		// 如果存在标题插件，则显示标题设置部分
-		if (hasHeadingPlugin) {
-			this.buildBasicAccordionSection(container, "平台特定设置", () => {
-				const settingsContainer = document.createElement("div");
-				this.buildHeadingNumberSettings(settingsContainer);
-				return settingsContainer;
-			});
-		}
 	}
 
 	getViewType() {
@@ -762,7 +717,7 @@ ${customCSS}`;
 	private saveSettingsToPlugin(): void {
 		// todo: 这个好像没用
 		uevent("save-settings");
-		
+
 		// 使用类型断言来解决 TypeScript 类型错误
 		const plugin = (this.app as any).plugins.plugins["omni-content"];
 		if (plugin) {
@@ -776,9 +731,6 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildPlatformSelector(container: HTMLElement): void {
-		// 确保适配器已经初始化
-		initializeContentAdapters();
-
 		const settingItem = container.createDiv({ cls: "setting-item" });
 		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
 		settingInfo.createDiv({ cls: "setting-item-name", text: "平台选择" });
@@ -914,6 +866,22 @@ ${customCSS}`;
 						const name = plugin.getName();
 						const listItem = listEl.createEl("li", { text: name });
 						listItem.setAttr("style", "margin: 2px 0;");
+
+						// 如果存在标题插件，则显示标题设置部分
+						if (name === "标题处理插件") {
+							this.buildBasicAccordionSection(
+								this.toolbar,
+								"标题设置",
+								() => {
+									const settingsContainer =
+										document.createElement("div");
+									this.buildHeadingNumberSettings(
+										settingsContainer
+									);
+									return settingsContainer;
+								}
+							);
+						}
 					}
 				});
 			} else {

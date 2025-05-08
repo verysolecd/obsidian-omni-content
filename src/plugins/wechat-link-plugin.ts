@@ -38,7 +38,7 @@ export class WechatLinkPlugin extends BaseProcessPlugin {
 				
 				// 如果已经是脚注相关的链接，去除a标签但保留上标效果
 				if (isFootnoteRef || isFootnoteBackRef || hasFootnoteClass || parentIsSup) {
-					logger.debug("Processing footnote link, removing a tag but keeping sup:", href);
+					// logger.debug("Processing footnote link, removing a tag but keeping sup:", href);
 					
 					if (parentIsSup) {
 						// 如果父元素是sup，保留sup但去除a标签

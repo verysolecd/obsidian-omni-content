@@ -43,7 +43,7 @@ export class FootnoteRenderer extends Extension {
             // 存储脚注定义
             this.footnotes.set(id, content);
             this.footnoteDefs.push({ id, content });
-            logger.debug("ADD Footnote:", {id, content});
+            // logger.debug("ADD Footnote:", {id, content});
 
             // 从原文中移除脚注定义
             modifiedText = modifiedText.replace(match[0], '');
@@ -61,7 +61,7 @@ export class FootnoteRenderer extends Extension {
         // 在生成脚注列表前，确保所有脚注都有内容
         // 对于没有定义的脚注，添加默认的占位符内容
         for (const id of this.footnoteRefs) {
-            logger.debug("Footnote ID:", id);
+            // logger.debug("Footnote ID:", id);
             if (!this.footnotes.has(id) || this.footnotes.get(id) === '') {
                 // 使用更民友的默认文本
                 this.footnotes.set(id, `该脚注未定义内容`);

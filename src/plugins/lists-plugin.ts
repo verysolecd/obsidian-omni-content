@@ -125,7 +125,7 @@ export class ListsPlugin extends BaseProcessPlugin {
 		for (const item of listItems) {
             // 获取原始列表项的颜色（如果有）
 			const originalColor = window.getComputedStyle(list).color;
-            logger.info("item: ", item, "color: ", originalColor)
+            // logger.info("item: ", item, "color: ", originalColor)
 
 			// 创建新的列表项
 			const newItem = document.createElement("li");
