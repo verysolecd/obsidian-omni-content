@@ -9,8 +9,7 @@ import {
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
 import {
-	IProcessPlugin,
-	PluginMetaConfig,
+	IProcessPlugin
 } from "src/plugins/base-process-plugin";
 
 import AssetsManager from "./assets";
@@ -19,12 +18,8 @@ import { CardDataManager } from "./markdown/code";
 import { MDRendererCallback } from "./markdown/extension";
 import { LocalImageManager } from "./markdown/local-file";
 import { MarkedParser } from "./markdown/parser";
-import {
-	initializeContentAdapters,
-	PreviewAdapterFactory,
-} from "./platform-adapters";
-import { BaseContentAdapter } from "./platform-adapters/base-content-adapter";
-import { PlatformType } from "./platform-adapters/types";
+// 移除平台适配器导入，使用插件管理器替代
+import { initializePlugins, PluginManager } from "./plugins";
 import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
 import { logger, uevent } from "./utils";
@@ -54,13 +49,15 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	title: string;
 	currentAppId: string;
 	markedParser: MarkedParser;
-	currentPlatform: PlatformType = PlatformType.DEFAULT;
+	// 已移除平台类型，使用统一的插件管理
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 		this.settings = NMPSettings.getInstance();
 		this.assetsManager = AssetsManager.getInstance();
 		this.markedParser = new MarkedParser(this.app, this);
+
+		initializePlugins();
 	}
 
 	get currentTheme() {
@@ -80,9 +77,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param parent 父容器元素
 	 */
 	buildToolbar(parent: HTMLDivElement) {
-
-
-
 		// 创建专业化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
@@ -98,10 +92,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const toolbarContainer = this.toolbar.createDiv({
 			cls: "toolbar-container",
 		});
-		toolbarContainer.setAttribute(
-			"style",
-			"flex: 1; overflow-y: auto;"
-		);
+		toolbarContainer.setAttribute("style", "flex: 1; overflow-y: auto;");
 
 		// 3. 创建工具栏内容区域 - 单列垂直布局
 		const toolbarContent = toolbarContainer.createDiv({
@@ -112,8 +103,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			"display: flex; flex-direction: column; padding: 10px;"
 		);
 
-						// 10. 构建操作按钮组
-						this.buildActionButtons(toolbarContent);
+		// 10. 构建操作按钮组
+		this.buildActionButtons(toolbarContent);
 
 		// 5. 构建手风琴组件容器
 		const accordionContainer = toolbarContent.createDiv({
@@ -141,21 +132,12 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			);
 		}
 
-		// 6. 构建主要机功组件包括平台选择器
-		this.buildBasicAccordionSection(accordionContainer, "平台设置", () => {
-			const container = document.createElement("div");
-			this.buildPlatformSelector(container);
-			return container;
-		});
-
 		// 9. 显示当前平台的插件列表
 		this.buildBasicAccordionSection(accordionContainer, "插件设置", () => {
 			const container = document.createElement("div");
 			this.buildPluginListSection(container);
 			return container;
 		});
-
-
 
 		// 11. 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
@@ -178,9 +160,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.listeners = [
 			this.workspace.on("active-leaf-change", () => this.update()),
 		];
-
-		// 初始化内容适配器
-		initializeContentAdapters();
 
 		this.renderMarkdown();
 		uevent("open");
@@ -210,9 +189,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	async renderMarkdown() {
-		this.articleDiv.innerHTML = await this.getArticleContent(
-			this.currentPlatform
-		);
+		this.articleDiv.innerHTML = await this.getArticleContent();
 		// 更新插件列表显示
 		this.updatePluginList();
 	}
@@ -222,14 +199,12 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * 用于插件配置变更时快速更新预览
 	 */
 	async renderArticleOnly() {
-		this.articleDiv.innerHTML = await this.getArticleContent(
-			this.currentPlatform
-		);
+		this.articleDiv.innerHTML = await this.getArticleContent();
 		logger.debug("仅渲染文章内容，跳过工具栏更新");
 	}
 
-	async copyArticle(platform: PlatformType = PlatformType.WECHAT) {
-		const content = await this.getArticleContent(platform);
+	async copyArticle() {
+		const content = await this.getArticleContent();
 
 		// 复制到剪贴板
 		await navigator.clipboard.write([
@@ -238,7 +213,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			}),
 		]);
 
-		new Notice(`已复制到剪贴板，请去平台：${platform}！`);
+		new Notice(`已复制到剪贴板！`);
 	}
 
 	/**
@@ -328,7 +303,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param sourceHtml 可选的源HTML内容，如果不提供则使用当前articleDiv的内容
 	 * @returns 适配后的文章HTML内容
 	 */
-	async getArticleContent(platform: PlatformType = PlatformType.DEFAULT) {
+	async getArticleContent() {
 		try {
 			// 获取当前激活的文件内容
 			const af = this.app.workspace.getActiveFile();
@@ -353,9 +328,12 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			articleHTML = this.wrapArticleContent(articleHTML);
 			// logger.debug(colors.green("HTML (wrapped): "), articleHTML);
 
-			// 获取适配器
-			const adapter = PreviewAdapterFactory.getAdapter(platform);
-			articleHTML = adapter.adaptContent(articleHTML, this.settings);
+			// 使用插件管理器处理HTML内容
+			const pluginManager = PluginManager.getInstance();
+			articleHTML = pluginManager.processContent(
+				articleHTML,
+				this.settings
+			);
 			// logger.debug(colors.green("HTML (final processed): "), articleHTML);
 			return articleHTML;
 		} catch (error) {
@@ -404,8 +382,10 @@ ${customCSS}`;
 	buildMsgView(parent: HTMLDivElement) {
 		// Add a reference to parent for debugging purposes
 		const parentExists = parent && parent.isConnected;
-		logger.debug(`Building message view with parent connected: ${parentExists}`);
-		
+		logger.debug(
+			`Building message view with parent connected: ${parentExists}`
+		);
+
 		// Create message view as a direct child of main container for proper z-index stacking
 		this.msgView = this.container.createDiv({ cls: "msg-view" });
 		// Ensure message view appears on top of both columns
@@ -488,34 +468,38 @@ ${customCSS}`;
 			document.documentElement.addEventListener("mousemove", doDrag);
 			document.documentElement.addEventListener("mouseup", stopDrag);
 		};
-		
+
 		const doDrag = (e: MouseEvent) => {
 			const newWidth = startWidth + e.clientX - startX;
 			const containerWidth = this.mainDiv.getBoundingClientRect().width;
 			const minWidth = 200; // 渲染区域的最小宽度
 			const maxWidth = containerWidth - 250; // 最大宽度（保留至少250px给工具栏）
-			
+
 			if (newWidth > minWidth && newWidth < maxWidth) {
 				// 设置渲染区域的固定宽度
 				this.renderDiv.style.flex = "0 0 " + newWidth + "px";
-				logger.debug(`调整渲染区域宽度: ${newWidth}px, 容器总宽度: ${containerWidth}px`);
+				logger.debug(
+					`调整渲染区域宽度: ${newWidth}px, 容器总宽度: ${containerWidth}px`
+				);
 			}
 		};
-		
+
 		const stopDrag = () => {
 			document.documentElement.removeEventListener("mousemove", doDrag);
 			document.documentElement.removeEventListener("mouseup", stopDrag);
 		};
-		
+
 		resizer.addEventListener("mousedown", startDrag);
 
 		// 明确创建右侧工具栏容器 - 使用flex: 1让其能跟随调整
-		const toolbarContainer = this.mainDiv.createDiv({ cls: "toolbar-container" });
+		const toolbarContainer = this.mainDiv.createDiv({
+			cls: "toolbar-container",
+		});
 		toolbarContainer.setAttribute(
 			"style",
 			"order: 2; flex: 1; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; background-color: var(--background-secondary-alt); border-left: 1px solid var(--background-modifier-border);"
 		);
-		
+
 		// Build toolbar in the right column
 		this.buildToolbar(toolbarContainer);
 	}
@@ -703,12 +687,12 @@ ${customCSS}`;
 		header.addEventListener("mouseleave", () => {
 			header.style.backgroundColor = "var(--background-secondary)";
 		});
-		
-		const titleEl = header.createDiv({ cls: "accordion-title", text: title });
-		titleEl.setAttr(
-			"style",
-			"font-weight: 500; font-size: 14px;"
-		);
+
+		const titleEl = header.createDiv({
+			cls: "accordion-title",
+			text: title,
+		});
+		titleEl.setAttr("style", "font-weight: 500; font-size: 14px;");
 
 		// 创建展开/收缩图标
 		const icon = header.createDiv({ cls: "accordion-icon" });
@@ -718,10 +702,7 @@ ${customCSS}`;
 
 		// 创建内容区域
 		const content = accordion.createDiv({ cls: "accordion-content" });
-		content.setAttr(
-			"style",
-			"padding: 0 10px; transition: 0.3s ease-out;"
-		);
+		content.setAttr("style", "padding: 0 10px; transition: 0.3s ease-out;");
 
 		// 生成并添加内容
 		const contentEl = contentBuilder();
@@ -734,7 +715,9 @@ ${customCSS}`;
 		// 添加点击事件
 		header.addEventListener("click", () => {
 			// 切换展开/收缩状态
-			const isExpanded = content.style.display !== "none" && content.style.display !== "";
+			const isExpanded =
+				content.style.display !== "none" &&
+				content.style.display !== "";
 
 			if (isExpanded) {
 				// 收起内容区域
@@ -756,7 +739,8 @@ ${customCSS}`;
 				content.style.padding = "16px"; // 使用单一的padding值更简洁
 				icon.style.transform = "rotate(180deg)";
 				// 添加标题栏的激活状态
-				header.style.borderBottomColor = "var(--background-modifier-border)";
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
 
 				// 添加到设置中
 				if (
@@ -772,7 +756,7 @@ ${customCSS}`;
 		window.setTimeout(() => {
 			// 默认隐藏所有内容
 			content.style.display = "none";
-			
+
 			// 如果应该展开（设置中有记录或者是第一个部分）
 			if (
 				shouldExpand ||
@@ -785,8 +769,9 @@ ${customCSS}`;
 				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
 				// 添加标题栏的激活状态
-				header.style.borderBottomColor = "var(--background-modifier-border)";
-				
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
+
 				// 记录展开状态
 				logger.debug(`初始化手风琴组件展开状态: ${sectionId}`);
 
@@ -847,93 +832,6 @@ ${customCSS}`;
 	}
 
 	/**
-	 * 构建平台选择器 - 用于切换不同的平台预览模式
-	 * @param container 工具栏内容容器
-	 */
-	private buildPlatformSelector(container: HTMLElement): void {
-		const settingItem = container.createDiv({ cls: "setting-item" });
-		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
-		settingInfo.createDiv({
-			cls: "setting-item-description",
-			text: "选择要预览的目标平台，不同平台使用不同的处理插件",
-		});
-
-		const settingControl = settingItem.createDiv({
-			cls: "setting-item-control",
-		});
-
-		// 创建平台选择下拉菜单
-		const selectEl = settingControl.createEl("select", { cls: "dropdown" });
-
-		// 获取所有可用的平台适配器
-		const adapters = PreviewAdapterFactory.getRegisteredAdapters();
-
-		// 添加选项 - 先手动添加可用平台以确保显示
-		const platformOptions = [
-			{ value: PlatformType.DEFAULT, text: "预览(默认)" },
-			{
-				value: PlatformType.WECHAT,
-				text: "微信公众号",
-			},
-		];
-
-		// 从设置中恢复上次选择的平台
-		if (
-			this.settings.lastSelectedPlatform &&
-			Object.values(PlatformType).includes(
-				this.settings.lastSelectedPlatform as PlatformType
-			)
-		) {
-			logger.debug(
-				`从设置中恢复平台选择: ${this.settings.lastSelectedPlatform}`
-			);
-			this.currentPlatform = this.settings
-				.lastSelectedPlatform as PlatformType;
-		}
-
-		// 添加选项
-		platformOptions.forEach((opt) => {
-			const option = selectEl.createEl("option", {
-				value: opt.value,
-				text: opt.text,
-			});
-
-			if (opt.value === this.currentPlatform) {
-				option.selected = true;
-			}
-		});
-
-		// 设置下拉菜单样式确保可见
-		selectEl.setAttr(
-			"style",
-			"width: 100%; min-width: 150px; display: block;"
-		);
-
-		// 添加事件监听器
-		selectEl.addEventListener("change", async () => {
-			this.currentPlatform = selectEl.value as PlatformType;
-
-			// 保存选择到设置中
-			this.settings.lastSelectedPlatform = this.currentPlatform;
-			this.saveSettingsToPlugin();
-			logger.debug(`保存平台选择到设置: ${this.currentPlatform}`);
-
-			// 更新插件列表
-			this.updatePluginList();
-
-			// 更新预览
-			logger.info(`切换到平台: ${this.currentPlatform}`);
-			await this.renderMarkdown();
-		});
-
-		// 增加键盘导航支持
-		this.addKeyboardNavigation(selectEl);
-
-		// 确保插件列表在初始化时也更新
-		this.updatePluginList();
-	}
-
-	/**
 	 * 构建插件列表显示区域 - 展示当前平台使用的处理插件
 	 * @param container 工具栏内容容器
 	 */
@@ -942,10 +840,7 @@ ${customCSS}`;
 		this.pluginListEl = container.createDiv({
 			cls: "plugin-list-container",
 		});
-		this.pluginListEl.setAttr(
-			"style",
-			"width: 100%;"
-		);
+		this.pluginListEl.setAttr("style", "width: 100%;");
 
 		// 初始化插件列表
 		this.updatePluginList();
@@ -982,14 +877,14 @@ ${customCSS}`;
 			"style",
 			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
 		);
-		
+
 		// 创建标题和控制区域的容器
 		const headerLeft = header.createDiv({ cls: "accordion-header-left" });
 		headerLeft.setAttr(
 			"style",
 			"display: flex; align-items: center; gap: 10px;"
 		);
-		
+
 		// 创建启用/禁用开关
 		const enableSwitch = headerLeft.createEl("label", {
 			cls: "switch small",
@@ -998,54 +893,53 @@ ${customCSS}`;
 			"style",
 			"margin-right: 8px; min-width: 36px; height: 18px;"
 		);
-		
+
 		const enableInput = enableSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
 			},
 		});
-		
+
 		// 设置启用状态
 		enableInput.checked = plugin.isEnabled();
-		
+
 		// 创建滑块
 		const slider = enableSwitch.createEl("span", { cls: "slider round" });
 		slider.setAttr("style", "height: 18px; width: 36px;");
-		
+
 		// 添加标题
 		headerLeft.createDiv({ cls: "accordion-title", text: pluginName });
-		
+
 		// 创建展开/收缩图标
 		const icon = header.createDiv({ cls: "accordion-icon" });
 		icon.setAttr("style", "transition: transform 0.3s;");
 		icon.innerHTML =
 			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-		
+
 		// 阻止开关点击事件冒泡到手风琴标题
 		enableSwitch.addEventListener("click", (event) => {
 			event.stopPropagation();
 		});
-		
+
 		// 添加开关状态变化事件
 		enableInput.addEventListener("change", (event) => {
 			const isEnabled = (event.target as HTMLInputElement).checked;
-			
+
 			// 更新插件状态
 			plugin.setEnabled(isEnabled);
-			
+
 			// 重新渲染内容
 			this.renderArticleOnly();
-			
+
 			// 显示操作成功通知
-			new Notice(`已${isEnabled ? "启用" : "禁用"}${plugin.getName()}插件`);
+			new Notice(
+				`已${isEnabled ? "启用" : "禁用"}${plugin.getName()}插件`
+			);
 		});
 
 		// 创建内容区域
 		const content = accordion.createDiv({ cls: "accordion-content" });
-		content.setAttr(
-			"style",
-			"padding: 0 10px; transition: 0.3s ease-out;"
-		);
+		content.setAttr("style", "padding: 0 10px; transition: 0.3s ease-out;");
 
 		// 构建插件配置区域
 		const configContainer = content.createDiv({
@@ -1156,7 +1050,9 @@ ${customCSS}`;
 		// 标题栏点击事件 - 控制折叠展开
 		header.addEventListener("click", () => {
 			// 切换展开/收缩状态 - 使用display属性判断
-			const isExpanded = content.style.display !== "none" && content.style.display !== "";
+			const isExpanded =
+				content.style.display !== "none" &&
+				content.style.display !== "";
 
 			if (isExpanded) {
 				// 收起内容区域
@@ -1176,7 +1072,8 @@ ${customCSS}`;
 				content.style.display = "block";
 				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
-				header.style.borderBottomColor = "var(--background-modifier-border)";
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
 
 				// 添加到设置中
 				if (
@@ -1192,14 +1089,15 @@ ${customCSS}`;
 		window.setTimeout(() => {
 			// 默认隐藏内容
 			content.style.display = "none";
-			
+
 			if (shouldExpand) {
 				// 如果应该展开，则设置显示状态
 				content.style.display = "block";
 				content.style.padding = "16px";
 				icon.style.transform = "rotate(180deg)";
-				header.style.borderBottomColor = "var(--background-modifier-border)";
-				
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
+
 				logger.debug(`初始化插件手风琴展开: ${pluginId}`);
 			}
 		}, 0);
@@ -1213,45 +1111,36 @@ ${customCSS}`;
 
 		this.pluginListEl.empty();
 
-		// 获取当前平台的适配器
-		const adapter = PreviewAdapterFactory.getAdapter(this.currentPlatform);
+		// 使用插件管理器获取所有插件
+		const pluginManager = PluginManager.getInstance();
+		const plugins = pluginManager.getPlugins();
 
-		// 如果适配器是BaseContentAdapter的实例，尝试获取其插件列表
-		if (adapter instanceof BaseContentAdapter) {
-			// 使用类型断言访问protected属性 - 仅用于显示目的
-			const plugins =
-				(adapter as unknown as { plugins: IProcessPlugin[] }).plugins ||
-				[];
+		if (plugins.length > 0) {
+			// 创建插件容器
+			const pluginsContainer = this.pluginListEl.createDiv({
+				cls: "plugins-accordion-container",
+			});
+			pluginsContainer.setAttr(
+				"style",
+				"display: flex; flex-direction: column; gap: 8px; width: 100%;"
+			);
 
-			if (plugins.length > 0) {
-				// 创建插件容器
-				const pluginsContainer = this.pluginListEl.createDiv({
-					cls: "plugins-accordion-container",
-				});
-				pluginsContainer.setAttr(
-					"style",
-					"display: flex; flex-direction: column; gap: 8px; width: 100%;"
-				);
+			plugins.forEach((plugin: IProcessPlugin) => {
+				if (plugin && typeof plugin.getName === "function") {
+					const pluginName = plugin.getName();
 
-				plugins.forEach((plugin: IProcessPlugin) => {
-					if (plugin && typeof plugin.getName === "function") {
-						const pluginName = plugin.getName();
-
-						// 为每个插件创建手风琴组件
-						this.buildPluginAccordion(
-							pluginsContainer,
-							plugin,
-							pluginName
-						);
-					}
-				});
-			} else {
-				this.pluginListEl.createEl("p", {
-					text: "当前平台未使用处理插件",
-				});
-			}
+					// 为每个插件创建手风琴组件
+					this.buildPluginAccordion(
+						pluginsContainer,
+						plugin,
+						pluginName
+					);
+				}
+			});
 		} else {
-			this.pluginListEl.createEl("p", { text: "无法获取插件信息" });
+			this.pluginListEl.createEl("p", {
+				text: "未找到任何处理插件",
+			});
 		}
 	}
 
@@ -1283,21 +1172,21 @@ ${customCSS}`;
 			text: "Omnient",
 		});
 
-	// 	// 创建版本号
-	// 	brandContent.createSpan({
-	// 		cls: "preview-version",
-	// 		text: "v1.0.0",
-	// 	});
+		// 	// 创建版本号
+		// 	brandContent.createSpan({
+		// 		cls: "preview-version",
+		// 		text: "v1.0.0",
+		// 	});
 
-	// 	// 创建品牌内容：Logo + 名称
-	// 	const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
-	// 	brandLogo.innerHTML = `
-    //     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    //         <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    //         <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    //         <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    //     </svg>
-    // `;
+		// 	// 创建品牌内容：Logo + 名称
+		// 	const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
+		// 	brandLogo.innerHTML = `
+		//     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+		//         <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		//         <path d="M2 17L12 22L22 17" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		//         <path d="M2 12L12 17L22 12" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		//     </svg>
+		// `;
 
 		// 创建平台名称
 		const brandName = brandContent.createDiv({ cls: "brand-name" });
