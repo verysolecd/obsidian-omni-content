@@ -1,5 +1,6 @@
 import { MarkedExtension, Tokens } from "marked";
 import { Extension } from "./extension";
+import { logger } from "../utils";
 
 interface FootnoteRefToken extends Tokens.Generic {
     type: 'footnoteRef';
@@ -28,7 +29,8 @@ export class FootnoteRenderer extends Extension {
     // 预处理Markdown文本，提取脚注定义
     preprocessText(text: string): string {
         // 匹配脚注定义的正则表达式：[^id]: content
-        const footnoteDefRegex = /\[\^(\d+|\w+)\]:\s*(.*?)(?=\n\[\^|\n\n|$)/g;
+        // 确保能匹配文末脚注，即使有多个换行符
+        const footnoteDefRegex = /\[\^(\d+|\w+)\]:\s*(.*?)(?=\n\[\^|\n\n|\n*$)/g;
 
         let modifiedText = text;
         let match;
@@ -41,6 +43,7 @@ export class FootnoteRenderer extends Extension {
             // 存储脚注定义
             this.footnotes.set(id, content);
             this.footnoteDefs.push({ id, content });
+            logger.debug("ADD Footnote:", {id, content});
 
             // 从原文中移除脚注定义
             modifiedText = modifiedText.replace(match[0], '');
@@ -54,10 +57,21 @@ export class FootnoteRenderer extends Extension {
         if (this.footnoteRefs.length === 0) {
             return html;
         }
+        
+        // 在生成脚注列表前，确保所有脚注都有内容
+        // 对于没有定义的脚注，添加默认的占位符内容
+        for (const id of this.footnoteRefs) {
+            logger.debug("Footnote ID:", id);
+            if (!this.footnotes.has(id) || this.footnotes.get(id) === '') {
+                // 使用更民友的默认文本
+                this.footnotes.set(id, `该脚注未定义内容`);
+            }
+        }
 
         // 生成脚注列表HTML
         const footnoteItems = this.footnoteRefs.map(id => {
-            const content = this.footnotes.get(id) || '';
+            // 这里不再需要空字符串作为默认值，因为前面已经确保所有ID都有内容
+            const content = this.footnotes.get(id) as string;
             return `<li id="fn-${id}">${content} <a href="#fnref-${id}" class="footnote-backref">↩︎</a></li>`;
         });
 
