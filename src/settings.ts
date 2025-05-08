@@ -1,6 +1,7 @@
 
 import {wxKeyInfo} from './weixin-api';
 import { logger } from './utils';
+import { PlatformType } from './platform-adapters/types';
 
 export enum LinkFootnoteMode {
 	None = 'none',
@@ -68,7 +69,10 @@ interface SettingsData {
 
 // 定义分发服务配置类型
 interface DistributionConfig {
-	[key: string]: unknown;
+	[platform: string]: {
+		enabled?: boolean;
+		[key: string]: unknown;
+	};
 }
 
 export class NMPSettings implements SettingsData {
@@ -146,7 +150,7 @@ export class NMPSettings implements SettingsData {
 		const settingsObj: Record<string, unknown> = {};
 		Object.entries(this).forEach(([key, value]) => {
 			// 排除某些不需要导出的属性
-			if (!['instance', 'expireat', 'expandedAccordionSections', 'lastSelectedPlatform', 'lastSelectedTemplate'].includes(key)) {
+			if (!['instance', 'expireat', 'expandedAccordionSections'].includes(key)) {
 				settingsObj[key] = value;
 			}
 		});
