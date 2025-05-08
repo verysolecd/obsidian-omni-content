@@ -13,31 +13,54 @@ export enum LinkDescriptionMode {
 	Raw = 'raw'
 }
 
-export class NMPSettings {
-	defaultStyle: string;
-	defaultHighlight: string;
-	showStyleUI: boolean;
+// 接口定义所有设置项，方便类型检查
+interface SettingsData {
+	defaultStyle?: string;
+	linkStyle?: string;
+	linkDescriptionMode?: LinkDescriptionMode;
+	embedStyle?: string;
+	showStyleUI?: boolean;
+	lineNumber?: boolean;
+	defaultHighlight?: string;
+	authKey?: string;
+	wxInfo?: { name: string, appid: string, secret: string }[];
+	math?: string;
+	useCustomCss?: boolean;
+	useTemplate?: boolean;
+	defaultTemplate?: string;
+	themeColor?: string;
+	enableThemeColor?: boolean;
+	distributionConfig?: any;
+	enableHeadingNumber?: boolean;
+	enableHeadingDelimiterBreak?: boolean;
+}
+
+export class NMPSettings implements SettingsData {
+	// 存储设置属性
+	defaultStyle: string = 'obsidian-light';
+	defaultHighlight: string = '默认';
+	showStyleUI: boolean = true;
 	// 控制脚注中链接的展示形式：empty-为空，description-为链接的描述
-	linkDescriptionMode: LinkDescriptionMode;
-	embedStyle: string;
-	lineNumber: boolean;
-	authKey: string;
-	useCustomCss: boolean;
-	wxInfo: { name: string, appid: string, secret: string }[];
-	math: string;
+	linkDescriptionMode: LinkDescriptionMode = LinkDescriptionMode.Empty;
+	embedStyle: string = 'quote';
+	lineNumber: boolean = true;
+	authKey: string = '';
+	useCustomCss: boolean = false;
+	wxInfo: { name: string, appid: string, secret: string }[] = [];
+	math: string = 'latex';
 	// 模板相关设置
-	useTemplate: boolean;
-	defaultTemplate: string;
+	useTemplate: boolean = false;
+	defaultTemplate: string = 'default';
 	// 主题色设置
-	themeColor: string;
+	themeColor: string = '#7852ee';
 	// 是否启用自定义主题色（如果不启用，则使用CSS文件中定义的颜色）
-	enableThemeColor: boolean;
+	enableThemeColor: boolean = false;
 	// 分发服务相关设置
-	distributionConfig: any;
+	distributionConfig: any = null;
 	// 二级标题设置
-	enableHeadingNumber: boolean;
+	enableHeadingNumber: boolean = true;
 	// 二级标题分隔符换行设置（遇到逗号等符号自动换行）
-	enableHeadingDelimiterBreak: boolean;
+	enableHeadingDelimiterBreak: boolean = true;
 	// 保存UI状态 - 展开的手风琴部分ID数组
 	expandedAccordionSections: string[] = [];
 	// 上次选择的平台类型，用于刷新后恢复
@@ -46,9 +69,10 @@ export class NMPSettings {
 	lastSelectedTemplate: string = "";
 	expireat: Date | null = null;
 
+	// 单例实例
 	private static instance: NMPSettings;
 
-	// 静态方法，用于获取实例
+	// 获取单例实例
 	public static getInstance(): NMPSettings {
 		if (!NMPSettings.instance) {
 			logger.info("创建NMPSettings实例");
@@ -58,143 +82,61 @@ export class NMPSettings {
 		return NMPSettings.instance;
 	}
 
-	private constructor() {
-		this.defaultStyle = 'obsidian-light';
-		this.defaultHighlight = '默认';
-		this.showStyleUI = true;
-		this.linkDescriptionMode = LinkDescriptionMode.Empty; // 默认脚注中不显示描述
-		this.embedStyle = 'quote';
-		this.lineNumber = true;
-		this.useCustomCss = false;
-		this.authKey = '';
-		this.wxInfo = [];
-		this.math = 'latex';
-		this.useTemplate = false; // 默认不使用模板
-		this.defaultTemplate = 'default'; // 默认模板名称
-		this.themeColor = '#7852ee'; // 默认主题色为紫色
-		this.enableThemeColor = false; // 默认不启用自定义主题色，使用CSS中的颜色
-		this.enableHeadingNumber = true; // 默认启用二级标题序号
-		this.enableHeadingDelimiterBreak = true; // 默认启用分隔符自动换行
-		this.distributionConfig = null; // 分发服务配置
-	}
+	// 私有构造函数 - 所有默认值已通过属性初始化
+	private constructor() {}
 
-	resetStyelAndHighlight() {
+	// 重置样式和高亮设置
+	resetStyelAndHighlight(): void {
 		this.defaultStyle = 'obsidian-light';
 		this.defaultHighlight = '默认';
 	}
 
-	public static loadSettings(data: any) {
+	// 加载设置（改为实例方法）
+	loadSettings(data: SettingsData): NMPSettings {
 		logger.info("加载设置: ", data);
-		if (!data) {
-			return
-		}
-		const {
-			defaultStyle,
-			linkStyle,
-			linkDescriptionMode,
-			embedStyle,
-			showStyleUI,
-			lineNumber,
-			defaultHighlight,
-			authKey,
-			wxInfo,
-			math,
-			useCustomCss,
-			useTemplate,
-			defaultTemplate,
-			themeColor,
-			enableThemeColor,
-			distributionConfig,
-			enableHeadingNumber,
-			enableHeadingDelimiterBreak,
-		} = data;
+		if (!data) return this;
 
-		const settings = NMPSettings.getInstance();
-		if (defaultStyle) {
-			settings.defaultStyle = defaultStyle;
-		}
-		if (defaultHighlight) {
-			settings.defaultHighlight = defaultHighlight;
-		}
-		if (showStyleUI !== undefined) {
-			settings.showStyleUI = showStyleUI;
-		}
-		if (linkDescriptionMode) {
-			settings.linkDescriptionMode = linkDescriptionMode;
-		}
-		if (embedStyle) {
-			settings.embedStyle = embedStyle;
-		}
-		if (lineNumber !== undefined) {
-			settings.lineNumber = lineNumber;
-		}
-		if (authKey) {
-			settings.authKey = authKey;
-		}
-		if (wxInfo) {
-			settings.wxInfo = wxInfo;
-		}
-		if (math) {
-			settings.math = math;
-		}
-		if (useCustomCss !== undefined) {
-			settings.useCustomCss = useCustomCss;
-		}
-		if (useTemplate !== undefined) {
-			settings.useTemplate = useTemplate;
-		}
-		if (defaultTemplate) {
-			settings.defaultTemplate = defaultTemplate;
-		}
-		if (themeColor) {
-			settings.themeColor = themeColor;
-		}
-		if (enableThemeColor !== undefined) {
-			settings.enableThemeColor = enableThemeColor;
-		}
-		if (distributionConfig) {
-			settings.distributionConfig = distributionConfig;
-		}
-		if (enableHeadingNumber !== undefined) {
-			settings.enableHeadingNumber = enableHeadingNumber;
-		}
-		if (enableHeadingDelimiterBreak !== undefined) {
-			settings.enableHeadingDelimiterBreak = enableHeadingDelimiterBreak;
-		}
-		settings.getExpiredDate();
+		// 使用更简洁的方式加载设置
+		Object.entries(data).forEach(([key, value]) => {
+			// 只更新非undefined的值
+			if (value !== undefined && key in this) {
+				(this as any)[key] = value;
+			}
+		});
 
-		logger.info("返回设置: ", settings);
-		return settings;
+		this.getExpiredDate();
+		logger.info("返回设置: ", this);
+		return this;
 	}
 
-	public static allSettings() {
-		const settings = NMPSettings.getInstance();
-		return {
-			'defaultStyle': settings.defaultStyle,
-			'defaultHighlight': settings.defaultHighlight,
-			'showStyleUI': settings.showStyleUI,
-			'linkDescriptionMode': settings.linkDescriptionMode,
-			'embedStyle': settings.embedStyle,
-			'lineNumber': settings.lineNumber,
-			'authKey': settings.authKey,
-			'wxInfo': settings.wxInfo,
-			'math': settings.math,
-			'useCustomCss': settings.useCustomCss,
-			'useTemplate': settings.useTemplate,
-			'defaultTemplate': settings.defaultTemplate,
-			'distributionConfig': settings.distributionConfig,
-			'themeColor': settings.themeColor,
-			'enableThemeColor': settings.enableThemeColor,
-			'enableHeadingNumber': settings.enableHeadingNumber,
-		}
-
-
+	// 静态方法用于加载设置（保持向后兼容性）
+	public static loadSettings(data: SettingsData): NMPSettings {
+		return NMPSettings.getInstance().loadSettings(data);
 	}
 
-	getExpiredDate() {
-		if (this.authKey.length == 0) return;
+	// 获取所有设置
+	getAllSettings(): Record<string, any> {
+		// 创建一个设置对象的浅拷贝，排除内部使用的属性
+		const settingsObj: Record<string, any> = {};
+		Object.entries(this).forEach(([key, value]) => {
+			// 排除某些不需要导出的属性
+			if (!['instance', 'expireat', 'expandedAccordionSections', 'lastSelectedPlatform', 'lastSelectedTemplate'].includes(key)) {
+				settingsObj[key] = value;
+			}
+		});
+		return settingsObj;
+	}
+
+	// 静态方法获取所有设置（保持向后兼容性）
+	public static allSettings(): Record<string, any> {
+		return NMPSettings.getInstance().getAllSettings();
+	}
+
+	// 获取过期日期
+	getExpiredDate(): void {
+		if (this.authKey.length === 0) return;
 		wxKeyInfo(this.authKey).then((res) => {
-			if (res.status == 200) {
+			if (res.status === 200) {
 				this.expireat = new Date(res.json.expireat);
 			}
 		})
