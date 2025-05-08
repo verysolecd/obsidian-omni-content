@@ -472,16 +472,16 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 			// 解析 Markdown 为 HTML
 			let articleHTML = await this.markedParser.parse(md);
-			logger.info(colors.green("HTML (parsed): "), articleHTML);
+			// logger.debug(colors.green("HTML (parsed): "), articleHTML);
 
 			// 包装文章内容
 			articleHTML = this.wrapArticleContent(articleHTML);
-			logger.info(colors.green("HTML (wrapped): "), articleHTML);
+			// logger.debug(colors.green("HTML (wrapped): "), articleHTML);
 
 			// 获取适配器
 			const adapter = PreviewAdapterFactory.getAdapter(platform);
 			articleHTML = adapter.adaptContent(articleHTML, this.settings);
-			logger.info(colors.green("HTML (final processed): "), articleHTML);
+			// logger.debug(colors.green("HTML (final processed): "), articleHTML);
 			return articleHTML;
 		} catch (error) {
 			logger.error("获取文章内容时出错:", error);

@@ -1,7 +1,7 @@
 import {MarkedExtension, Tokens} from "marked";
-import {LinkDescriptionMode} from "src/settings";
+import {LinkDescriptionMode} from "../settings";
 import {Extension} from "./extension";
-import {NMPSettings} from "src/settings";
+import { logger } from "../utils";
 
 export class LinkRenderer extends Extension {
 	// 存储链接信息：URL、描述文本和位置信息
@@ -72,6 +72,8 @@ export class LinkRenderer extends Extension {
 				name: 'link',
 				level: 'inline',
 				renderer: (token: Tokens.Link) => {
+					logger.debug("Link renderer called for:", token.href);
+
 					// 记录当前位置并递增
 					const position = this.currentPosition++;
 					
