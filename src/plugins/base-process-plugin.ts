@@ -2,6 +2,14 @@ import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
 /**
+ * 插件配置接口 - 定义插件配置的基本结构
+ */
+export interface PluginConfig {
+	// 使用更缩窄的类型而非 any
+	[key: string]: string | number | boolean | null | undefined | string[] | number[] | Record<string, unknown>;
+}
+
+/**
  * 微信处理插件接口 - 定义处理HTML内容的插件接口
  */
 export interface IProcessPlugin {
@@ -19,13 +27,29 @@ export interface IProcessPlugin {
 	 */
 	process(html: string, settings: NMPSettings): string;
 
+	/**
+	 * 获取插件配置
+	 * @returns 插件的当前配置
+	 */
+	getConfig(): PluginConfig;
 
+	/**
+	 * 更新插件配置
+	 * @param config 新的配置对象
+	 * @returns 更新后的配置
+	 */
+	updateConfig(config: PluginConfig): PluginConfig;
 }
 
 /**
  * 基础插件类，提供通用功能
  */
 export abstract class BaseProcessPlugin implements IProcessPlugin {
+	/**
+	 * 插件配置数据
+	 */
+	protected _config: PluginConfig = {};
+
 	/**
 	 * 获取主题色
 	 */
@@ -70,6 +94,25 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 		}
 
 		return themeAccentColor;
+	}
+
+	/**
+	 * 获取插件配置
+	 * @returns 插件的当前配置
+	 */
+	getConfig(): PluginConfig {
+		return { ...this._config };
+	}
+
+	/**
+	 * 更新插件配置
+	 * @param config 新的配置对象
+	 * @returns 更新后的配置
+	 */
+	updateConfig(config: PluginConfig): PluginConfig {
+		this._config = { ...this._config, ...config };
+		logger.debug(`已更新${this.getName()}插件配置:`, this._config);
+		return this.getConfig();
 	}
 
 	/**

@@ -1,36 +1,44 @@
-import colors from "colors";
-import {
-	apiVersion,
-	EventRef,
-	ItemView,
-	Notice,
-	Platform,
-	TFile,
-	WorkspaceLeaf,
-} from "obsidian";
-import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
-import { IProcessPlugin } from "src/plugins/base-process-plugin";
+import {apiVersion, EventRef, ItemView, Notice, Platform, TFile, WorkspaceLeaf,} from "obsidian";
+import {FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
+import {IProcessPlugin, PluginConfig} from "src/plugins/base-process-plugin";
+
+/**
+ * 插件元配置选项接口 - 用于定义选择器控件的选项
+ */
+interface PluginMetaConfigOption {
+	value: string;
+	text: string;
+}
+
+/**
+ * 单个配置项元配置接口 - 定义控件类型、标题等元数据
+ */
+interface PluginMetaConfigItem {
+	type: "switch" | "select" | "text" | "number";
+	title: string;
+	options?: PluginMetaConfigOption[];
+}
+
+/**
+ * 插件元配置接口 - 定义插件配置的UI交互所需数据结构
+ */
+interface PluginMetaConfig {
+	[key: string]: PluginMetaConfigItem;
+}
+
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import { CardDataManager } from "./markdown/code";
-import { MDRendererCallback } from "./markdown/extension";
-import { LocalImageManager } from "./markdown/local-file";
-import { MarkedParser } from "./markdown/parser";
-import {
-	initializeContentAdapters,
-	PreviewAdapterFactory,
-} from "./platform-adapters";
-import { BaseContentAdapter } from "./platform-adapters/base-content-adapter";
-import { PlatformType } from "./platform-adapters/types";
-import { NMPSettings } from "./settings";
+import {CardDataManager} from "./markdown/code";
+import {MDRendererCallback} from "./markdown/extension";
+import {LocalImageManager} from "./markdown/local-file";
+import {MarkedParser} from "./markdown/parser";
+import {initializeContentAdapters, PreviewAdapterFactory,} from "./platform-adapters";
+import {BaseContentAdapter} from "./platform-adapters/base-content-adapter";
+import {PlatformType} from "./platform-adapters/types";
+import {NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
-import { logger, uevent } from "./utils";
-import {
-	DraftArticle,
-	wxBatchGetMaterial,
-	wxGetToken,
-	wxUploadImage,
-} from "./weixin-api";
+import {logger, uevent} from "./utils";
+import {DraftArticle, wxBatchGetMaterial, wxGetToken, wxUploadImage,} from "./weixin-api";
 
 export class NotePreview extends ItemView implements MDRendererCallback {
 	mainDiv: HTMLDivElement;
@@ -52,6 +60,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	currentAppId: string;
 	markedParser: MarkedParser;
 	currentPlatform: PlatformType = PlatformType.DEFAULT;
+
+	// 用于跟踪特定设置组件是否已创建
+	private createdSettingsSections: Set<string> = new Set();
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -78,7 +89,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 */
 	buildToolbar(parent: HTMLDivElement) {
 		// 创建专业化的工具栏
-		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
+		this.toolbar = parent.createDiv({cls: "preview-toolbar"});
 		this.toolbar.addClasses(["modern-toolbar"]);
 
 		// 1. 构建品牌区域
@@ -99,10 +110,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			cls: "accordion-container",
 		});
 		// 为手风琴容器添加基础样式
-		accordionContainer.setAttr(
-			"style",
-			"width: 100%; display: flex; flex-direction: column; gap: 5px;"
-		);
+		accordionContainer.setAttr("style", "width: 100%; display: flex; flex-direction: column; gap: 5px;");
 
 		// 6. 构建主要机功组件包括平台选择器
 		this.buildBasicAccordionSection(accordionContainer, "基本设置", () => {
@@ -114,17 +122,13 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 		// 8. 如果启用了样式UI，构建样式相关设置组件
 		if (this.settings.showStyleUI) {
-			this.buildBasicAccordionSection(
-				accordionContainer,
-				"样式设置",
-				() => {
-					const container = document.createElement("div");
-					this.buildThemeSelector(container);
-					this.buildHighlightSelector(container);
-					this.buildThemeColorSelector(container);
-					return container;
-				}
-			);
+			this.buildBasicAccordionSection(accordionContainer, "样式设置", () => {
+				const container = document.createElement("div");
+				this.buildThemeSelector(container);
+				this.buildHighlightSelector(container);
+				this.buildThemeColorSelector(container);
+				return container;
+			});
 		}
 
 		// 9. 显示当前平台的插件列表
@@ -141,117 +145,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.buildMsgView(parent);
 	}
 
-	/**
-	 * 构建基础手风琴部分
-	 * @param container 父容器
-	 * @param title 标题
-	 * @param contentBuilder 内容生成函数
-	 * @returns 创建的手风琴元素
-	 */
-	private buildBasicAccordionSection(
-		container: HTMLElement,
-		title: string,
-		contentBuilder: () => HTMLElement
-	): HTMLElement {
-		// 创建唯一标识符，用于状态存储
-		const sectionId = `accordion-${title
-			.replace(/\s+/g, "-")
-			.toLowerCase()}`;
-
-		// 创建手风琴包装器
-		const accordion = container.createDiv({ cls: "accordion-section" });
-		accordion.setAttr("id", sectionId);
-		accordion.setAttr(
-			"style",
-			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;"
-		);
-
-		// 创建标题栏
-		const header = accordion.createDiv({ cls: "accordion-header" });
-		header.setAttr(
-			"style",
-			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
-		);
-		header.createDiv({ cls: "accordion-title", text: title });
-
-		// 创建展开/收缩图标
-		const icon = header.createDiv({ cls: "accordion-icon" });
-		icon.setAttr("style", "transition: transform 0.3s;");
-		icon.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-
-		// 创建内容区域
-		const content = accordion.createDiv({ cls: "accordion-content" });
-		content.setAttr(
-			"style",
-			"padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;"
-		);
-
-		// 生成并添加内容
-		const contentEl = contentBuilder();
-		content.appendChild(contentEl);
-
-		// 检查设置中是否存储了扩展状态
-		const shouldExpand =
-			this.settings.expandedAccordionSections.includes(sectionId);
-
-		// 添加点击事件
-		header.addEventListener("click", () => {
-			// 切换展开/收缩状态
-			const isExpanded =
-				content.style.maxHeight !== "0px" &&
-				content.style.maxHeight !== "";
-
-			if (isExpanded) {
-				content.style.maxHeight = "0px";
-				icon.style.transform = "rotate(0deg)";
-
-				// 从设置中移除该部分
-				const index =
-					this.settings.expandedAccordionSections.indexOf(sectionId);
-				if (index > -1) {
-					this.settings.expandedAccordionSections.splice(index, 1);
-					this.saveSettingsToPlugin();
-				}
-			} else {
-				content.style.maxHeight = content.scrollHeight + "px";
-				icon.style.transform = "rotate(180deg)";
-
-				// 添加到设置中
-				if (
-					!this.settings.expandedAccordionSections.includes(sectionId)
-				) {
-					this.settings.expandedAccordionSections.push(sectionId);
-					this.saveSettingsToPlugin();
-				}
-			}
-		});
-
-		// 根据保存的设置或默认规则来设置初始状态
-		window.setTimeout(() => {
-			// 如果应该展开（设置中有记录或者是第一个部分）
-			if (
-				shouldExpand ||
-				(container.querySelectorAll(".accordion-section").length ===
-					1 &&
-					this.settings.expandedAccordionSections.length === 0)
-			) {
-				content.style.maxHeight = content.scrollHeight + "px";
-				icon.style.transform = "rotate(180deg)";
-
-				// 如果还没有添加到设置中，则添加
-				if (
-					!this.settings.expandedAccordionSections.includes(sectionId)
-				) {
-					this.settings.expandedAccordionSections.push(sectionId);
-					this.saveSettingsToPlugin();
-				}
-			}
-		}, 0);
-
-		return accordion;
-	}
-
 	getViewType() {
 		return VIEW_TYPE_NOTE_PREVIEW;
 	}
@@ -266,9 +159,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 	async onOpen() {
 		this.buildUI();
-		this.listeners = [
-			this.workspace.on("active-leaf-change", () => this.update()),
-		];
+		this.listeners = [this.workspace.on("active-leaf-change", () => this.update()),];
 
 		// 初始化内容适配器
 		initializeContentAdapters();
@@ -289,21 +180,11 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	}
 
 	errorContent(error: any) {
-		return (
-			"<h1>渲染失败!</h1><br/>" +
-			'如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/omni-content/issues">https://github.com/sunbooshi/omni-content/issues</a>&nbsp;&nbsp;反馈<br/><br/>' +
-			"如果方便，请提供引发错误的完整Markdown内容。<br/><br/>" +
-			"<br/>Obsidian版本：" +
-			apiVersion +
-			"<br/>错误信息：<br/>" +
-			`${error}`
-		);
+		return ("<h1>渲染失败!</h1><br/>" + '如需帮助请前往&nbsp;&nbsp;<a href="https://github.com/sunbooshi/omni-content/issues">https://github.com/sunbooshi/omni-content/issues</a>&nbsp;&nbsp;反馈<br/><br/>' + "如果方便，请提供引发错误的完整Markdown内容。<br/><br/>" + "<br/>Obsidian版本：" + apiVersion + "<br/>错误信息：<br/>" + `${error}`);
 	}
 
 	async renderMarkdown() {
-		this.articleDiv.innerHTML = await this.getArticleContent(
-			this.currentPlatform
-		);
+		this.articleDiv.innerHTML = await this.getArticleContent(this.currentPlatform);
 		// 更新插件列表显示
 		this.updatePluginList();
 	}
@@ -312,11 +193,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const content = await this.getArticleContent(platform);
 
 		// 复制到剪贴板
-		await navigator.clipboard.write([
-			new ClipboardItem({
-				"text/html": new Blob([content], { type: "text/html" }),
-			}),
-		]);
+		await navigator.clipboard.write([new ClipboardItem({
+			"text/html": new Blob([content], {type: "text/html"}),
+		}),]);
 
 		new Notice(`已复制到剪贴板，请去平台：${platform}！`);
 	}
@@ -326,9 +205,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * 这是让主题色变更立即生效的关键
 	 */
 	updateCSSVariables() {
-		const noteContainer = this.articleDiv?.querySelector(
-			".note-to-mp"
-		) as HTMLElement;
+		const noteContainer = this.articleDiv?.querySelector(".note-to-mp") as HTMLElement;
 		if (!noteContainer) {
 			console.log("找不到.note-to-mp容器，无法更新CSS变量");
 			return;
@@ -337,10 +214,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 根据启用状态决定是否设置主题色变量
 		if (this.settings.enableThemeColor) {
 			// 设置自定义主题色
-			noteContainer.style.setProperty(
-				"--primary-color",
-				this.settings.themeColor || "#7852ee"
-			);
+			noteContainer.style.setProperty("--primary-color", this.settings.themeColor || "#7852ee");
 			console.log(`应用自定义主题色：${this.settings.themeColor}`);
 		} else {
 			// 删除自定义主题色，恢复使用主题文件中的颜色
@@ -373,21 +247,14 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 				const templateManager = TemplateManager.getInstance();
 				// 获取文档元数据
 				const file = this.app.workspace.getActiveFile();
-				const meta: Record<
-					string,
-					string | string[] | number | boolean | object | undefined
-				> = {};
+				const meta: Record<string, string | string[] | number | boolean | object | undefined> = {};
 				if (file) {
 					const metadata = this.app.metadataCache.getFileCache(file);
 					Object.assign(meta, metadata?.frontmatter);
 				}
 				logger.debug("传递至模板的元数据:", meta);
 
-				html = templateManager.applyTemplate(
-					html,
-					this.settings.defaultTemplate,
-					meta
-				);
+				html = templateManager.applyTemplate(html, this.settings.defaultTemplate, meta);
 			} catch (error) {
 				logger.error("应用模板失败", error);
 				new Notice("应用模板失败，请检查模板设置！");
@@ -447,12 +314,8 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	getCSS() {
 		// 获取主题和高亮样式
 		const theme = this.assetsManager.getTheme(this.currentTheme);
-		const highlight = this.assetsManager.getHighlight(
-			this.currentHighlight
-		);
-		const customCSS = this.settings.useCustomCss
-			? this.assetsManager.customCSS
-			: "";
+		const highlight = this.assetsManager.getHighlight(this.currentHighlight);
+		const customCSS = this.settings.useCustomCss ? this.assetsManager.customCSS : "";
 
 		// 根据用户选择决定是否注入主题色变量
 		let themeColorCSS = "";
@@ -482,15 +345,12 @@ ${customCSS}`;
 	}
 
 	buildMsgView(parent: HTMLDivElement) {
-		this.msgView = parent.createDiv({ cls: "msg-view" });
-		const title = this.msgView.createDiv({ cls: "msg-title" });
+		this.msgView = parent.createDiv({cls: "msg-view"});
+		const title = this.msgView.createDiv({cls: "msg-title"});
 		title.id = "msg-title";
 		title.innerText = "加载中...";
-		const okBtn = this.msgView.createEl(
-			"button",
-			{ cls: "msg-ok-btn" },
-			async (button) => {}
-		);
+		const okBtn = this.msgView.createEl("button", {cls: "msg-ok-btn"}, async (button) => {
+		});
 		okBtn.id = "msg-ok-btn";
 		okBtn.innerText = "确定";
 		okBtn.onclick = async () => {
@@ -518,7 +378,7 @@ ${customCSS}`;
 		this.container = this.containerEl.children[1];
 		this.container.empty();
 
-		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
+		this.mainDiv = this.container.createDiv({cls: "note-preview"});
 		// this.mainDiv.setAttribute(
 		// 	"style",
 		// 	"padding: 50px;"
@@ -526,12 +386,9 @@ ${customCSS}`;
 
 		this.buildToolbar(this.mainDiv);
 
-		this.renderDiv = this.mainDiv.createDiv({ cls: "render-div" });
+		this.renderDiv = this.mainDiv.createDiv({cls: "render-div"});
 		this.renderDiv.id = "render-div";
-		this.renderDiv.setAttribute(
-			"style",
-			"-webkit-user-select: text; user-select: text; padding:10px;"
-		);
+		this.renderDiv.setAttribute("style", "-webkit-user-select: text; user-select: text; padding:10px;");
 		this.styleEl = this.renderDiv.createEl("style");
 		this.styleEl.setAttr("title", "omni-content-style");
 		this.setStyle(this.getCSS());
@@ -576,9 +433,7 @@ ${customCSS}`;
 			res.cover = frontmatter["封面"];
 			res.thumb_media_id = frontmatter["封面素材ID"];
 			res.need_open_comment = frontmatter["打开评论"] ? 1 : undefined;
-			res.only_fans_can_comment = frontmatter["仅粉丝可评论"]
-				? 1
-				: undefined;
+			res.only_fans_can_comment = frontmatter["仅粉丝可评论"] ? 1 : undefined;
 			if (frontmatter["封面裁剪"]) {
 				res.pic_crop_235_1 = "0_0_1_0.5";
 				res.pic_crop_1_1 = "0_0.525_0.404_1";
@@ -637,11 +492,7 @@ ${customCSS}`;
 	}
 
 	async getToken() {
-		const res = await wxGetToken(
-			this.settings.authKey,
-			this.currentAppId,
-			this.getSecret() || ""
-		);
+		const res = await wxGetToken(this.settings.authKey, this.currentAppId, this.getSecret() || "");
 		if (res.status != 200) {
 			const data = res.json;
 			this.showMsg("获取token失败: " + data.message);
@@ -684,6 +535,90 @@ ${customCSS}`;
 	}
 
 	/**
+	 * 构建基础手风琴部分
+	 * @param container 父容器
+	 * @param title 标题
+	 * @param contentBuilder 内容生成函数
+	 * @returns 创建的手风琴元素
+	 */
+	private buildBasicAccordionSection(container: HTMLElement, title: string, contentBuilder: () => HTMLElement): HTMLElement {
+		// 创建唯一标识符，用于状态存储
+		const sectionId = `accordion-${title
+			.replace(/\s+/g, "-")
+			.toLowerCase()}`;
+
+		// 创建手风琴包装器
+		const accordion = container.createDiv({cls: "accordion-section"});
+		accordion.setAttr("id", sectionId);
+		accordion.setAttr("style", "margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;");
+
+		// 创建标题栏
+		const header = accordion.createDiv({cls: "accordion-header"});
+		header.setAttr("style", "padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;");
+		header.createDiv({cls: "accordion-title", text: title});
+
+		// 创建展开/收缩图标
+		const icon = header.createDiv({cls: "accordion-icon"});
+		icon.setAttr("style", "transition: transform 0.3s;");
+		icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+		// 创建内容区域
+		const content = accordion.createDiv({cls: "accordion-content"});
+		content.setAttr("style", "padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;");
+
+		// 生成并添加内容
+		const contentEl = contentBuilder();
+		content.appendChild(contentEl);
+
+		// 检查设置中是否存储了扩展状态
+		const shouldExpand = this.settings.expandedAccordionSections.includes(sectionId);
+
+		// 添加点击事件
+		header.addEventListener("click", () => {
+			// 切换展开/收缩状态
+			const isExpanded = content.style.maxHeight !== "0px" && content.style.maxHeight !== "";
+
+			if (isExpanded) {
+				content.style.maxHeight = "0px";
+				icon.style.transform = "rotate(0deg)";
+
+				// 从设置中移除该部分
+				const index = this.settings.expandedAccordionSections.indexOf(sectionId);
+				if (index > -1) {
+					this.settings.expandedAccordionSections.splice(index, 1);
+					this.saveSettingsToPlugin();
+				}
+			} else {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+
+				// 添加到设置中
+				if (!this.settings.expandedAccordionSections.includes(sectionId)) {
+					this.settings.expandedAccordionSections.push(sectionId);
+					this.saveSettingsToPlugin();
+				}
+			}
+		});
+
+		// 根据保存的设置或默认规则来设置初始状态
+		window.setTimeout(() => {
+			// 如果应该展开（设置中有记录或者是第一个部分）
+			if (shouldExpand || (container.querySelectorAll(".accordion-section").length === 1 && this.settings.expandedAccordionSections.length === 0)) {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+
+				// 如果还没有添加到设置中，则添加
+				if (!this.settings.expandedAccordionSections.includes(sectionId)) {
+					this.settings.expandedAccordionSections.push(sectionId);
+					this.saveSettingsToPlugin();
+				}
+			}
+		}, 0);
+
+		return accordion;
+	}
+
+	/**
 	 * 添加键盘导航事件到select元素
 	 * @param selectEl select元素
 	 */
@@ -695,10 +630,7 @@ ${customCSS}`;
 				const options = selectEl.options;
 				const currentIndex = selectEl.selectedIndex;
 
-				if (
-					e.key === "ArrowDown" &&
-					currentIndex < options.length - 1
-				) {
+				if (e.key === "ArrowDown" && currentIndex < options.length - 1) {
 					selectEl.selectedIndex = currentIndex + 1;
 				} else if (e.key === "ArrowUp" && currentIndex > 0) {
 					selectEl.selectedIndex = currentIndex - 1;
@@ -731,12 +663,11 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildPlatformSelector(container: HTMLElement): void {
-		const settingItem = container.createDiv({ cls: "setting-item" });
-		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
-		settingInfo.createDiv({ cls: "setting-item-name", text: "平台选择" });
+		const settingItem = container.createDiv({cls: "setting-item"});
+		const settingInfo = settingItem.createDiv({cls: "setting-item-info"});
+		settingInfo.createDiv({cls: "setting-item-name", text: "平台选择"});
 		settingInfo.createDiv({
-			cls: "setting-item-description",
-			text: "选择要预览的目标平台，不同平台使用不同的处理插件",
+			cls: "setting-item-description", text: "选择要预览的目标平台，不同平台使用不同的处理插件",
 		});
 
 		const settingControl = settingItem.createDiv({
@@ -744,36 +675,27 @@ ${customCSS}`;
 		});
 
 		// 创建平台选择下拉菜单
-		const selectEl = settingControl.createEl("select", { cls: "dropdown" });
+		const selectEl = settingControl.createEl("select", {cls: "dropdown"});
 
 		// 获取所有可用的平台适配器
 		const adapters = PreviewAdapterFactory.getRegisteredAdapters();
 
 		// 添加选项 - 先手动添加可用平台以确保显示
-		const platformOptions = [
-			{ value: PlatformType.DEFAULT, text: "预览(默认)" },
-			{ value: PlatformType.WECHAT, text: "微信公众号" },
-		];
+		const platformOptions = [{value: PlatformType.DEFAULT, text: "预览(默认)"}, {
+			value: PlatformType.WECHAT,
+			text: "微信公众号"
+		},];
 
 		// 从设置中恢复上次选择的平台
-		if (
-			this.settings.lastSelectedPlatform &&
-			Object.values(PlatformType).includes(
-				this.settings.lastSelectedPlatform as PlatformType
-			)
-		) {
-			logger.debug(
-				`从设置中恢复平台选择: ${this.settings.lastSelectedPlatform}`
-			);
-			this.currentPlatform = this.settings
-				.lastSelectedPlatform as PlatformType;
+		if (this.settings.lastSelectedPlatform && Object.values(PlatformType).includes(this.settings.lastSelectedPlatform as PlatformType)) {
+			logger.debug(`从设置中恢复平台选择: ${this.settings.lastSelectedPlatform}`);
+			this.currentPlatform = this.settings.lastSelectedPlatform as PlatformType;
 		}
 
 		// 添加选项
 		platformOptions.forEach((opt) => {
 			const option = selectEl.createEl("option", {
-				value: opt.value,
-				text: opt.text,
+				value: opt.value, text: opt.text,
 			});
 
 			if (opt.value === this.currentPlatform) {
@@ -782,10 +704,7 @@ ${customCSS}`;
 		});
 
 		// 设置下拉菜单样式确保可见
-		selectEl.setAttr(
-			"style",
-			"width: 100%; min-width: 150px; display: block;"
-		);
+		selectEl.setAttr("style", "width: 100%; min-width: 150px; display: block;");
 
 		// 添加事件监听器
 		selectEl.addEventListener("change", async () => {
@@ -816,21 +735,173 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildPluginListSection(container: HTMLElement): void {
-		const settingItem = container.createDiv({ cls: "setting-item" });
-		const settingInfo = settingItem.createDiv({ cls: "setting-item-info" });
-		settingInfo.createDiv({ cls: "setting-item-name", text: "处理插件" });
-
 		// 创建插件列表容器
-		this.pluginListEl = settingItem.createDiv({
+		this.pluginListEl = container.createDiv({
 			cls: "plugin-list-container",
 		});
-		this.pluginListEl.setAttr(
-			"style",
-			"max-height: 150px; overflow-y: auto; margin-top: 10px;"
-		);
+		this.pluginListEl.setAttr("style", "max-height: 250px; overflow-y: auto; width: 100%;");
 
 		// 初始化插件列表
 		this.updatePluginList();
+	}
+
+	/**
+	 * 获取插件的元配置信息
+	 * @param plugin 插件实例
+	 * @returns 元配置对象
+	 */
+	getPluginMetaConfig(plugin: IProcessPlugin): PluginMetaConfig {
+		// 根据插件名称返回相应的元配置
+		const pluginName = plugin.getName();
+		
+		// 标题插件配置
+		if (pluginName === "标题处理插件") {
+			return {
+				"enableHeadingNumber": {
+					type: "switch",
+					title: "启用编号"
+				},
+				"enableHeadingDelimiterBreak" : {
+					type: "switch",
+					title: "启用分隔符自动换行"
+				},
+			};
+		}
+		
+		// 默认返回空配置
+		return {};
+	}
+
+	/**
+	 * 构建手风琴组件
+	 * @param container 父容器
+	 * @param plugin 插件实例
+	 * @param pluginName 插件名称
+	 */
+	private buildPluginAccordion(container: HTMLElement, plugin: IProcessPlugin, pluginName: string): void {
+		// 创建手风琴包装器
+		const accordion = container.createDiv({cls: "accordion-section"});
+		accordion.setAttr("style", "margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;");
+
+		// 创建标题栏
+		const header = accordion.createDiv({cls: "accordion-header"});
+		header.setAttr("style", "padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;");
+		header.createDiv({cls: "accordion-title", text: pluginName});
+
+		// 创建展开/收缩图标
+		const icon = header.createDiv({cls: "accordion-icon"});
+		icon.setAttr("style", "transition: transform 0.3s;");
+		icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+		// 创建内容区域
+		const content = accordion.createDiv({cls: "accordion-content"});
+		content.setAttr("style", "padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;");
+
+		// 构建插件配置区域
+		const configContainer = content.createDiv({
+			cls: "plugin-config-container",
+		});
+		configContainer.setAttr("style", "display: flex; flex-direction: column; gap: 10px;");
+
+		// 添加插件配置项
+		// 现在使用插件的元配置和配置值分开管理
+		// 元配置定义控件类型、标题等
+		const pluginMetaConfig = this.getPluginMetaConfig(plugin);
+		const pluginCurrentConfig = plugin.getConfig();
+		
+		Object.entries(pluginMetaConfig).forEach(([key, meta]) => {
+			const configItem = configContainer.createDiv({
+				cls: "plugin-config-item",
+			});
+			configItem.setAttr("style", "display: flex; justify-content: space-between; align-items: center;");
+
+			// 添加配置项标题
+			const configTitle = configItem.createDiv({
+				cls: "plugin-config-title",
+			});
+			configTitle.textContent = meta.title;
+
+			// 添加配置项控件
+			const configControl = configItem.createDiv({
+				cls: "plugin-config-control",
+			});
+			let switchEl, switchInput, selectEl: HTMLSelectElement
+			const currentValue = pluginCurrentConfig[key];
+			
+			switch (meta.type) {
+				case "switch":
+					switchEl = configControl.createEl("label", {
+						cls: "switch",
+					});
+					switchInput = switchEl.createEl("input", {
+						attr: {
+							type: "checkbox",
+						},
+					});
+					switchInput.checked = !!currentValue;
+					switchEl.createEl("span", {cls: "slider round"});
+					break;
+				case "select":
+					selectEl = configControl.createEl("select", {
+						cls: "plugin-config-select",
+					});
+					// 防止 options 为 undefined 的情况
+					if (meta.options && meta.options.length > 0) {
+						meta.options.forEach((option) => {
+							const optionEl = selectEl.createEl("option", {
+								value: option.value, text: option.text,
+							});
+							if (option.value === currentValue) {
+								optionEl.selected = true;
+							}
+						});
+					} else {
+						// 如果没有选项，添加一个默认选项
+						selectEl.createEl("option", {
+							value: "", text: "无选项",
+						});
+					}
+					break;
+				default:
+					break;
+			}
+
+			// 添加事件监听器
+			configControl.addEventListener("change", (event) => {
+				// 获取控件的当前值
+				let value: string | boolean;
+				const target = event.target as HTMLElement;
+				
+				if (meta.type === "switch") {
+					value = (target as HTMLInputElement).checked;
+				} else if (meta.type === "select") {
+					value = (target as HTMLSelectElement).value;
+				} else {
+					return;
+				}
+				
+				// 更新插件配置 - 使用对象格式
+				plugin.updateConfig({ [key]: value });
+				
+				// 显示成功提示
+				new Notice(`已更新${plugin.getName()}插件设置`);
+			});
+		});
+		
+
+		// 添加点击事件
+		header.addEventListener("click", () => {
+			// 切换展开/收缩状态
+			const isExpanded = content.style.maxHeight !== "0px" && content.style.maxHeight !== "";
+
+			if (isExpanded) {
+				content.style.maxHeight = "0px";
+				icon.style.transform = "rotate(0deg)";
+			} else {
+				content.style.maxHeight = content.scrollHeight + "px";
+				icon.style.transform = "rotate(180deg)";
+			}
+		});
 	}
 
 	/**
@@ -847,41 +918,22 @@ ${customCSS}`;
 		// 如果适配器是BaseContentAdapter的实例，尝试获取其插件列表
 		if (adapter instanceof BaseContentAdapter) {
 			// 使用类型断言访问protected属性 - 仅用于显示目的
-			const plugins =
-				(adapter as unknown as { plugins: IProcessPlugin[] }).plugins ||
-				[];
+			const plugins = (adapter as unknown as { plugins: IProcessPlugin[] }).plugins || [];
 
 			if (plugins.length > 0) {
-				// 创建插件列表
-				const listEl = this.pluginListEl.createEl("ul", {
-					cls: "plugin-list",
+				// 创建插件容器
+				const pluginsContainer = this.pluginListEl.createDiv({
+					cls: "plugins-accordion-container",
 				});
-				listEl.setAttr(
-					"style",
-					"list-style-type: disc; padding-left: 20px; margin: 5px 0;"
-				);
+				pluginsContainer.setAttr("style", "display: flex; flex-direction: column; gap: 8px; width: 100%;");
 
 				plugins.forEach((plugin: IProcessPlugin) => {
 					if (plugin && typeof plugin.getName === "function") {
-						const name = plugin.getName();
-						const listItem = listEl.createEl("li", { text: name });
-						listItem.setAttr("style", "margin: 2px 0;");
+						const pluginName = plugin.getName();
 
-						// 如果存在标题插件，则显示标题设置部分
-						if (name === "标题处理插件") {
-							this.buildBasicAccordionSection(
-								this.toolbar,
-								"标题设置",
-								() => {
-									const settingsContainer =
-										document.createElement("div");
-									this.buildHeadingNumberSettings(
-										settingsContainer
-									);
-									return settingsContainer;
-								}
-							);
-						}
+						// 为每个插件创建手风琴组件
+						this.buildPluginAccordion(pluginsContainer, plugin, pluginName);
+
 					}
 				});
 			} else {
@@ -890,7 +942,7 @@ ${customCSS}`;
 				});
 			}
 		} else {
-			this.pluginListEl.createEl("p", { text: "无法获取插件信息" });
+			this.pluginListEl.createEl("p", {text: "无法获取插件信息"});
 		}
 	}
 
@@ -899,10 +951,10 @@ ${customCSS}`;
 	 */
 	private buildBrandSection(): void {
 		// 添加工具栏顶部品牌区域
-		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
+		const brandSection = this.toolbar.createDiv({cls: "brand-section"});
 
 		// 品牌Logo和名称
-		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
+		const brandLogo = brandSection.createDiv({cls: "brand-logo"});
 		brandLogo.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -911,7 +963,7 @@ ${customCSS}`;
         </svg>
     `;
 
-		const brandName = brandSection.createDiv({ cls: "brand-name" });
+		const brandName = brandSection.createDiv({cls: "brand-name"});
 		brandName.innerHTML = "手工川智能创作平台";
 	}
 
@@ -920,10 +972,9 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildTemplateSelector(container: HTMLElement): void {
-		const templateGroup = container.createDiv({ cls: "toolbar-group" });
-		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
-		templateLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+		const templateGroup = container.createDiv({cls: "toolbar-group"});
+		const templateLabel = templateGroup.createDiv({cls: "toolbar-label"});
+		templateLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
 
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
@@ -946,9 +997,7 @@ ${customCSS}`;
 			const op = templateSelect.createEl("option");
 			op.value = template;
 			op.text = template;
-			op.selected =
-				this.settings.useTemplate &&
-				template === this.settings.defaultTemplate;
+			op.selected = this.settings.useTemplate && template === this.settings.defaultTemplate;
 		});
 
 		templateSelect.onchange = async () => {
@@ -961,9 +1010,7 @@ ${customCSS}`;
 				this.settings.lastSelectedTemplate = templateSelect.value;
 			}
 
-			logger.debug(
-				`保存模板选择到设置: ${this.settings.lastSelectedTemplate}`
-			);
+			logger.debug(`保存模板选择到设置: ${this.settings.lastSelectedTemplate}`);
 
 			// 保存设置
 			this.saveSettingsToPlugin();
@@ -981,11 +1028,10 @@ ${customCSS}`;
 	 * @param container 工具栏内容容器
 	 */
 	private buildThemeSelector(container: HTMLElement): void {
-		const styleGroup = container.createDiv({ cls: "toolbar-group" });
+		const styleGroup = container.createDiv({cls: "toolbar-group"});
 
-		const styleLabel = styleGroup.createDiv({ cls: "toolbar-label" });
-		styleLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
+		const styleLabel = styleGroup.createDiv({cls: "toolbar-label"});
+		styleLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题</span>';
 
 		const selectWrapper = styleGroup.createDiv({
 			cls: "select-wrapper",
@@ -1024,8 +1070,7 @@ ${customCSS}`;
 		const highlightLabel = highlightGroup.createDiv({
 			cls: "toolbar-label",
 		});
-		highlightLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
+		highlightLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>代码高亮</span>';
 
 		const highlightWrapper = highlightGroup.createDiv({
 			cls: "select-wrapper",
@@ -1057,11 +1102,10 @@ ${customCSS}`;
 	 */
 	private buildThemeColorSelector(container: HTMLElement): void {
 		// 主题色组
-		const colorGroup = container.createDiv({ cls: "toolbar-group" });
+		const colorGroup = container.createDiv({cls: "toolbar-group"});
 
-		const colorLabel = colorGroup.createDiv({ cls: "toolbar-label" });
-		colorLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
+		const colorLabel = colorGroup.createDiv({cls: "toolbar-label"});
+		colorLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
 
 		// 选择器容器
 		const colorControlWrapper = colorGroup.createDiv({
@@ -1074,58 +1118,46 @@ ${customCSS}`;
 		});
 
 		// 创建开关按钮
-		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
+		const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
 			},
 		});
 		toggleInput.checked = this.settings.enableThemeColor;
-		toggleSwitch.createEl("span", { cls: "slider round" });
+		toggleSwitch.createEl("span", {cls: "slider round"});
 
 		// 开关文本
 		const toggleText = enableSwitch.createEl("span", {
-			cls: "toggle-text",
-			text: this.settings.enableThemeColor
-				? "启用自定义色"
-				: "使用主题色",
+			cls: "toggle-text", text: this.settings.enableThemeColor ? "启用自定义色" : "使用主题色",
 		});
 
 		// 颜色选择器容器
 		const colorWrapper = colorControlWrapper.createDiv({
-			cls: "color-picker-wrapper",
-			attr: {
+			cls: "color-picker-wrapper", attr: {
 				style: this.settings.enableThemeColor ? "" : "opacity: 0.5;",
 			},
 		});
 
 		// 创建颜色选择器
 		const colorPicker = colorWrapper.createEl("input", {
-			cls: "toolbar-color-picker",
-			attr: {
-				type: "color",
-				value: this.settings.themeColor || "#7852ee",
-				disabled: !this.settings.enableThemeColor,
+			cls: "toolbar-color-picker", attr: {
+				type: "color", value: this.settings.themeColor || "#7852ee", disabled: !this.settings.enableThemeColor,
 			},
 		});
 
 		// 添加颜色预览
-		const colorPreview = colorWrapper.createDiv({ cls: "color-preview" });
-		colorPreview.style.backgroundColor =
-			this.settings.themeColor || "#7852ee";
+		const colorPreview = colorWrapper.createDiv({cls: "color-preview"});
+		colorPreview.style.backgroundColor = this.settings.themeColor || "#7852ee";
 
 		// 开关事件
 		toggleInput.onchange = async () => {
 			this.settings.enableThemeColor = toggleInput.checked;
-			toggleText.textContent = this.settings.enableThemeColor
-				? "启用自定义色"
-				: "使用主题色";
+			toggleText.textContent = this.settings.enableThemeColor ? "启用自定义色" : "使用主题色";
 
 			// 更新颜色选择器的禁用状态
 			colorPicker.disabled = !this.settings.enableThemeColor;
-			colorWrapper.style.opacity = this.settings.enableThemeColor
-				? "1"
-				: "0.5";
+			colorWrapper.style.opacity = this.settings.enableThemeColor ? "1" : "0.5";
 
 			this.saveSettingsToPlugin();
 
@@ -1174,12 +1206,11 @@ ${customCSS}`;
 	 */
 	private buildHeadingNumberSettings(container: HTMLElement): void {
 		// 创建设置组
-		const headingGroup = container.createDiv({ cls: "toolbar-group" });
+		const headingGroup = container.createDiv({cls: "toolbar-group"});
 
 		// 创建标签
-		const headingLabel = headingGroup.createDiv({ cls: "toolbar-label" });
-		headingLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题设置</span>';
+		const headingLabel = headingGroup.createDiv({cls: "toolbar-label"});
+		headingLabel.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"></path><path d="M6 20h12"></path><path d="M6 4h12"></path><path d="M9 9h.01"></path><path d="M9 17h.01"></path></svg><span>二级标题设置</span>';
 
 		// 创建控件容器
 		const headingControlWrapper = headingGroup.createDiv({
@@ -1192,7 +1223,7 @@ ${customCSS}`;
 		});
 
 		// 创建开关按钮
-		const toggleSwitch = enableSwitch.createEl("label", { cls: "switch" });
+		const toggleSwitch = enableSwitch.createEl("label", {cls: "switch"});
 		const toggleInput = toggleSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
@@ -1200,22 +1231,17 @@ ${customCSS}`;
 		});
 		toggleInput.checked = this.settings.enableHeadingNumber;
 
-		toggleSwitch.createEl("span", { cls: "slider round" });
+		toggleSwitch.createEl("span", {cls: "slider round"});
 
 		// 开关文本
 		const toggleText = enableSwitch.createEl("span", {
-			cls: "toggle-text",
-			text: this.settings.enableHeadingNumber
-				? "启用序号 (01.)"
-				: "禁用序号",
+			cls: "toggle-text", text: this.settings.enableHeadingNumber ? "启用序号 (01.)" : "禁用序号",
 		});
 
 		// 开关事件
 		toggleInput.onchange = async () => {
 			this.settings.enableHeadingNumber = toggleInput.checked;
-			toggleText.textContent = this.settings.enableHeadingNumber
-				? "启用序号 (01.)"
-				: "禁用序号";
+			toggleText.textContent = this.settings.enableHeadingNumber ? "启用序号 (01.)" : "禁用序号";
 
 			// 保存设置
 			this.saveSettingsToPlugin();
@@ -1241,27 +1267,20 @@ ${customCSS}`;
 				type: "checkbox",
 			},
 		});
-		delimiterToggleInput.checked =
-			this.settings.enableHeadingDelimiterBreak;
+		delimiterToggleInput.checked = this.settings.enableHeadingDelimiterBreak;
 
-		delimiterToggleSwitch.createEl("span", { cls: "slider round" });
+		delimiterToggleSwitch.createEl("span", {cls: "slider round"});
 
 		// 开关文本
 		const delimiterToggleText = delimiterGroup.createEl("span", {
 			cls: "toggle-text",
-			text: this.settings.enableHeadingDelimiterBreak
-				? "分隔符换行 (逗号后换行)"
-				: "禁用分隔符换行",
+			text: this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行",
 		});
 
 		// 分隔符换行开关事件
 		delimiterToggleInput.onchange = async () => {
-			this.settings.enableHeadingDelimiterBreak =
-				delimiterToggleInput.checked;
-			delimiterToggleText.textContent = this.settings
-				.enableHeadingDelimiterBreak
-				? "分隔符换行 (逗号后换行)"
-				: "禁用分隔符换行";
+			this.settings.enableHeadingDelimiterBreak = delimiterToggleInput.checked;
+			delimiterToggleText.textContent = this.settings.enableHeadingDelimiterBreak ? "分隔符换行 (逗号后换行)" : "禁用分隔符换行";
 
 			// 保存设置
 			this.saveSettingsToPlugin();
@@ -1273,13 +1292,12 @@ ${customCSS}`;
 
 	private buildActionButtons(container: HTMLElement): void {
 		// 操作按钮组
-		const actionGroup = container.createDiv({ cls: "toolbar-group" });
+		const actionGroup = container.createDiv({cls: "toolbar-group"});
 		// 刷新按钮
 		const refreshBtn = actionGroup.createEl("button", {
 			cls: "toolbar-button refresh-button",
 		});
-		refreshBtn.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
+		refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>刷新</span>';
 
 		refreshBtn.onclick = async () => {
 			this.setStyle(this.getCSS());
@@ -1292,8 +1310,7 @@ ${customCSS}`;
 			const copyBtn = actionGroup.createEl("button", {
 				cls: "toolbar-button copy-button",
 			});
-			copyBtn.innerHTML =
-				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
+			copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>复制</span>';
 
 			copyBtn.onclick = async () => {
 				await this.copyArticle();
@@ -1305,8 +1322,7 @@ ${customCSS}`;
 		const distributeBtn = actionGroup.createEl("button", {
 			cls: "toolbar-button distribute-button",
 		});
-		distributeBtn.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
+		distributeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>分发</span>';
 
 		distributeBtn.onclick = async () => {
 			this.openDistributionModal();
