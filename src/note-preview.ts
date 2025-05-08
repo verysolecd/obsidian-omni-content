@@ -8,9 +8,7 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
-import {
-	IProcessPlugin
-} from "src/plugins/base-process-plugin";
+import { IProcessPlugin } from "src/plugins/base-process-plugin";
 
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
@@ -894,6 +892,11 @@ ${customCSS}`;
 			"margin-right: 8px; min-width: 36px; height: 18px;"
 		);
 
+		// 阻止开关点击事件冒泡到手风琴标题
+		enableSwitch.addEventListener("click", (event) => {
+			event.stopPropagation();
+		});
+
 		const enableInput = enableSwitch.createEl("input", {
 			attr: {
 				type: "checkbox",
@@ -902,24 +905,6 @@ ${customCSS}`;
 
 		// 设置启用状态
 		enableInput.checked = plugin.isEnabled();
-
-		// 创建滑块
-		const slider = enableSwitch.createEl("span", { cls: "slider round" });
-		slider.setAttr("style", "height: 18px; width: 36px;");
-
-		// 添加标题
-		headerLeft.createDiv({ cls: "accordion-title", text: pluginName });
-
-		// 创建展开/收缩图标
-		const icon = header.createDiv({ cls: "accordion-icon" });
-		icon.setAttr("style", "transition: transform 0.3s;");
-		icon.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
-
-		// 阻止开关点击事件冒泡到手风琴标题
-		enableSwitch.addEventListener("click", (event) => {
-			event.stopPropagation();
-		});
 
 		// 添加开关状态变化事件
 		enableInput.addEventListener("change", (event) => {
@@ -936,6 +921,29 @@ ${customCSS}`;
 				`已${isEnabled ? "启用" : "禁用"}${plugin.getName()}插件`
 			);
 		});
+
+		// 创建滑块
+		const slider = enableSwitch.createEl("span", { cls: "slider round" });
+		slider.setAttr("style", "height: 18px; width: 36px;");
+
+		// 添加标题
+		headerLeft.createDiv({ cls: "accordion-title", text: pluginName });
+
+		// 添加插件配置项
+		// 从插件读取元配置和当前配置值
+		// 元配置定义控件类型、标题等
+		const pluginMetaConfig = plugin.getMetaConfig();
+		const pluginCurrentConfig = plugin.getConfig();
+		const configEntries = Object.entries(pluginMetaConfig);
+		const hasConfigOptions = configEntries.length > 0;
+
+		if (!hasConfigOptions) return;
+
+		// 创建展开/收缩图标
+		const icon = header.createDiv({ cls: "accordion-icon" });
+		icon.setAttr("style", "transition: transform 0.3s;");
+		icon.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
 
 		// 创建内容区域
 		const content = accordion.createDiv({ cls: "accordion-content" });
@@ -954,13 +962,7 @@ ${customCSS}`;
 		const shouldExpand =
 			this.settings.expandedAccordionSections.includes(pluginId);
 
-		// 添加插件配置项
-		// 从插件读取元配置和当前配置值
-		// 元配置定义控件类型、标题等
-		const pluginMetaConfig = plugin.getMetaConfig();
-		const pluginCurrentConfig = plugin.getConfig();
-
-		Object.entries(pluginMetaConfig).forEach(([key, meta]) => {
+		configEntries.forEach(([key, meta]) => {
 			const configItem = configContainer.createDiv({
 				cls: "plugin-config-item",
 			});
@@ -1173,10 +1175,11 @@ ${customCSS}`;
 		});
 
 		// 	// 创建版本号
-		// 	brandContent.createSpan({
-		// 		cls: "preview-version",
-		// 		text: "v1.0.0",
-		// 	});
+		const brandVersion = brandContent.createSpan({
+			cls: "preview-version",
+			text: "V0.3.0",
+		});
+		brandVersion.setAttr("style", "margin-left: 2px;");
 
 		// 	// 创建品牌内容：Logo + 名称
 		// 	const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
