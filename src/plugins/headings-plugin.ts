@@ -1,4 +1,4 @@
-import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
+import {BaseProcessPlugin, PluginMetaConfig} from "src/plugins/base-process-plugin";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
@@ -11,6 +11,23 @@ import {logger} from "src/utils";
 export class HeadingsPlugin extends BaseProcessPlugin {
     getName(): string {
         return "标题处理插件";
+    }
+    
+    /**
+     * 获取插件配置的元数据
+     * @returns 插件配置的元数据
+     */
+    getMetaConfig(): PluginMetaConfig {
+        return {
+            enableHeadingNumber: {
+                type: "switch",
+                title: "启用编号"
+            },
+            enableHeadingDelimiterBreak: {
+                type: "switch",
+                title: "启用分隔符自动换行"
+            }
+        };
     }
 
     process(html: string, settings: NMPSettings): string {

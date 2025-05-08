@@ -10,6 +10,30 @@ export interface PluginConfig {
 }
 
 /**
+ * 插件元配置选项接口 - 用于定义选择器控件的选项
+ */
+export interface PluginMetaConfigOption {
+	value: string;
+	text: string;
+}
+
+/**
+ * 单个配置项元配置接口 - 定义控件类型、标题等元数据
+ */
+export interface PluginMetaConfigItem {
+	type: "switch" | "select" | "text" | "number";
+	title: string;
+	options?: PluginMetaConfigOption[];
+}
+
+/**
+ * 插件元配置接口 - 定义插件配置的UI交互所需数据结构
+ */
+export interface PluginMetaConfig {
+	[key: string]: PluginMetaConfigItem;
+}
+
+/**
  * 微信处理插件接口 - 定义处理HTML内容的插件接口
  */
 export interface IProcessPlugin {
@@ -39,6 +63,13 @@ export interface IProcessPlugin {
 	 * @returns 更新后的配置
 	 */
 	updateConfig(config: PluginConfig): PluginConfig;
+	
+	/**
+	 * 获取插件配置的元数据
+	 * 包含控件类型、标题、选项等UI交互相关信息
+	 * @returns 插件配置的元数据
+	 */
+	getMetaConfig(): PluginMetaConfig;
 }
 
 /**
@@ -113,6 +144,16 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 		this._config = { ...this._config, ...config };
 		logger.debug(`已更新${this.getName()}插件配置:`, this._config);
 		return this.getConfig();
+	}
+	
+	/**
+	 * 获取插件配置的元数据
+	 * 包含控件类型、标题、选项等UI交互相关信息
+	 * @returns 插件配置的元数据
+	 */
+	getMetaConfig(): PluginMetaConfig {
+		// 默认返回空元配置，子类可以重写该方法以提供特定的元配置
+		return {};
 	}
 
 	/**

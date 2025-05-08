@@ -8,31 +8,7 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
-import { IProcessPlugin, PluginConfig } from "src/plugins/base-process-plugin";
-
-/**
- * 插件元配置选项接口 - 用于定义选择器控件的选项
- */
-interface PluginMetaConfigOption {
-	value: string;
-	text: string;
-}
-
-/**
- * 单个配置项元配置接口 - 定义控件类型、标题等元数据
- */
-interface PluginMetaConfigItem {
-	type: "switch" | "select" | "text" | "number";
-	title: string;
-	options?: PluginMetaConfigOption[];
-}
-
-/**
- * 插件元配置接口 - 定义插件配置的UI交互所需数据结构
- */
-interface PluginMetaConfig {
-	[key: string]: PluginMetaConfigItem;
-}
+import { IProcessPlugin, PluginMetaConfig } from "src/plugins/base-process-plugin";
 
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
@@ -76,9 +52,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	currentAppId: string;
 	markedParser: MarkedParser;
 	currentPlatform: PlatformType = PlatformType.DEFAULT;
-
-	// 用于跟踪特定设置组件是否已创建
-	private createdSettingsSections: Set<string> = new Set();
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -859,32 +832,7 @@ ${customCSS}`;
 		this.updatePluginList();
 	}
 
-	/**
-	 * 获取插件的元配置信息
-	 * @param plugin 插件实例
-	 * @returns 元配置对象
-	 */
-	getPluginMetaConfig(plugin: IProcessPlugin): PluginMetaConfig {
-		// 根据插件名称返回相应的元配置
-		const pluginName = plugin.getName();
 
-		// 标题插件配置
-		if (pluginName === "标题处理插件") {
-			return {
-				enableHeadingNumber: {
-					type: "switch",
-					title: "启用编号",
-				},
-				enableHeadingDelimiterBreak: {
-					type: "switch",
-					title: "启用分隔符自动换行",
-				},
-			};
-		}
-
-		// 默认返回空配置
-		return {};
-	}
 
 	/**
 	 * 构建手风琴组件
@@ -935,9 +883,9 @@ ${customCSS}`;
 		);
 
 		// 添加插件配置项
-		// 现在使用插件的元配置和配置值分开管理
+		// 从插件读取元配置和当前配置值
 		// 元配置定义控件类型、标题等
-		const pluginMetaConfig = this.getPluginMetaConfig(plugin);
+		const pluginMetaConfig = plugin.getMetaConfig();
 		const pluginCurrentConfig = plugin.getConfig();
 
 		Object.entries(pluginMetaConfig).forEach(([key, meta]) => {
