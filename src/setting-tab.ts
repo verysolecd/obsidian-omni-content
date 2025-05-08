@@ -86,20 +86,6 @@ export class OmniContentSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("链接转换脚注模式")
-			.setDesc("控制哪些链接应该转换为脚注")
-			.addDropdown((dropdown) => {
-				dropdown.addOption("none", "都不转换");
-				dropdown.addOption("all", "所有链接转换");
-				dropdown.addOption("non-wx", "仅非微信链接转换");
-				dropdown.setValue(this.settings.linkFootnoteMode);
-				dropdown.onChange(async (value) => {
-					this.settings.linkFootnoteMode = value as LinkFootnoteMode;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(containerEl)
 			.setName("脚注链接描述模式")
 			.setDesc("控制脚注中链接的展示形式")
 			.addDropdown((dropdown) => {

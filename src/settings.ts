@@ -17,8 +17,6 @@ export class NMPSettings {
 	defaultStyle: string;
 	defaultHighlight: string;
 	showStyleUI: boolean;
-	// 控制哪些链接转为脚注：none-都不转，all-都转，non-wx-非微信文章转
-	linkFootnoteMode: LinkFootnoteMode;
 	// 控制脚注中链接的展示形式：empty-为空，description-为链接的描述
 	linkDescriptionMode: LinkDescriptionMode;
 	embedStyle: string;
@@ -64,7 +62,6 @@ export class NMPSettings {
 		this.defaultStyle = 'obsidian-light';
 		this.defaultHighlight = '默认';
 		this.showStyleUI = true;
-		this.linkFootnoteMode = LinkFootnoteMode.NonWx; // 默认只转换非微信文章链接
 		this.linkDescriptionMode = LinkDescriptionMode.Empty; // 默认脚注中不显示描述
 		this.embedStyle = 'quote';
 		this.lineNumber = true;
@@ -94,7 +91,6 @@ export class NMPSettings {
 		const {
 			defaultStyle,
 			linkStyle,
-			linkFootnoteMode,
 			linkDescriptionMode,
 			embedStyle,
 			showStyleUI,
@@ -122,9 +118,6 @@ export class NMPSettings {
 		}
 		if (showStyleUI !== undefined) {
 			settings.showStyleUI = showStyleUI;
-		}
-		if (linkFootnoteMode) {
-			settings.linkFootnoteMode = linkFootnoteMode;
 		}
 		if (linkDescriptionMode) {
 			settings.linkDescriptionMode = linkDescriptionMode;
@@ -180,7 +173,6 @@ export class NMPSettings {
 			'defaultStyle': settings.defaultStyle,
 			'defaultHighlight': settings.defaultHighlight,
 			'showStyleUI': settings.showStyleUI,
-			'linkFootnoteMode': settings.linkFootnoteMode,
 			'linkDescriptionMode': settings.linkDescriptionMode,
 			'embedStyle': settings.embedStyle,
 			'lineNumber': settings.lineNumber,

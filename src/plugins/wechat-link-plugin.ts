@@ -11,10 +11,6 @@ export class WechatLinkPlugin extends BaseProcessPlugin {
 	}
 
 	process(html: string, settings: NMPSettings): string {
-		// 如果不需要处理链接，直接返回
-		if (settings.linkFootnoteMode === "none") {
-			return html;
-		}
 
 		try {
 			const parser = new DOMParser();
