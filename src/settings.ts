@@ -1,7 +1,7 @@
 
 import {wxKeyInfo} from './weixin-api';
 import { logger } from './utils';
-import { PlatformType } from './platform-adapters/types';
+import { PlatformType } from 'src/types';
 
 export enum LinkFootnoteMode {
 	None = 'none',

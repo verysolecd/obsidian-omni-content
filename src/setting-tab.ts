@@ -4,7 +4,7 @@ import {cleanMathCache} from "./markdown/math";
 import {LinkDescriptionMode, LinkFootnoteMode, NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
 import {logger} from "./utils";
-import { PlatformType } from "./platform-adapters/types";
+import { PlatformType } from "src/types";
 
 export class OmniContentSettingTab extends PluginSettingTab {
 	plugin: OmniContentPlugin;
