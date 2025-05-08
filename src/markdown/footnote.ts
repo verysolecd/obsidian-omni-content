@@ -43,7 +43,7 @@ export class FootnoteRenderer extends Extension {
             // 存储脚注定义
             this.footnotes.set(id, content);
             this.footnoteDefs.push({ id, content });
-            logger.debug("ADD Footnote:", {id, content});
+            // logger.debug("ADD Footnote:", {id, content});
 
             // 从原文中移除脚注定义
             modifiedText = modifiedText.replace(match[0], '');

@@ -65,6 +65,10 @@ interface SettingsData {
 	wxInfo?: { name: string, appid: string, secret: string }[];
 	/** 分发服务配置 */
 	distributionConfig?: DistributionConfig | null;
+	
+	// ===== 插件配置 =====
+	/** 插件配置存储 */
+	pluginsConfig?: Record<string, Record<string, any>>;
 }
 
 // 定义分发服务配置类型
@@ -98,6 +102,7 @@ export class NMPSettings implements SettingsData {
 	lastSelectedPlatform: string = "";
 	lastSelectedTemplate: string = "";
 	expireat: Date | null = null;
+	pluginsConfig: Record<string, Record<string, any>> = {};
 
 	// 单例实例
 	private static instance: NMPSettings;

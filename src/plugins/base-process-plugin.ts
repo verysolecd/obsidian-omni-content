@@ -1,5 +1,25 @@
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
+import {App} from "obsidian";
+
+// 为 window 接口扩展，添加 app 属性
+declare global {
+    interface Window {
+        app: App;
+    }
+}
+
+// 定义插件类型接口
+interface ObsidianPlugin {
+    saveSettings: () => Promise<void>;
+}
+
+// 插件管理器类型
+interface PluginManager {
+    plugins: {
+        [key: string]: ObsidianPlugin;
+    };
+}
 
 /**
  * 插件配置接口 - 定义插件配置的基本结构
@@ -80,6 +100,71 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 	 * 插件配置数据
 	 */
 	protected _config: PluginConfig = {};
+	
+	/**
+	 * 插件构造函数
+	 */
+	constructor() {
+		// 从设置中加载插件配置
+		this.loadConfigFromSettings();
+	}
+	
+	/**
+	 * 从用户设置中加载插件配置
+	 */
+	private loadConfigFromSettings(): void {
+		try {
+			const settings = NMPSettings.getInstance();
+			const pluginName = this.getName();
+			
+			// 如果设置中有该插件的配置，使用它
+			if (settings.pluginsConfig && settings.pluginsConfig[pluginName]) {
+				this._config = { ...this._config, ...settings.pluginsConfig[pluginName] };
+				logger.debug(`从设置中加载了 ${pluginName} 插件配置:`, this._config);
+			}
+		} catch (error) {
+			logger.error(`加载插件配置失败:`, error);
+		}
+	}
+	
+	/**
+	 * 保存插件配置到用户设置
+	 */
+	private saveConfigToSettings(): void {
+		try {
+			const settings = NMPSettings.getInstance();
+			const pluginName = this.getName();
+			
+			// 初始化存储如果不存在
+			if (!settings.pluginsConfig) {
+				settings.pluginsConfig = {};
+			}
+			
+			// 更新插件配置
+			settings.pluginsConfig[pluginName] = { ...this._config };
+			logger.debug(`已保存 ${pluginName} 插件配置到全局设置:`, this._config);
+			
+			// 触发设置保存
+			const app = window.app;
+			if (app) {
+				try {
+					// 使用类型断言安全地访问插件管理器
+					const pluginManager = app as unknown as { plugins: PluginManager };
+					if (pluginManager.plugins) {
+						const plugin = pluginManager.plugins.plugins["omni-content"];
+						if (plugin && typeof plugin.saveSettings === "function") {
+							plugin.saveSettings();
+							logger.debug(`已触发插件的 saveSettings 方法`);
+						}
+					}
+				} catch (e) {
+					logger.error(`触发设置保存时出错:`, e);
+				}
+			}
+		} catch (error) {
+			logger.error(`保存插件配置失败:`, error);
+		}
+	}
 
 	/**
 	 * 获取主题色
@@ -141,9 +226,18 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 	 * @returns 更新后的配置
 	 */
 	updateConfig(config: PluginConfig): PluginConfig {
-		this._config = { ...this._config, ...config };
-		logger.debug(`已更新${this.getName()}插件配置:`, this._config);
-		return this.getConfig();
+		// 合并新的配置到当前配置
+		this._config = {
+			...this._config,
+			...config
+		};
+		
+		logger.debug(`更新了插件配置:`, this._config);
+		
+		// 将更新后的配置保存到设置中
+		this.saveConfigToSettings();
+		
+		return this._config;
 	}
 	
 	/**
