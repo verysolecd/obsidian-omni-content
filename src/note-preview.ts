@@ -1084,6 +1084,9 @@ ${customCSS}`;
 				// 更新插件配置 - 使用对象格式
 				plugin.updateConfig({ [key]: value });
 
+				// 重新渲染内容，使配置变更立即生效
+				this.renderMarkdown();
+
 				// 显示成功提示
 				new Notice(`已更新${plugin.getName()}插件设置`);
 			});

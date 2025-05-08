@@ -1,5 +1,4 @@
 import {BaseProcessPlugin, PluginMetaConfig} from "src/plugins/base-process-plugin";
-import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
 /**
@@ -30,11 +29,13 @@ export class HeadingsPlugin extends BaseProcessPlugin {
         };
     }
 
-    process(html: string, settings: NMPSettings): string {
+    process(html: string): string {
         try {
-            // 检查是否需要处理标题
-            const needProcessNumber = settings.enableHeadingNumber;
-            const needProcessDelimiter = settings.enableHeadingDelimiterBreak;
+            // 使用插件自己的配置而非全局设置
+            const config = this.getConfig();
+            const needProcessNumber = config.enableHeadingNumber;
+            const needProcessDelimiter = config.enableHeadingDelimiterBreak;
+            logger.debug({needProcessNumber, needProcessDelimiter})
 
             if (needProcessDelimiter || needProcessNumber) {
                 const parser = new DOMParser();
