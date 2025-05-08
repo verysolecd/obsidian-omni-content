@@ -83,6 +83,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		// 创建专业化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
+		this.toolbar.setAttribute(
+			"style",
+			"display: flex; flex-direction: column; height: 100%; overflow: hidden;"
+		);
 
 		// 1. 构建品牌区域
 		this.buildBrandSection();
@@ -91,11 +95,19 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		const toolbarContainer = this.toolbar.createDiv({
 			cls: "toolbar-container",
 		});
+		toolbarContainer.setAttribute(
+			"style",
+			"flex: 1; overflow-y: auto;"
+		);
 
 		// 3. 创建工具栏内容区域 - 单列垂直布局
 		const toolbarContent = toolbarContainer.createDiv({
 			cls: "toolbar-content toolbar-vertical",
 		});
+		toolbarContent.setAttribute(
+			"style",
+			"display: flex; flex-direction: column; padding: 10px;"
+		);
 
 		// 5. 构建手风琴组件容器
 		const accordionContainer = toolbarContent.createDiv({
@@ -374,7 +386,17 @@ ${customCSS}`;
 	}
 
 	buildMsgView(parent: HTMLDivElement) {
-		this.msgView = parent.createDiv({ cls: "msg-view" });
+		// Add a reference to parent for debugging purposes
+		const parentExists = parent && parent.isConnected;
+		logger.debug(`Building message view with parent connected: ${parentExists}`);
+		
+		// Create message view as a direct child of main container for proper z-index stacking
+		this.msgView = this.container.createDiv({ cls: "msg-view" });
+		// Ensure message view appears on top of both columns
+		this.msgView.setAttribute(
+			"style",
+			"position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; display: none;"
+		);
 		const title = this.msgView.createDiv({ cls: "msg-title" });
 		title.id = "msg-title";
 		title.innerText = "加载中...";
@@ -410,24 +432,74 @@ ${customCSS}`;
 		this.container = this.containerEl.children[1];
 		this.container.empty();
 
+		// Create main container with flex layout for dual columns
 		this.mainDiv = this.container.createDiv({ cls: "note-preview" });
-		// this.mainDiv.setAttribute(
-		// 	"style",
-		// 	"padding: 50px;"
-		// );
+		this.mainDiv.setAttribute(
+			"style",
+			"display: flex; flex-direction: row; height: 100%; width: 100%; overflow: hidden;"
+		);
 
-		this.buildToolbar(this.mainDiv);
-
+		// 明确创建左侧渲染区域
 		this.renderDiv = this.mainDiv.createDiv({ cls: "render-div" });
 		this.renderDiv.id = "render-div";
 		this.renderDiv.setAttribute(
 			"style",
-			"-webkit-user-select: text; user-select: text; padding:10px;"
+			"order: 0; -webkit-user-select: text; user-select: text; padding: 10px; flex: 1; overflow: auto; border-right: 1px solid var(--background-modifier-border);"
 		);
 		this.styleEl = this.renderDiv.createEl("style");
 		this.styleEl.setAttr("title", "omni-content-style");
 		this.setStyle(this.getCSS());
 		this.articleDiv = this.renderDiv.createEl("div");
+
+		// 创建可拖动的分隔条，明确放在中间位置
+		const resizer = this.mainDiv.createDiv({ cls: "column-resizer" });
+		resizer.setAttribute(
+			"style",
+			"order: 1; width: 5px; background-color: var(--background-modifier-border); cursor: col-resize; opacity: 0.7; transition: opacity 0.2s; z-index: 10;"
+		);
+		resizer.addEventListener("mouseenter", () => {
+			resizer.style.opacity = "1";
+		});
+		resizer.addEventListener("mouseleave", () => {
+			resizer.style.opacity = "0.7";
+		});
+
+		// Add drag functionality
+		let startX: number, startWidth: number;
+		const startDrag = (e: MouseEvent) => {
+			startX = e.clientX;
+			startWidth = parseInt(getComputedStyle(this.renderDiv).width, 10);
+			document.documentElement.addEventListener("mousemove", doDrag);
+			document.documentElement.addEventListener("mouseup", stopDrag);
+		};
+		
+		const doDrag = (e: MouseEvent) => {
+			const newWidth = startWidth + e.clientX - startX;
+			const containerWidth = this.mainDiv.getBoundingClientRect().width;
+			const minWidth = 200; // Minimum width for render div
+			const maxWidth = containerWidth - 250; // Max width (keep at least 250px for toolbar)
+			
+			if (newWidth > minWidth && newWidth < maxWidth) {
+				this.renderDiv.style.flex = "0 0 " + newWidth + "px";
+			}
+		};
+		
+		const stopDrag = () => {
+			document.documentElement.removeEventListener("mousemove", doDrag);
+			document.documentElement.removeEventListener("mouseup", stopDrag);
+		};
+		
+		resizer.addEventListener("mousedown", startDrag);
+
+		// 明确创建右侧工具栏容器
+		const toolbarContainer = this.mainDiv.createDiv({ cls: "toolbar-container" });
+		toolbarContainer.setAttribute(
+			"style",
+			"order: 2; flex: 0 0 300px; height: 100%; overflow-y: auto; overflow-x: hidden; background-color: var(--background-secondary-alt); border-left: 1px solid var(--background-modifier-border);"
+		);
+		
+		// Build toolbar in the right column
+		this.buildToolbar(toolbarContainer);
 	}
 
 	updateStyle(styleName: string) {
@@ -1079,11 +1151,38 @@ ${customCSS}`;
 	 * 构建品牌区域
 	 */
 	private buildBrandSection(): void {
-		// 添加工具栏顶部品牌区域
-		const brandSection = this.toolbar.createDiv({ cls: "brand-section" });
+		// 创建品牌区域容器
+		const brandSection = this.toolbar.createDiv({
+			cls: "brand-section",
+		});
+		brandSection.setAttribute(
+			"style",
+			"flex: 0 0 auto; padding: 10px; border-bottom: 1px solid var(--background-modifier-border);"
+		);
 
-		// 品牌Logo和名称
-		const brandLogo = brandSection.createDiv({ cls: "brand-logo" });
+		// 创建品牌区域内容容器
+		const brandContent = brandSection.createDiv({
+			cls: "brand-content",
+		});
+		brandContent.setAttribute(
+			"style",
+			"display: flex; align-items: center; justify-content: space-between;"
+		);
+
+		// 创建品牌标题
+		brandContent.createDiv({
+			cls: "preview-title",
+			text: "全能内容",
+		});
+
+		// 创建版本号
+		brandContent.createSpan({
+			cls: "preview-version",
+			text: "v1.0.0",
+		});
+
+		// 创建品牌内容：Logo + 名称
+		const brandLogo = brandContent.createDiv({ cls: "brand-logo" });
 		brandLogo.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4A6BF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1092,8 +1191,10 @@ ${customCSS}`;
         </svg>
     `;
 
-		const brandName = brandSection.createDiv({ cls: "brand-name" });
+		// 创建平台名称
+		const brandName = brandContent.createDiv({ cls: "brand-name" });
 		brandName.innerHTML = "手工川智能创作平台";
+		brandName.setAttr("style", "margin-left: 8px;");
 	}
 
 	/**
