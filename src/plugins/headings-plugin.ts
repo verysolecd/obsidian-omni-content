@@ -89,7 +89,7 @@ export class HeadingsPlugin extends BaseProcessPlugin {
     private processHeadingDelimiters(element: Element): void {
         try {
             // 分隔符正则表达式 - 匹配逗号、页、分号、冒号等常见分隔符
-            const delimiterRegex = /[,，、；：;:页|与]/g;
+            const delimiterRegex = /[,，、；：;:|]/g;
 
             // 获取所有文本节点
             const walker = document.createTreeWalker(

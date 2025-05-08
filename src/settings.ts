@@ -40,6 +40,12 @@ export class NMPSettings {
 	enableHeadingNumber: boolean;
 	// 二级标题分隔符换行设置（遇到逗号等符号自动换行）
 	enableHeadingDelimiterBreak: boolean;
+	// 保存UI状态 - 展开的手风琴部分ID数组
+	expandedAccordionSections: string[] = [];
+	// 上次选择的平台类型，用于刷新后恢复
+	lastSelectedPlatform: string = "";
+	// 上次选择的模板，用于刷新后恢复模板选择状态
+	lastSelectedTemplate: string = "";
 	expireat: Date | null = null;
 
 	private static instance: NMPSettings;

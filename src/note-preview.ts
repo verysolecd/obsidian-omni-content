@@ -102,7 +102,10 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			cls: "accordion-container",
 		});
 		// 为手风琴容器添加基础样式
-		accordionContainer.setAttr("style", "width: 100%; display: flex; flex-direction: column; gap: 5px;");
+		accordionContainer.setAttr(
+			"style",
+			"width: 100%; display: flex; flex-direction: column; gap: 5px;"
+		);
 
 		// 6. 构建主要机功组件包括平台选择器
 		this.buildBasicAccordionSection(accordionContainer, "基本设置", () => {
@@ -117,13 +120,17 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 		// 8. 如果启用了样式UI，构建样式相关设置组件
 		if (this.settings.showStyleUI) {
-			this.buildBasicAccordionSection(accordionContainer, "样式设置", () => {
-				const container = document.createElement("div");
-				this.buildThemeSelector(container);
-				this.buildHighlightSelector(container);
-				this.buildThemeColorSelector(container);
-				return container;
-			});
+			this.buildBasicAccordionSection(
+				accordionContainer,
+				"样式设置",
+				() => {
+					const container = document.createElement("div");
+					this.buildThemeSelector(container);
+					this.buildHighlightSelector(container);
+					this.buildThemeColorSelector(container);
+					return container;
+				}
+			);
 		}
 
 		// 9. 显示当前平台的插件列表
@@ -145,51 +152,110 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param container 父容器
 	 * @param title 标题
 	 * @param contentBuilder 内容生成函数
+	 * @returns 创建的手风琴元素
 	 */
-	private buildBasicAccordionSection(container: HTMLElement, title: string, contentBuilder: () => HTMLElement): void {
+	private buildBasicAccordionSection(
+		container: HTMLElement,
+		title: string,
+		contentBuilder: () => HTMLElement
+	): HTMLElement {
+		// 创建唯一标识符，用于状态存储
+		const sectionId = `accordion-${title
+			.replace(/\s+/g, "-")
+			.toLowerCase()}`;
+
 		// 创建手风琴包装器
 		const accordion = container.createDiv({ cls: "accordion-section" });
-		accordion.setAttr("style", "margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;");
+		accordion.setAttr("id", sectionId);
+		accordion.setAttr(
+			"style",
+			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px; overflow: hidden;"
+		);
 
 		// 创建标题栏
 		const header = accordion.createDiv({ cls: "accordion-header" });
-		header.setAttr("style", "padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;");
+		header.setAttr(
+			"style",
+			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
+		);
 		header.createDiv({ cls: "accordion-title", text: title });
 
 		// 创建展开/收缩图标
 		const icon = header.createDiv({ cls: "accordion-icon" });
 		icon.setAttr("style", "transition: transform 0.3s;");
-		icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+		icon.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
 
 		// 创建内容区域
 		const content = accordion.createDiv({ cls: "accordion-content" });
-		content.setAttr("style", "padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;");
+		content.setAttr(
+			"style",
+			"padding: 0 10px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;"
+		);
 
 		// 生成并添加内容
 		const contentEl = contentBuilder();
 		content.appendChild(contentEl);
 
+		// 检查设置中是否存储了扩展状态
+		const shouldExpand =
+			this.settings.expandedAccordionSections.includes(sectionId);
+
 		// 添加点击事件
 		header.addEventListener("click", () => {
 			// 切换展开/收缩状态
-			const isExpanded = content.style.maxHeight !== "0px" && content.style.maxHeight !== "";
-			
+			const isExpanded =
+				content.style.maxHeight !== "0px" &&
+				content.style.maxHeight !== "";
+
 			if (isExpanded) {
 				content.style.maxHeight = "0px";
 				icon.style.transform = "rotate(0deg)";
+
+				// 从设置中移除该部分
+				const index =
+					this.settings.expandedAccordionSections.indexOf(sectionId);
+				if (index > -1) {
+					this.settings.expandedAccordionSections.splice(index, 1);
+					this.saveSettingsToPlugin();
+				}
 			} else {
 				content.style.maxHeight = content.scrollHeight + "px";
 				icon.style.transform = "rotate(180deg)";
+
+				// 添加到设置中
+				if (
+					!this.settings.expandedAccordionSections.includes(sectionId)
+				) {
+					this.settings.expandedAccordionSections.push(sectionId);
+					this.saveSettingsToPlugin();
+				}
 			}
 		});
 
-		// 默认展开第一个部分
-		if (container.querySelectorAll(".accordion-section").length === 1) {
-			window.setTimeout(() => {
+		// 根据保存的设置或默认规则来设置初始状态
+		window.setTimeout(() => {
+			// 如果应该展开（设置中有记录或者是第一个部分）
+			if (
+				shouldExpand ||
+				(container.querySelectorAll(".accordion-section").length ===
+					1 &&
+					this.settings.expandedAccordionSections.length === 0)
+			) {
 				content.style.maxHeight = content.scrollHeight + "px";
 				icon.style.transform = "rotate(180deg)";
-			}, 0);
-		}
+
+				// 如果还没有添加到设置中，则添加
+				if (
+					!this.settings.expandedAccordionSections.includes(sectionId)
+				) {
+					this.settings.expandedAccordionSections.push(sectionId);
+					this.saveSettingsToPlugin();
+				}
+			}
+		}, 0);
+
+		return accordion;
 	}
 
 	/**
@@ -205,14 +271,19 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 		// 检查适配器是否使用了特定插件
 		let hasHeadingPlugin = false;
-		
+
 		if (adapter instanceof BaseContentAdapter) {
-			const plugins = (adapter as unknown as { plugins: IProcessPlugin[] }).plugins || [];
-			
+			const plugins =
+				(adapter as unknown as { plugins: IProcessPlugin[] }).plugins ||
+				[];
+
 			// 检查是否启用了标题插件
-			hasHeadingPlugin = plugins.some(p => 
-				p && typeof p.getName === 'function' && 
-				(p.getName().toLowerCase().includes('heading') || p.getName().toLowerCase().includes('标题'))
+			hasHeadingPlugin = plugins.some(
+				(p) =>
+					p &&
+					typeof p.getName === "function" &&
+					(p.getName().toLowerCase().includes("heading") ||
+						p.getName().toLowerCase().includes("标题"))
 			);
 		}
 
@@ -225,7 +296,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			});
 		}
 	}
-	
 
 	getViewType() {
 		return VIEW_TYPE_NOTE_PREVIEW;
@@ -690,7 +760,15 @@ ${customCSS}`;
 	 * 更优雅的方式来处理设置持久化
 	 */
 	private saveSettingsToPlugin(): void {
+		// todo: 这个好像没用
 		uevent("save-settings");
+		
+		// 使用类型断言来解决 TypeScript 类型错误
+		const plugin = (this.app as any).plugins.plugins["omni-content"];
+		if (plugin) {
+			logger.debug("正在保存设置到持久化存储");
+			plugin.saveSettings();
+		}
 	}
 
 	/**
@@ -725,6 +803,20 @@ ${customCSS}`;
 			{ value: PlatformType.WECHAT, text: "微信公众号" },
 		];
 
+		// 从设置中恢复上次选择的平台
+		if (
+			this.settings.lastSelectedPlatform &&
+			Object.values(PlatformType).includes(
+				this.settings.lastSelectedPlatform as PlatformType
+			)
+		) {
+			logger.debug(
+				`从设置中恢复平台选择: ${this.settings.lastSelectedPlatform}`
+			);
+			this.currentPlatform = this.settings
+				.lastSelectedPlatform as PlatformType;
+		}
+
 		// 添加选项
 		platformOptions.forEach((opt) => {
 			const option = selectEl.createEl("option", {
@@ -746,6 +838,15 @@ ${customCSS}`;
 		// 添加事件监听器
 		selectEl.addEventListener("change", async () => {
 			this.currentPlatform = selectEl.value as PlatformType;
+
+			// 保存选择到设置中
+			this.settings.lastSelectedPlatform = this.currentPlatform;
+			this.saveSettingsToPlugin();
+			logger.debug(`保存平台选择到设置: ${this.currentPlatform}`);
+
+			// 更新插件列表
+			this.updatePluginList();
+
 			// 更新预览
 			logger.info(`切换到平台: ${this.currentPlatform}`);
 			await this.renderMarkdown();
@@ -753,6 +854,9 @@ ${customCSS}`;
 
 		// 增加键盘导航支持
 		this.addKeyboardNavigation(selectEl);
+
+		// 确保插件列表在初始化时也更新
+		this.updatePluginList();
 	}
 
 	/**
@@ -882,10 +986,16 @@ ${customCSS}`;
 		templateSelect.onchange = async () => {
 			if (templateSelect.value === "") {
 				this.settings.useTemplate = false;
+				this.settings.lastSelectedTemplate = "";
 			} else {
 				this.settings.useTemplate = true;
 				this.settings.defaultTemplate = templateSelect.value;
+				this.settings.lastSelectedTemplate = templateSelect.value;
 			}
+
+			logger.debug(
+				`保存模板选择到设置: ${this.settings.lastSelectedTemplate}`
+			);
 
 			// 保存设置
 			this.saveSettingsToPlugin();

@@ -48,7 +48,11 @@ export class StylesPlugin extends BaseProcessPlugin {
                     "padding",
                     "border",
                     "border-radius",
-                    "position" // 微信公众号支持position属性
+                    "max-width",
+                    "box-sizing",
+                    "margin-bottom",
+                    "background-image",
+                    // "position" // 微信公众号支持position属性
                 ];
 
                 for (const prop of properties) {
