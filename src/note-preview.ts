@@ -80,6 +80,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * @param parent 父容器元素
 	 */
 	buildToolbar(parent: HTMLDivElement) {
+
+
+
 		// 创建专业化的工具栏
 		this.toolbar = parent.createDiv({ cls: "preview-toolbar" });
 		this.toolbar.addClasses(["modern-toolbar"]);
@@ -108,6 +111,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			"style",
 			"display: flex; flex-direction: column; padding: 10px;"
 		);
+
+						// 10. 构建操作按钮组
+						this.buildActionButtons(toolbarContent);
 
 		// 5. 构建手风琴组件容器
 		const accordionContainer = toolbarContent.createDiv({
@@ -149,8 +155,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			return container;
 		});
 
-		// 10. 构建操作按钮组
-		this.buildActionButtons(toolbarContent);
+
 
 		// 11. 创建消息视图，但将其放在工具栏之外
 		this.buildMsgView(parent);
@@ -476,11 +481,13 @@ ${customCSS}`;
 		const doDrag = (e: MouseEvent) => {
 			const newWidth = startWidth + e.clientX - startX;
 			const containerWidth = this.mainDiv.getBoundingClientRect().width;
-			const minWidth = 200; // Minimum width for render div
-			const maxWidth = containerWidth - 250; // Max width (keep at least 250px for toolbar)
+			const minWidth = 200; // 渲染区域的最小宽度
+			const maxWidth = containerWidth - 250; // 最大宽度（保留至少250px给工具栏）
 			
 			if (newWidth > minWidth && newWidth < maxWidth) {
+				// 设置渲染区域的固定宽度
 				this.renderDiv.style.flex = "0 0 " + newWidth + "px";
+				logger.debug(`调整渲染区域宽度: ${newWidth}px, 容器总宽度: ${containerWidth}px`);
 			}
 		};
 		
@@ -491,11 +498,11 @@ ${customCSS}`;
 		
 		resizer.addEventListener("mousedown", startDrag);
 
-		// 明确创建右侧工具栏容器
+		// 明确创建右侧工具栏容器 - 使用flex: 1让其能跟随调整
 		const toolbarContainer = this.mainDiv.createDiv({ cls: "toolbar-container" });
 		toolbarContainer.setAttribute(
 			"style",
-			"order: 2; flex: 0 0 300px; height: 100%; overflow-y: auto; overflow-x: hidden; background-color: var(--background-secondary-alt); border-left: 1px solid var(--background-modifier-border);"
+			"order: 2; flex: 1; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; background-color: var(--background-secondary-alt); border-left: 1px solid var(--background-modifier-border);"
 		);
 		
 		// Build toolbar in the right column
@@ -900,7 +907,7 @@ ${customCSS}`;
 		});
 		this.pluginListEl.setAttr(
 			"style",
-			"max-height: 250px; overflow-y: auto; width: 100%;"
+			"width: 100%;"
 		);
 
 		// 初始化插件列表
