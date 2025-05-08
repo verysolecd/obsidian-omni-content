@@ -1,3 +1,4 @@
+import {BlockquotesPlugin} from "src/plugins/blockquotes-plugin";
 import { logger } from "../utils";
 import { CodeBlocksPlugin } from "./code-blocks-plugin";
 import { HeadingsPlugin } from "./headings-plugin";
@@ -7,8 +8,6 @@ import { PluginManager } from "./plugin-manager";
 import { StylesPlugin } from "./styles-plugin";
 import { TablesPlugin } from "./tables-plugin";
 import { WechatLinkPlugin } from "./wechat-link-plugin";
-// 如需使用 BlockquotesPlugin，请取消下面的注释，并在 initializePlugins 中添加它
-// import { BlockquotesPlugin } from "./blockquotes-plugin";
 
 /**
  * 初始化并注册所有处理插件
@@ -27,8 +26,7 @@ export function initializePlugins(): void {
         new CodeBlocksPlugin(),
         new TablesPlugin(),
         new StylesPlugin(),
-        // 如需启用 BlockquotesPlugin，请取消注释添加
-        // new BlockquotesPlugin(),
+        new BlockquotesPlugin(false),
     ]);
 
     logger.info(`插件初始化完成，共注册了 ${pluginManager.getPlugins().length} 个插件`);

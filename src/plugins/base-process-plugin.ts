@@ -120,7 +120,8 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 	/**
 	 * 插件构造函数
 	 */
-	constructor() {
+	constructor(enabled=true) {
+		this._config = {enabled}
 		// 从设置中加载插件配置
 		this.loadConfigFromSettings();
 	}
