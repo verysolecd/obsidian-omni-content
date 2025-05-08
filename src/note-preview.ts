@@ -217,6 +217,17 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 		this.updatePluginList();
 	}
 
+	/**
+	 * 只渲染文章内容，不更新工具栏
+	 * 用于插件配置变更时快速更新预览
+	 */
+	async renderArticleOnly() {
+		this.articleDiv.innerHTML = await this.getArticleContent(
+			this.currentPlatform
+		);
+		logger.debug("仅渲染文章内容，跳过工具栏更新");
+	}
+
 	async copyArticle(platform: PlatformType = PlatformType.WECHAT) {
 		const content = await this.getArticleContent(platform);
 
@@ -1084,8 +1095,8 @@ ${customCSS}`;
 				// 更新插件配置 - 使用对象格式
 				plugin.updateConfig({ [key]: value });
 
-				// 重新渲染内容，使配置变更立即生效
-				this.renderMarkdown();
+				// 只重新渲染文章内容，不更新工具栏，提高响应速度
+				this.renderArticleOnly();
 
 				// 显示成功提示
 				new Notice(`已更新${plugin.getName()}插件设置`);
