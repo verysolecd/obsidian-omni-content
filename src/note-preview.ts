@@ -982,13 +982,63 @@ ${customCSS}`;
 			"style",
 			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
 		);
-		header.createDiv({ cls: "accordion-title", text: pluginName });
-
+		
+		// 创建标题和控制区域的容器
+		const headerLeft = header.createDiv({ cls: "accordion-header-left" });
+		headerLeft.setAttr(
+			"style",
+			"display: flex; align-items: center; gap: 10px;"
+		);
+		
+		// 创建启用/禁用开关
+		const enableSwitch = headerLeft.createEl("label", {
+			cls: "switch small",
+		});
+		enableSwitch.setAttr(
+			"style",
+			"margin-right: 8px; min-width: 36px; height: 18px;"
+		);
+		
+		const enableInput = enableSwitch.createEl("input", {
+			attr: {
+				type: "checkbox",
+			},
+		});
+		
+		// 设置启用状态
+		enableInput.checked = plugin.isEnabled();
+		
+		// 创建滑块
+		const slider = enableSwitch.createEl("span", { cls: "slider round" });
+		slider.setAttr("style", "height: 18px; width: 36px;");
+		
+		// 添加标题
+		headerLeft.createDiv({ cls: "accordion-title", text: pluginName });
+		
 		// 创建展开/收缩图标
 		const icon = header.createDiv({ cls: "accordion-icon" });
 		icon.setAttr("style", "transition: transform 0.3s;");
 		icon.innerHTML =
 			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+		
+		// 阻止开关点击事件冒泡到手风琴标题
+		enableSwitch.addEventListener("click", (event) => {
+			event.stopPropagation();
+		});
+		
+		// 添加开关状态变化事件
+		enableInput.addEventListener("change", (event) => {
+			const isEnabled = (event.target as HTMLInputElement).checked;
+			
+			// 更新插件状态
+			plugin.setEnabled(isEnabled);
+			
+			// 重新渲染内容
+			this.renderArticleOnly();
+			
+			// 显示操作成功通知
+			new Notice(`已${isEnabled ? "启用" : "禁用"}${plugin.getName()}插件`);
+		});
 
 		// 创建内容区域
 		const content = accordion.createDiv({ cls: "accordion-content" });
@@ -1103,7 +1153,7 @@ ${customCSS}`;
 			});
 		});
 
-		// 添加点击事件
+		// 标题栏点击事件 - 控制折叠展开
 		header.addEventListener("click", () => {
 			// 切换展开/收缩状态 - 使用display属性判断
 			const isExpanded = content.style.display !== "none" && content.style.display !== "";

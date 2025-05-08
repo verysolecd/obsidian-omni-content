@@ -27,6 +27,8 @@ interface PluginManager {
 export interface PluginConfig {
 	// 使用更缩窄的类型而非 any
 	[key: string]: string | number | boolean | null | undefined | string[] | number[] | Record<string, unknown>;
+	// 插件启用状态，默认为 true
+	enabled?: boolean;
 }
 
 /**
@@ -90,6 +92,18 @@ export interface IProcessPlugin {
 	 * @returns 插件配置的元数据
 	 */
 	getMetaConfig(): PluginMetaConfig;
+	
+	/**
+	 * 检查插件是否启用
+	 * @returns 插件是否启用
+	 */
+	isEnabled(): boolean;
+	
+	/**
+	 * 设置插件启用状态
+	 * @param enabled 是否启用
+	 */
+	setEnabled(enabled: boolean): void;
 }
 
 /**
@@ -99,7 +113,9 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 	/**
 	 * 插件配置数据
 	 */
-	protected _config: PluginConfig = {};
+	protected _config: PluginConfig = {
+		enabled: true // 默认启用
+	};
 	
 	/**
 	 * 插件构造函数
@@ -259,4 +275,23 @@ export abstract class BaseProcessPlugin implements IProcessPlugin {
 	 * 处理HTML内容，子类必须实现
 	 */
 	abstract process(html: string, settings: NMPSettings): string;
+	
+	/**
+	 * 检查插件是否启用
+	 * @returns 插件是否启用
+	 */
+	isEnabled(): boolean {
+		// 如果没有设置enabled属性，默认为启用状态
+		return this._config.enabled !== false;
+	}
+	
+	/**
+	 * 设置插件启用状态
+	 * @param enabled 是否启用
+	 */
+	setEnabled(enabled: boolean): void {
+		this._config.enabled = enabled;
+		this.saveConfigToSettings();
+		logger.debug(`插件 ${this.getName()} 的启用状态已更改为: ${enabled}`);
+	}
 }

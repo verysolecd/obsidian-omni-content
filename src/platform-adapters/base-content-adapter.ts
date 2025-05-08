@@ -106,16 +106,29 @@ export abstract class BaseContentAdapter implements IContentAdapter {
 	}
 
 	/**
-	 * 处理HTML - 默认实现为应用所有插件
+	 * 处理HTML - 默认实现为应用所有启用的插件
 	 */
 	protected process(html: string): string {
 		logger.debug(`开始处理内容，使用 ${this.plugins.length} 个插件`);
 
+		// 计数器，记录实际应用的插件数量
+		let appliedPluginCount = 0;
+		
 		// 通过插件链依次处理HTML内容
-		return this.plugins.reduce((processedHtml, plugin) => {
-			logger.debug(`应用插件: ${plugin.getName()}`);
-			return plugin.process(processedHtml, this.currentSettings);
+		const result = this.plugins.reduce((processedHtml, plugin) => {
+			// 检查插件是否启用
+			if (plugin.isEnabled && plugin.isEnabled()) {
+				logger.debug(`应用插件: ${plugin.getName()}`);
+				appliedPluginCount++;
+				return plugin.process(processedHtml, this.currentSettings);
+			} else {
+				logger.debug(`跳过禁用的插件: ${plugin.getName()}`);
+				return processedHtml; // 如果插件禁用，直接返回原内容
+			}
 		}, html);
+		
+		logger.debug(`内容处理完成，实际应用了 ${appliedPluginCount} 个插件`);
+		return result;
 	}
 
 	/**
