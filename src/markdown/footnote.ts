@@ -72,7 +72,8 @@ export class FootnoteRenderer extends Extension {
         const footnoteItems = this.footnoteRefs.map(id => {
             // 这里不再需要空字符串作为默认值，因为前面已经确保所有ID都有内容
             const content = this.footnotes.get(id) as string;
-            return `<li id="fn-${id}">${content} <a href="#fnref-${id}" class="footnote-backref">↩︎</a></li>`;
+            // 移除返回符号和链接，微信平台不支持页内跳转
+            return `<li id="fn-${id}">${content}</li>`;
         });
 
         // 添加脚注部分

@@ -40,9 +40,26 @@ export class WechatLinkPlugin extends BaseProcessPlugin {
 				const hasFootnoteClass = link.classList.contains('footnote-ref') || 
 										link.classList.contains('footnote-backref');
 				
-				// 如果已经是脚注相关的链接，直接跳过
+				// 如果已经是脚注相关的链接，去除a标签但保留上标效果
 				if (isFootnoteRef || isFootnoteBackRef || hasFootnoteClass || parentIsSup) {
-					logger.debug("Skip processing footnote link:", href);
+					logger.debug("Processing footnote link, removing a tag but keeping sup:", href);
+					
+					if (parentIsSup) {
+						// 如果父元素是sup，保留sup但去除a标签
+						const supElement = link.parentElement;
+						const linkText = link.textContent;
+						link.replaceWith(linkText || '');
+						
+						// 确保还是sup样式
+						if (supElement && linkText) {
+							supElement.textContent = linkText;
+						}
+					} else {
+						// 直接将自身转为上标
+						const supElement = document.createElement('sup');
+						supElement.textContent = link.textContent || '';
+						link.replaceWith(supElement);
+					}
 					return;
 				}
 
