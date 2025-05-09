@@ -38,16 +38,19 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "main.js",
+	outfile: "dist/main.js",
 	plugins: [
 		copy({
-			// 复制以下资源到 assets 目录
+			// 复制以下资源到 dist/assets 目录
 			assets: [
-				{ from: ['./themes/**/*'], to: ['./assets/themes'] },
-				{ from: ['./templates/**/*'], to: ['./assets/templates'] },
-				{ from: ['./themes.json'], to: ['./assets/themes.json'] },
-				{ from: ['./highlights.json'], to: ['./assets/highlights.json'] },
-				{ from: ["./css-snippets/black-h2.css"], to: ["./assets/custom.css"] },
+				{ from: ['./themes/**/*'], to: ['./assets/themes'], outDir: './dist' },
+				{ from: ['./templates/**/*'], to: ['./assets/templates'], outDir: './dist' },
+				{ from: ['./themes.json'], to: ['./assets/themes.json'], outDir: './dist' },
+				{ from: ['./highlights.json'], to: ['./assets/highlights.json'], outDir: './dist' },
+				{ from: ["./css-snippets/black-h2.css"], to: ["./assets/custom.css"], outDir: './dist' },
+				// 复制插件所需的其他文件到 dist 目录
+				{ from: ['./manifest.json'], to: ['./manifest.json'], outDir: './dist' },
+				{ from: ['./styles.css'], to: ['./styles.css'], outDir: './dist' }
 			],
 			verbose: false, // 输出复制操作的日志
 		}),
