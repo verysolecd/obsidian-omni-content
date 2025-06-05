@@ -358,6 +358,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			themeColorCSS = `
 :root {
   --primary-color: ${this.settings.themeColor || "#7852ee"};
+  --theme-color-light: ${this.settings.themeColor || "#7852ee"}aa;
 }
 `;
 		}

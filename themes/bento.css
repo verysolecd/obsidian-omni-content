@@ -18,7 +18,7 @@
     --mark-bg: rgba(227, 25, 55, 0.1);
     --blockquote-border: #E31937;
     --link-color: #E31937;
-    --strong-color: #E31937;
+    --strong-color: rgba(227, 25, 55, 0.8);
   }
   
   /* 深色模式变量 */
@@ -35,7 +35,7 @@
       --mark-bg: rgba(227, 25, 55, 0.2);
       --blockquote-border: #E31937;
       --link-color: #E31937;
-      --strong-color: #ffffff;
+      --strong-color: rgba(227, 25, 55, 0.9);
     }
   }
   

@@ -104,7 +104,7 @@ Emphasis
 ==================================
     */
 .note-to-mp strong {
-    color: #222222;
+    color: var(--strong-color);
     font-weight: 600;
 }
 
