@@ -6,43 +6,7 @@ import {WeixinCodeFormatter} from "./weixin-code-formatter";
 import {GetCallout} from "./callouts";
 import {Extension} from "./extension";
 import {MathRendererQueue} from "./math";
-
-export class CardDataManager {
-	private cardData: Map<string, string>;
-	private static instance: CardDataManager;
-
-	private constructor() {
-		this.cardData = new Map<string, string>();
-	}
-
-	// 静态方法，用于获取实例
-	public static getInstance(): CardDataManager {
-		if (!CardDataManager.instance) {
-			CardDataManager.instance = new CardDataManager();
-		}
-		return CardDataManager.instance;
-	}
-
-	public setCardData(id: string, cardData: string) {
-		this.cardData.set(id, cardData);
-	}
-
-	public cleanup() {
-		this.cardData.clear();
-	}
-
-	public restoreCard(html: string) {
-		for (const [key, value] of this.cardData.entries()) {
-			const exp = `<section[^>]*\\sdata-id="${key}"[^>]*>(.*?)<\\/section>`;
-			const regex = new RegExp(exp, "gs");
-			if (!regex.test(html)) {
-				console.error("未能正确替换公众号卡片");
-			}
-			html = html.replace(regex, value);
-		}
-		return html;
-	}
-}
+import {CardDataManager} from "../rehype-plugins/code-blocks";
 
 const MermaidSectionClassName = "note-mermaid";
 const MermaidImgClassName = "note-mermaid-img";
@@ -59,36 +23,6 @@ export class CodeRenderer extends Extension {
 		this.mermaidIndex = 0;
 	}
 
-	static srcToBlob(src: string) {
-		const base64 = src.split(",")[1];
-		const byteCharacters = atob(base64);
-		const byteNumbers = new Array(byteCharacters.length);
-		for (let i = 0; i < byteCharacters.length; i++) {
-			byteNumbers[i] = byteCharacters.charCodeAt(i);
-		}
-		const byteArray = new Uint8Array(byteNumbers);
-		return new Blob([byteArray], {type: "image/png"});
-	}
-
-	static async uploadMermaidImages(root: HTMLElement, token: string) {
-		const imgs = root.querySelectorAll("." + MermaidImgClassName);
-		for (let img of imgs) {
-			const src = img.getAttribute("src");
-			if (!src) continue;
-			if (src.startsWith("http")) continue;
-			const blob = CodeRenderer.srcToBlob(img.getAttribute("src")!);
-			const name = img.id + ".png";
-			const res = await wxUploadImage(blob, name, token);
-			if (res.errcode != 0) {
-				const msg = `上传图片失败: ${res.errcode} ${res.errmsg}`;
-				new Notice(msg);
-				console.error(msg);
-				continue;
-			}
-			const url = res.url;
-			img.setAttribute("src", url);
-		}
-	}
 
 	codeRenderer(code: string, infostring: string | undefined): string {
 		console.log("codeRenderer", {code, infostring});

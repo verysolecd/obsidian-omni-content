@@ -12,7 +12,7 @@ import { IProcessPlugin } from "src/rehype-plugins/base-process";
 
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import { CardDataManager } from "./remark-plugins/code";
+import { CardDataManager } from "./rehype-plugins/code-blocks";
 import { MDRendererCallback } from "./remark-plugins/extension";
 import { ExtensionManager } from "./remark-plugins/extension-manager";
 import type { Extension, ExtensionMetaConfig } from "./remark-plugins/extension";

@@ -1,6 +1,52 @@
 import {BaseProcess} from "src/rehype-plugins/base-process";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
+import {toPng} from "html-to-image";
+import {Notice} from "obsidian";
+import {wxUploadImage} from "../weixin-api";
+
+/**
+ * 微信公众号卡片数据管理器
+ */
+export class CardDataManager {
+	private cardData: Map<string, string>;
+	private static instance: CardDataManager;
+
+	private constructor() {
+		this.cardData = new Map<string, string>();
+	}
+
+	// 静态方法，用于获取实例
+	public static getInstance(): CardDataManager {
+		if (!CardDataManager.instance) {
+			CardDataManager.instance = new CardDataManager();
+		}
+		return CardDataManager.instance;
+	}
+
+	public setCardData(id: string, cardData: string) {
+		this.cardData.set(id, cardData);
+	}
+
+	public cleanup() {
+		this.cardData.clear();
+	}
+
+	public restoreCard(html: string) {
+		for (const [key, value] of this.cardData.entries()) {
+			const exp = `<section[^>]*\\sdata-id="${key}"[^>]*>(.*?)<\\/section>`;
+			const regex = new RegExp(exp, "gs");
+			if (!regex.test(html)) {
+				console.error("未能正确替换公众号卡片");
+			}
+			html = html.replace(regex, value);
+		}
+		return html;
+	}
+}
+
+const MermaidSectionClassName = "note-mermaid";
+const MermaidImgClassName = "note-mermaid-img";
 
 /**
  * 代码块处理插件 - 处理微信公众号中的代码格式和行号显示
@@ -8,6 +54,47 @@ import {logger} from "src/utils";
 export class CodeBlocks extends BaseProcess {
     getName(): string {
         return "代码块处理插件";
+    }
+
+    /**
+     * 将base64图片转换为Blob对象
+     * @param src base64图片数据
+     * @returns Blob对象
+     */
+    static srcToBlob(src: string): Blob {
+        const base64 = src.split(",")[1];
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], {type: "image/png"});
+    }
+
+    /**
+     * 上传Mermaid图片到微信公众号
+     * @param root HTML根元素
+     * @param token 微信API令牌
+     */
+    static async uploadMermaidImages(root: HTMLElement, token: string): Promise<void> {
+        const imgs = root.querySelectorAll("." + MermaidImgClassName);
+        for (let img of imgs) {
+            const src = img.getAttribute("src");
+            if (!src) continue;
+            if (src.startsWith("http")) continue;
+            const blob = CodeBlocks.srcToBlob(img.getAttribute("src")!);
+            const name = img.id + ".png";
+            const res = await wxUploadImage(blob, name, token);
+            if (res.errcode != 0) {
+                const msg = `上传图片失败: ${res.errcode} ${res.errmsg}`;
+                new Notice(msg);
+                console.error(msg);
+                continue;
+            }
+            const url = res.url;
+            img.setAttribute("src", url);
+        }
     }
 
     /**
@@ -134,7 +221,10 @@ export class CodeBlocks extends BaseProcess {
 
     process(html: string, settings: NMPSettings): string {
         try {
-            // 如果启用了微信代码格式化，跳过此插件的处理
+            // 首先处理微信公众号卡片恢复
+            html = CardDataManager.getInstance().restoreCard(html);
+
+            // 如果启用了微信代码格式化，跳过此插件的其他处理
             if (settings.enableWeixinCodeFormat) {
                 logger.debug("微信代码格式化已启用，跳过代码块处理插件");
                 return html;
