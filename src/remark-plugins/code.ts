@@ -124,15 +124,15 @@ export class CodeRenderer extends Extension {
 				'<section class="code-section">'
 				// + '<div class="line-numbers"><ul>' + liItems + '</ul></div>'
 				+ '<div class="code-content">' + codeContent + '</div>'
-				+ '</section>\n'
+				+ '</section>'
 			);
 		} else {
 			// No line numbers, simpler structure
 			if (!lang) {
-				return '<section class="code-section"><pre><code>' + code + '</code></pre></section>\n';
+				return '<section class="code-section"><pre><code>' + code + '</code></pre></section>';
 			}
 
-			return '<section class="code-section"><pre><code class="hljs language-' + lang + '">' + code + '</code></pre></section>\n';
+			return '<section class="code-section"><pre><code class="hljs language-' + lang + '">' + code + '</code></pre></section>';
 		}
 	}
 

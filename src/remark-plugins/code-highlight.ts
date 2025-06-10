@@ -13,6 +13,8 @@ export class CodeHighlight extends Extension {
 		return markedHighlight({
 			langPrefix: 'hljs language-',
 			highlight(code, lang, info) {
+				console.log("CodeHighlight处理代码:", {lang, codePreview: code.substring(0, 100)});
+				
 				const type = CodeRenderer.getMathType(lang)
 				if (type) return code;
 				if (lang && lang.trim().toLocaleLowerCase() == 'mpcard') return code;
@@ -21,6 +23,7 @@ export class CodeHighlight extends Extension {
 				if (lang && hljs.getLanguage(lang)) {
 					try {
 						const result = hljs.highlight(code, {language: lang});
+						console.log("CodeHighlight生成高亮HTML:", result.value.substring(0, 200));
 						return result.value;
 					} catch (err) {
 					}
@@ -28,6 +31,7 @@ export class CodeHighlight extends Extension {
 
 				try {
 					const result = hljs.highlightAuto(code);
+					console.log("CodeHighlight自动高亮HTML:", result.value.substring(0, 200));
 					return result.value;
 				} catch (err) {
 				}

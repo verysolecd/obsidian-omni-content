@@ -209,6 +209,45 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	async copyArticle() {
 		const content = await this.getArticleContent();
 
+		// 调试：分析最终的HTML内容
+		console.log("=== 复制内容分析 ===");
+		console.log("完整HTML长度:", content.length);
+		
+		// 提取代码块部分进行分析
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(content, "text/html");
+		const codeBlocks = doc.querySelectorAll("pre, pre code, section.code-section");
+		
+		console.log("找到代码块数量:", codeBlocks.length);
+		
+		codeBlocks.forEach((block, index) => {
+			console.log(`--- 代码块 ${index + 1} ---`);
+			console.log("标签名:", block.tagName);
+			console.log("类名:", block.className);
+			console.log("内联样式:", block.getAttribute("style"));
+			console.log("内容预览:", block.innerHTML.substring(0, 200));
+			console.log("父元素:", block.parentElement?.tagName, block.parentElement?.className);
+			console.log("父元素样式:", block.parentElement?.getAttribute("style"));
+			
+			// 详细分析换行符
+			const html = block.innerHTML;
+			const lines = html.split('\n');
+			console.log("总行数:", lines.length);
+			console.log("各行内容（带引号显示空行）:");
+			lines.forEach((line, i) => {
+				if (i < 5) { // 只显示前5行
+					console.log(`  行${i}: "${line}"`);
+				}
+			});
+			
+			// 检查是否有高亮span元素
+			const highlightSpans = block.querySelectorAll('[class*="hljs-"]');
+			console.log("高亮span数量:", highlightSpans.length);
+			if (highlightSpans.length > 0) {
+				console.log("第一个高亮span:", highlightSpans[0].outerHTML.substring(0, 100));
+			}
+		});
+
 		// 复制到剪贴板
 		await navigator.clipboard.write([
 			new ClipboardItem({
