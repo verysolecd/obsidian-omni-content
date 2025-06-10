@@ -136,4 +136,8 @@ export class FootnoteRenderer extends Extension {
             }
         }
     }
+
+    getName(): string {
+        return "FootnoteRenderer";
+    }
 }

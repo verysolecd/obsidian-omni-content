@@ -4,6 +4,10 @@ import {Extension} from "./extension";
 const highlightRegex = /^==(.*?)==/;
 
 export class TextHighlight extends Extension {
+	getName(): string {
+		return "TextHighlight";
+	}
+
 	markedExtension(): MarkedExtension {
 		return {
 			extensions: [{

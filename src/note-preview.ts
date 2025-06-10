@@ -14,6 +14,8 @@ import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
 import { CardDataManager } from "./markdown/code";
 import { MDRendererCallback } from "./markdown/extension";
+import { ExtensionManager } from "./markdown/extension-manager";
+import type { Extension, ExtensionMetaConfig } from "./markdown/extension";
 import { LocalImageManager } from "./markdown/local-file";
 import { MarkedParser } from "./markdown/parser";
 // 移除平台适配器导入，使用插件管理器替代
@@ -197,6 +199,9 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * 用于插件配置变更时快速更新预览
 	 */
 	async renderArticleOnly() {
+		// 重新构建marked实例以应用remark扩展状态变更
+		this.markedParser.buildMarked();
+		
 		this.articleDiv.innerHTML = await this.getArticleContent();
 		logger.debug("仅渲染文章内容，跳过工具栏更新");
 	}
@@ -923,7 +928,7 @@ ${customCSS}`;
 			);
 		});
 
-		// 创建滑块
+		// 添加滑块
 		const slider = enableSwitch.createEl("span", { cls: "slider round" });
 		slider.setAttr("style", "height: 18px; width: 36px;");
 
@@ -1107,25 +1112,69 @@ ${customCSS}`;
 	}
 
 	/**
-	 * 更新当前平台的插件列表显示
+	 * 构建插件列表显示区域 - 展示当前平台使用的处理插件
 	 */
 	private updatePluginList(): void {
 		if (!this.pluginListEl) return;
 
 		this.pluginListEl.empty();
 
+
+		// === Remark 扩展部分 ===
+		const extensionManager = ExtensionManager.getInstance();
+		const extensions = extensionManager.getExtensions();
+
+		if (extensions.length > 0) {
+			// 创建Remark扩展标题
+			const remarkTitle = this.pluginListEl.createEl("h3", {
+				text: "Remark 扩展",
+				cls: "extension-section-title"
+			});
+			remarkTitle.setAttr("style", "margin: 16px 0 8px 0; color: var(--text-normal); font-size: 16px; font-weight: 600;");
+
+			// 创建扩展容器
+			const extensionsContainer = this.pluginListEl.createDiv({
+				cls: "extensions-accordion-container",
+			});
+			extensionsContainer.setAttr(
+				"style",
+				"display: flex; flex-direction: column; gap: 8px; width: 100%;"
+			);
+
+			extensions.forEach((extension) => {
+				if (extension && typeof extension.getName === "function") {
+					const extensionName = extension.getName();
+
+					// 为每个扩展创建手风琴组件
+					this.buildExtensionAccordion(
+						extensionsContainer,
+						extension,
+						extensionName
+					);
+				}
+			});
+		}
+
+				// === Rehype 插件部分 ===
 		// 使用插件管理器获取所有插件
 		const pluginManager = PluginManager.getInstance();
 		const plugins = pluginManager.getPlugins();
 
 		if (plugins.length > 0) {
+			// 创建Rehype插件标题
+			const rehypeTitle = this.pluginListEl.createEl("h3", {
+				text: "Rehype 插件",
+				cls: "plugin-section-title"
+			});
+			rehypeTitle.setAttr("style", "margin: 16px 0 8px 0; color: var(--text-normal); font-size: 16px; font-weight: 600;");
+
 			// 创建插件容器
 			const pluginsContainer = this.pluginListEl.createDiv({
 				cls: "plugins-accordion-container",
 			});
 			pluginsContainer.setAttr(
 				"style",
-				"display: flex; flex-direction: column; gap: 8px; width: 100%;"
+				"display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 24px;"
 			);
 
 			plugins.forEach((plugin: IProcessPlugin) => {
@@ -1140,11 +1189,277 @@ ${customCSS}`;
 					);
 				}
 			});
-		} else {
+		}
+
+
+		// 如果没有任何插件或扩展
+		if (plugins.length === 0 && extensions.length === 0) {
 			this.pluginListEl.createEl("p", {
-				text: "未找到任何处理插件",
+				text: "未找到任何处理插件或扩展",
 			});
 		}
+	}
+
+	/**
+	 * 构建手风琴组件
+	 * @param container 父容器
+	 * @param extension 扩展实例
+	 * @param extensionName 扩展名称
+	 */
+	private buildExtensionAccordion(
+		container: HTMLElement,
+		extension: Extension,
+		extensionName: string
+	): void {
+		// 创建唯一标识符，用于状态存储
+		const extensionId = `extension-${extensionName
+			.replace(/\s+/g, "-")
+			.toLowerCase()}`;
+
+		// 创建手风琴包装器
+		const accordion = container.createDiv({ cls: "accordion-section" });
+		// 添加唯一ID属性便于识别
+		accordion.setAttr("id", extensionId);
+		accordion.setAttr(
+			"style",
+			"margin-bottom: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px;"
+		);
+
+		// 创建标题栏
+		const header = accordion.createDiv({ cls: "accordion-header" });
+		header.setAttr(
+			"style",
+			"padding: 10px; cursor: pointer; background-color: var(--background-secondary); display: flex; justify-content: space-between; align-items: center;"
+		);
+
+		// 创建标题和控制区域的容器
+		const headerLeft = header.createDiv({ cls: "accordion-header-left" });
+		headerLeft.setAttr(
+			"style",
+			"display: flex; align-items: center; gap: 10px;"
+		);
+
+		// 创建启用/禁用开关
+		const enableSwitch = headerLeft.createEl("label", {
+			cls: "switch small",
+		});
+		enableSwitch.setAttr(
+			"style",
+			"margin-right: 8px; min-width: 36px; height: 18px;"
+		);
+
+		// 阻止开关点击事件冒泡到手风琴标题
+		enableSwitch.addEventListener("click", (event) => {
+			event.stopPropagation();
+		});
+
+		const enableInput = enableSwitch.createEl("input", {
+			attr: {
+				type: "checkbox",
+			},
+		});
+
+		// 设置启用状态
+		enableInput.checked = extension.isEnabled();
+
+		// 添加开关状态变化事件
+		enableInput.addEventListener("change", (event) => {
+			const isEnabled = (event.target as HTMLInputElement).checked;
+
+			// 更新扩展状态
+			extension.setEnabled(isEnabled);
+
+			// 重新渲染内容
+			this.renderArticleOnly();
+
+			// 显示操作成功通知
+			new Notice(
+				`已${isEnabled ? "启用" : "禁用"}${extension.getName()}扩展`
+			);
+		});
+
+		// 添加滑块
+		const slider = enableSwitch.createEl("span", { cls: "slider round" });
+		slider.setAttr("style", "height: 18px; width: 36px;");
+
+		// 添加标题
+		headerLeft.createDiv({ cls: "accordion-title", text: extensionName });
+
+		// 添加扩展配置项
+		// 从扩展读取元配置和当前配置值
+		// 元配置定义控件类型、标题等
+		const extensionMetaConfig = extension.getMetaConfig();
+		const extensionCurrentConfig = extension.getConfig();
+		const configEntries = Object.entries(extensionMetaConfig);
+		const hasConfigOptions = configEntries.length > 0;
+
+		if (!hasConfigOptions) return;
+
+		// 创建展开/收缩图标
+		const icon = header.createDiv({ cls: "accordion-icon" });
+		icon.setAttr("style", "transition: transform 0.3s;");
+		icon.innerHTML =
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+
+		// 创建内容区域
+		const content = accordion.createDiv({ cls: "accordion-content" });
+		content.setAttr("style", "padding: 0 10px; transition: 0.3s ease-out;");
+
+		// 构建扩展配置区域
+		const configContainer = content.createDiv({
+			cls: "extension-config-container",
+		});
+		configContainer.setAttr(
+			"style",
+			"display: flex; flex-direction: column; gap: 10px;"
+		);
+
+		// 检查设置中是否存储了扩展状态
+		const shouldExpand =
+			this.settings.expandedAccordionSections.includes(extensionId);
+
+		configEntries.forEach(([key, metaValue]) => {
+			const meta = metaValue as ExtensionMetaConfig[string];
+			const configItem = configContainer.createDiv({
+				cls: "extension-config-item",
+			});
+			configItem.setAttr(
+				"style",
+				"display: flex; justify-content: space-between; align-items: center;"
+			);
+
+			// 添加配置项标题
+			const configTitle = configItem.createDiv({
+				cls: "extension-config-title",
+			});
+			configTitle.textContent = meta.title;
+
+			// 添加配置项控件
+			const configControl = configItem.createDiv({
+				cls: "extension-config-control",
+			});
+			let switchEl, switchInput, selectEl: HTMLSelectElement;
+			const currentValue = extensionCurrentConfig[key];
+
+			switch (meta.type) {
+				case "switch":
+					switchEl = configControl.createEl("label", {
+						cls: "switch",
+					});
+					switchInput = switchEl.createEl("input", {
+						attr: {
+							type: "checkbox",
+						},
+					});
+					switchInput.checked = !!currentValue;
+					switchEl.createEl("span", { cls: "slider round" });
+					break;
+				case "select":
+					selectEl = configControl.createEl("select", {
+						cls: "extension-config-select",
+					});
+					// 防止 options 为 undefined 的情况
+					if (meta.options && meta.options.length > 0) {
+						meta.options.forEach((option: any) => {
+							const optionEl = selectEl.createEl("option", {
+								value: option.value,
+								text: option.text,
+							});
+							if (option.value === currentValue) {
+								optionEl.selected = true;
+							}
+						});
+					} else {
+						// 如果没有选项，添加一个默认选项
+						selectEl.createEl("option", {
+							value: "",
+							text: "无选项",
+						});
+					}
+					break;
+				default:
+					break;
+			}
+
+			// 添加事件监听器
+			configControl.addEventListener("change", (event) => {
+				// 获取控件的当前值
+				let value: string | boolean;
+				const target = event.target as HTMLElement;
+
+				if (meta.type === "switch") {
+					value = (target as HTMLInputElement).checked;
+				} else if (meta.type === "select") {
+					value = (target as HTMLSelectElement).value;
+				} else {
+					return;
+				}
+
+				// 更新扩展配置 - 使用对象格式
+				extension.updateConfig({ [key]: value });
+
+				// 只重新渲染文章内容，不更新工具栏，提高响应速度
+				this.renderArticleOnly();
+
+				// 显示成功提示
+				new Notice(`已更新${extension.getName()}扩展设置`);
+			});
+		});
+
+		// 标题栏点击事件 - 控制折叠展开
+		header.addEventListener("click", () => {
+			// 切换展开/收缩状态 - 使用display属性判断
+			const isExpanded =
+				content.style.display !== "none" &&
+				content.style.display !== "";
+
+			if (isExpanded) {
+				// 收起内容区域
+				content.style.display = "none";
+				icon.style.transform = "rotate(0deg)";
+				header.style.borderBottomColor = "transparent";
+
+				// 从设置中移除该部分
+				const index =
+					this.settings.expandedAccordionSections.indexOf(extensionId);
+				if (index > -1) {
+					this.settings.expandedAccordionSections.splice(index, 1);
+					this.saveSettingsToPlugin();
+				}
+			} else {
+				// 展开内容区域
+				content.style.display = "block";
+				content.style.padding = "16px";
+				icon.style.transform = "rotate(180deg)";
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
+
+				// 添加到设置中
+				if (
+					!this.settings.expandedAccordionSections.includes(extensionId)
+				) {
+					this.settings.expandedAccordionSections.push(extensionId);
+					this.saveSettingsToPlugin();
+				}
+			}
+		});
+
+		// 根据保存的设置来设置初始状态
+		window.setTimeout(() => {
+			// 默认隐藏内容
+			content.style.display = "none";
+
+			if (shouldExpand) {
+				// 如果应该展开，则设置显示状态
+				content.style.display = "block";
+				content.style.padding = "16px";
+				icon.style.transform = "rotate(180deg)";
+				header.style.borderBottomColor =
+					"var(--background-modifier-border)";
+
+				logger.debug(`初始化扩展手风琴展开: ${extensionId}`);
+			}
+		}, 0);
 	}
 
 	/**
@@ -1247,7 +1562,7 @@ ${customCSS}`;
 		const templateGroup = container.createDiv({ cls: "toolbar-group" });
 		const templateLabel = templateGroup.createDiv({ cls: "toolbar-label" });
 		templateLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15v-3a2 2 0 0 1 2-2h6"></path><path d="m9 16 3-3 3 3"></path><path d="m9 20 3-3 3 3"></path></svg><span>模板</span>';
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/></path><polyline points="16 6 12 2 8 6"/></svg><span>模板</span>';
 
 		const templateManager = TemplateManager.getInstance();
 		const templates = templateManager.getTemplateNames();
@@ -1385,7 +1700,7 @@ ${customCSS}`;
 
 		const colorLabel = colorGroup.createDiv({ cls: "toolbar-label" });
 		colorLabel.innerHTML =
-			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 20 3 3 3-3"></path><path d="m9 4 3-3 3 3"></path><path d="M14 8 8 14"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span>主题色</span>';
+			'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l16-10z"></path></svg><span>主题色</span>';
 
 		// 选择器容器
 		const colorControlWrapper = colorGroup.createDiv({

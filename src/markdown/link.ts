@@ -4,6 +4,10 @@ import {Extension} from "./extension";
 
 export class LinkRenderer extends Extension {
 
+	getName(): string {
+		return "LinkRenderer";
+	}
+
 	// 检查是否为邮箱格式
 	isEmailAddress(text: string): boolean {
 		// 简单的邮箱格式检测

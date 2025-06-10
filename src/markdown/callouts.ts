@@ -177,6 +177,10 @@ function GetCalloutTitle(callout: string, text: string) {
 }
 
 export class CalloutRenderer extends Extension {
+	getName(): string {
+		return "CalloutRenderer";
+	}
+
 	async renderer(token: Tokens.Blockquote) {
 		let callout = matchCallouts(token.text);
 		if (callout == "") {

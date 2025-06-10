@@ -72,6 +72,10 @@ export class LocalImageManager {
 export class LocalFile extends Extension {
 	index: number = 0;
 
+	getName(): string {
+		return "LocalFile";
+	}
+
 	generateId() {
 		this.index += 1;
 		return `fid-${this.index}`;

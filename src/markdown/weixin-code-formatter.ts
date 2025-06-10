@@ -45,37 +45,50 @@ export class WeixinCodeFormatter {
     }
 
     /**
+     * 处理JSON特殊字符，为其添加对应的微信样式类
+     */
+    private static enhanceJsonSyntax(code: string): string {
+        return code
+            // 处理字符串中的引号和冒号
+            .replace(/"([^"]*)"(\s*:)/g, '<span class="code-snippet__attr">"$1"</span><span class="code-snippet__punctuation">$2</span>')
+            // 处理字符串值
+            .replace(/:\s*"([^"]*)"/g, ': <span class="code-snippet__string">"$1"</span>')
+            // 处理标点符号
+            .replace(/([{}[\],])/g, '<span class="code-snippet__punctuation">$1</span>')
+            // 清理重叠的span标签
+            .replace(/<span class="code-snippet__punctuation"><span class="code-snippet__punctuation">/g, '<span class="code-snippet__punctuation">')
+            .replace(/<\/span><\/span>/g, '</span>');
+    }
+
+    /**
      * 格式化代码为微信公众号编辑器格式
      */
     public static formatCodeForWeixin(code: string, language?: string): string {
         // 移除代码末尾的换行符
         const cleanCode = code.replace(/\n$/, '');
-        let highlightedHtml = '';
+        let processedHtml = '';
 
         // 使用highlight.js进行语法高亮
-        if (language && hljs.getLanguage(language)) {
-            try {
+        try {
+            if (language && hljs.getLanguage(language)) {
                 const result = hljs.highlight(cleanCode, { language });
-                highlightedHtml = result.value;
-            } catch (err) {
-                console.warn('Highlight.js error:', err);
-                highlightedHtml = this.escapeHtml(cleanCode);
-            }
-        } else {
-            try {
+                processedHtml = this.convertHighlightedCode(result.value);
+            } else {
                 const result = hljs.highlightAuto(cleanCode);
-                highlightedHtml = result.value;
-            } catch (err) {
-                console.warn('Highlight.js auto error:', err);
-                highlightedHtml = this.escapeHtml(cleanCode);
+                processedHtml = this.convertHighlightedCode(result.value);
             }
+        } catch (err) {
+            console.warn('Highlight.js error:', err);
+            processedHtml = this.escapeHtml(cleanCode);
         }
 
-        // 转换为微信格式的类名
-        const weixinHtml = this.convertHighlightedCode(highlightedHtml);
+        // 如果是JSON，进行额外的语法增强
+        if (language === 'json') {
+            processedHtml = this.enhanceJsonSyntax(processedHtml);
+        }
 
         // 按行分割并构建最终结构
-        const lines = weixinHtml.split('\n');
+        const lines = processedHtml.split('\n');
         const codeElements = lines.map(line => {
             if (line.trim() === '') {
                 return '<code><span leaf=""><br class="ProseMirror-trailingBreak"></span></code>';

@@ -48,6 +48,10 @@ const MermaidSectionClassName = "note-mermaid";
 const MermaidImgClassName = "note-mermaid-img";
 
 export class CodeRenderer extends Extension {
+	getName(): string {
+		return "CodeRenderer";
+	}
+
 	showLineNumber: boolean;
 	mermaidIndex: number;
 

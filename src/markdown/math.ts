@@ -131,6 +131,11 @@ export class MathRendererQueue {
 
 
 export class MathRenderer extends Extension {
+
+	getName(): string {
+		return "MathRenderer";
+	}
+
 	renderer(token: Tokens.Generic, inline: boolean, type: string = '') {
 		if (type === '') {
 			type = this.settings.math;

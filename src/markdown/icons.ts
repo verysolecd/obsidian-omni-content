@@ -4,6 +4,10 @@ import {Extension} from "./extension";
 const iconsRegex = /^\[:(.*?):\]/;
 
 export class SVGIcon extends Extension {
+	getName(): string {
+		return "SVGIcon";
+	}
+
 	isNumeric(str: string): boolean {
 		return !isNaN(Number(str)) && str.trim() !== '';
 	}

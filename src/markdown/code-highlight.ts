@@ -5,6 +5,10 @@ import {CodeRenderer} from "./code";
 import {Extension} from "./extension";
 
 export class CodeHighlight extends Extension {
+	getName(): string {
+		return "CodeHighlight";
+	}
+
 	markedExtension(): MarkedExtension {
 		return markedHighlight({
 			langPrefix: 'hljs language-',

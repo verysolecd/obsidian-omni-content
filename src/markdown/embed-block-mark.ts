@@ -10,6 +10,10 @@ export class EmbedBlockMark extends Extension {
 		this.allLinks = [];
 	}
 
+	getName(): string {
+		return "EmbedBlockMark";
+	}
+
 	markedExtension(): MarkedExtension {
 		return {
 			extensions: [{
@@ -33,7 +37,7 @@ export class EmbedBlockMark extends Extension {
 					}
 				},
 				renderer: (token: Tokens.Generic) => {
-					return `<span data-txt="${token.text}"></span}`;
+					return `<span data-txt="${token.text}"></span>`;
 				}
 			}]
 		}
