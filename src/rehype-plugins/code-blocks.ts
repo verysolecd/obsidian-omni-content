@@ -10,6 +10,27 @@ export class CodeBlocks extends BaseProcess {
         return "代码块处理插件";
     }
 
+    /**
+     * 获取插件配置的元数据
+     * @returns 插件配置的元数据
+     */
+    getMetaConfig() {
+        return {
+            codeWrap: {
+                type: "switch" as const,
+                title: "代码换行"
+            }
+        };
+    }
+
+    /**
+     * 获取代码换行配置
+     * @returns 是否启用代码换行
+     */
+    private getCodeWrapConfig(): boolean {
+        return this._config.codeWrap as boolean ?? false; // 默认为false（不换行）
+    }
+
     process(html: string, settings: NMPSettings): string {
         try {
             // 如果启用了微信代码格式化，跳过此插件的处理
@@ -23,6 +44,9 @@ export class CodeBlocks extends BaseProcess {
 
             // 查找所有代码块
             const codeBlocks = doc.querySelectorAll("pre code");
+            
+            // 获取代码换行配置
+            const enableCodeWrap = this.getCodeWrapConfig();
 
             codeBlocks.forEach((codeBlock) => {
                 // 确保代码块有正确的微信样式
@@ -34,6 +58,23 @@ export class CodeBlocks extends BaseProcess {
                     pre.style.overflow = "auto";
                     pre.style.fontSize = "14px";
                     pre.style.lineHeight = "1.5";
+                    
+                    // 根据配置设置代码换行
+                    if (enableCodeWrap) {
+                        pre.style.setProperty("white-space", "pre-wrap", "important");
+                        pre.style.setProperty("word-break", "break-all", "important");
+                        pre.style.setProperty("overflow-x", "visible", "important");
+                        // 也设置code元素的样式
+                        (codeBlock as HTMLElement).style.setProperty("white-space", "pre-wrap", "important");
+                        (codeBlock as HTMLElement).style.setProperty("word-break", "break-all", "important");
+                    } else {
+                        pre.style.setProperty("white-space", "pre", "important");
+                        pre.style.setProperty("word-break", "normal", "important");
+                        pre.style.setProperty("overflow-x", "auto", "important");
+                        // 也设置code元素的样式
+                        (codeBlock as HTMLElement).style.setProperty("white-space", "pre", "important");
+                        (codeBlock as HTMLElement).style.setProperty("word-break", "normal", "important");
+                    }
 
                     // 处理行号显示
                     if (settings.lineNumber) {
