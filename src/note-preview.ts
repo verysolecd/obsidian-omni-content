@@ -132,10 +132,17 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 			);
 		}
 
-		// 9. 显示当前平台的插件列表
-		this.buildBasicAccordionSection(accordionContainer, "插件设置", () => {
+		// 9. 构建Remark插件手风琴
+		this.buildBasicAccordionSection(accordionContainer, "Remark 插件", () => {
 			const container = document.createElement("div");
-			this.buildPluginListSection(container);
+			this.buildRemarkPluginSection(container);
+			return container;
+		});
+
+		// 10. 构建Rehype插件手风琴
+		this.buildBasicAccordionSection(accordionContainer, "Rehype 插件", () => {
+			const container = document.createElement("div");
+			this.buildRehypePluginSection(container);
 			return container;
 		});
 
@@ -190,8 +197,6 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 
 	async renderMarkdown() {
 		this.articleDiv.innerHTML = await this.getArticleContent();
-		// 更新插件列表显示
-		this.updatePluginList();
 	}
 
 	/**
@@ -199,7 +204,7 @@ export class NotePreview extends ItemView implements MDRendererCallback {
 	 * 用于插件配置变更时快速更新预览
 	 */
 	async renderArticleOnly() {
-		// 重新构建marked实例以应用remark扩展状态变更
+		// 重新构建marked实例以应用remark插件状态变更
 		this.markedParser.buildMarked();
 		
 		this.articleDiv.innerHTML = await this.getArticleContent();
@@ -875,18 +880,73 @@ ${customCSS}`;
 	}
 
 	/**
-	 * 构建插件列表显示区域 - 展示当前平台使用的处理插件
-	 * @param container 工具栏内容容器
+	 * 构建Remark插件显示区域
+	 * @param container 容器元素
 	 */
-	private buildPluginListSection(container: HTMLElement): void {
-		// 创建插件列表容器
-		this.pluginListEl = container.createDiv({
-			cls: "plugin-list-container",
+	private buildRemarkPluginSection(container: HTMLElement): void {
+		// 创建Remark插件容器
+		const remarkContainer = container.createDiv({
+			cls: "remark-plugins-container",
 		});
-		this.pluginListEl.setAttr("style", "width: 100%;");
+		remarkContainer.setAttr("style", "width: 100%;");
 
-		// 初始化插件列表
-		this.updatePluginList();
+		// 获取Remark插件（原扩展）
+		const extensionManager = ExtensionManager.getInstance();
+		const extensions = extensionManager.getExtensions();
+
+		if (extensions.length > 0) {
+			extensions.forEach((extension) => {
+				if (extension && typeof extension.getName === "function") {
+					const extensionName = extension.getName();
+					// 为每个扩展创建手风琴组件
+					this.buildExtensionAccordion(
+						remarkContainer,
+						extension,
+						extensionName
+					);
+				}
+			});
+		} else {
+			remarkContainer.createEl("p", {
+				text: "未找到任何Remark插件",
+				cls: "no-plugins-message"
+			});
+		}
+	}
+
+	/**
+	 * 构建Rehype插件显示区域
+	 * @param container 容器元素
+	 */
+	private buildRehypePluginSection(container: HTMLElement): void {
+		// 创建Rehype插件容器
+		const rehypeContainer = container.createDiv({
+			cls: "rehype-plugins-container",
+		});
+		rehypeContainer.setAttr("style", "width: 100%;");
+
+		// 获取Rehype插件
+		const pluginManager = PluginManager.getInstance();
+		const plugins = pluginManager.getPlugins();
+
+		if (plugins.length > 0) {
+			plugins.forEach((plugin: IProcessPlugin) => {
+				if (plugin && typeof plugin.getName === "function") {
+					const pluginName = plugin.getName();
+					// 为每个插件创建手风琴组件
+					this.buildPluginAccordion(
+						rehypeContainer,
+						plugin,
+						pluginName
+					);
+				}
+			});
+		} else {
+			rehypeContainer.createEl("p", {
+				text: "未找到任何Rehype插件",
+				cls: "no-plugins-message"
+			});
+		}
 	}
 
 	/**
@@ -1150,94 +1210,6 @@ ${customCSS}`;
 		}, 0);
 	}
 
-	/**
-	 * 构建插件列表显示区域 - 展示当前平台使用的处理插件
-	 */
-	private updatePluginList(): void {
-		if (!this.pluginListEl) return;
-
-		this.pluginListEl.empty();
-
-
-		// === Remark 扩展部分 ===
-		const extensionManager = ExtensionManager.getInstance();
-		const extensions = extensionManager.getExtensions();
-
-		if (extensions.length > 0) {
-			// 创建Remark扩展标题
-			const remarkTitle = this.pluginListEl.createEl("h3", {
-				text: "Remark 扩展",
-				cls: "extension-section-title"
-			});
-			remarkTitle.setAttr("style", "margin: 16px 0 8px 0; color: var(--text-normal); font-size: 16px; font-weight: 600;");
-
-			// 创建扩展容器
-			const extensionsContainer = this.pluginListEl.createDiv({
-				cls: "extensions-accordion-container",
-			});
-			extensionsContainer.setAttr(
-				"style",
-				"display: flex; flex-direction: column; gap: 8px; width: 100%;"
-			);
-
-			extensions.forEach((extension) => {
-				if (extension && typeof extension.getName === "function") {
-					const extensionName = extension.getName();
-
-					// 为每个扩展创建手风琴组件
-					this.buildExtensionAccordion(
-						extensionsContainer,
-						extension,
-						extensionName
-					);
-				}
-			});
-		}
-
-				// === Rehype 插件部分 ===
-		// 使用插件管理器获取所有插件
-		const pluginManager = PluginManager.getInstance();
-		const plugins = pluginManager.getPlugins();
-
-		if (plugins.length > 0) {
-			// 创建Rehype插件标题
-			const rehypeTitle = this.pluginListEl.createEl("h3", {
-				text: "Rehype 插件",
-				cls: "plugin-section-title"
-			});
-			rehypeTitle.setAttr("style", "margin: 16px 0 8px 0; color: var(--text-normal); font-size: 16px; font-weight: 600;");
-
-			// 创建插件容器
-			const pluginsContainer = this.pluginListEl.createDiv({
-				cls: "plugins-accordion-container",
-			});
-			pluginsContainer.setAttr(
-				"style",
-				"display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 24px;"
-			);
-
-			plugins.forEach((plugin: IProcessPlugin) => {
-				if (plugin && typeof plugin.getName === "function") {
-					const pluginName = plugin.getName();
-
-					// 为每个插件创建手风琴组件
-					this.buildPluginAccordion(
-						pluginsContainer,
-						plugin,
-						pluginName
-					);
-				}
-			});
-		}
-
-
-		// 如果没有任何插件或扩展
-		if (plugins.length === 0 && extensions.length === 0) {
-			this.pluginListEl.createEl("p", {
-				text: "未找到任何处理插件或扩展",
-			});
-		}
-	}
 
 	/**
 	 * 构建手风琴组件
@@ -1313,7 +1285,7 @@ ${customCSS}`;
 
 			// 显示操作成功通知
 			new Notice(
-				`已${isEnabled ? "启用" : "禁用"}${extension.getName()}扩展`
+				`已${isEnabled ? "启用" : "禁用"}${extension.getName()}插件`
 			);
 		});
 
@@ -1441,7 +1413,7 @@ ${customCSS}`;
 				this.renderArticleOnly();
 
 				// 显示成功提示
-				new Notice(`已更新${extension.getName()}扩展设置`);
+				new Notice(`已更新${extension.getName()}插件设置`);
 			});
 		});
 
@@ -1496,7 +1468,7 @@ ${customCSS}`;
 				header.style.borderBottomColor =
 					"var(--background-modifier-border)";
 
-				logger.debug(`初始化扩展手风琴展开: ${extensionId}`);
+				logger.debug(`初始化插件手风琴展开: ${extensionId}`);
 			}
 		}, 0);
 	}
