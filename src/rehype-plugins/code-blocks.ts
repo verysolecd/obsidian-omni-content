@@ -61,19 +61,15 @@ export class CodeBlocks extends BaseProcess {
                     
                     // 根据配置设置代码换行
                     if (enableCodeWrap) {
-                        pre.style.setProperty("white-space", "pre-wrap", "important");
-                        pre.style.setProperty("word-break", "break-all", "important");
-                        pre.style.setProperty("overflow-x", "visible", "important");
-                        // 也设置code元素的样式
-                        (codeBlock as HTMLElement).style.setProperty("white-space", "pre-wrap", "important");
-                        (codeBlock as HTMLElement).style.setProperty("word-break", "break-all", "important");
+                        // 启用换行的样式
+                        const wrapStyles = "white-space: pre-wrap !important; word-break: break-all !important; overflow-x: visible !important; word-wrap: break-word !important;";
+                        pre.setAttribute("style", pre.getAttribute("style") + "; " + wrapStyles);
+                        (codeBlock as HTMLElement).setAttribute("style", (codeBlock as HTMLElement).getAttribute("style") + "; " + wrapStyles);
                     } else {
-                        pre.style.setProperty("white-space", "pre", "important");
-                        pre.style.setProperty("word-break", "normal", "important");
-                        pre.style.setProperty("overflow-x", "auto", "important");
-                        // 也设置code元素的样式
-                        (codeBlock as HTMLElement).style.setProperty("white-space", "pre", "important");
-                        (codeBlock as HTMLElement).style.setProperty("word-break", "normal", "important");
+                        // 禁用换行的样式 - 加强版
+                        const noWrapStyles = "white-space: pre !important; word-break: normal !important; overflow-x: auto !important; word-wrap: normal !important; text-wrap: nowrap !important; overflow-wrap: normal !important;";
+                        pre.setAttribute("style", pre.getAttribute("style") + "; " + noWrapStyles);
+                        (codeBlock as HTMLElement).setAttribute("style", ((codeBlock as HTMLElement).getAttribute("style") || "") + "; " + noWrapStyles);
                     }
 
                     // 处理行号显示
