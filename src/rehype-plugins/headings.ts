@@ -1,4 +1,4 @@
-import {BaseProcessPlugin, PluginMetaConfig} from "src/plugins/base-process-plugin";
+import {BaseProcess, PluginMetaConfig} from "src/rehype-plugins/base-process";
 import {logger} from "src/utils";
 
 /**
@@ -7,7 +7,7 @@ import {logger} from "src/utils";
  * 1. 添加序号: 当启用时，将标题序号作为标题内容插入
  * 2. 分隔符换行: 当启用时，遇到逗号等分隔符自动换行
  */
-export class HeadingsPlugin extends BaseProcessPlugin {
+export class Headings extends BaseProcess {
     getName(): string {
         return "标题处理插件";
     }

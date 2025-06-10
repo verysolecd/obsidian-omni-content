@@ -109,7 +109,7 @@ export interface IProcessPlugin {
 /**
  * 基础插件类，提供通用功能
  */
-export abstract class BaseProcessPlugin implements IProcessPlugin {
+export abstract class BaseProcess implements IProcessPlugin {
 	/**
 	 * 插件配置数据
 	 */

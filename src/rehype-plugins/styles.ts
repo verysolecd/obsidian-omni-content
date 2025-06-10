@@ -1,4 +1,4 @@
-import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
+import {BaseProcess} from "src/rehype-plugins/base-process";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 import colors from "colors";
@@ -7,7 +7,7 @@ import colors from "colors";
  * 样式处理插件 - 为微信公众号内容应用内联样式
  * 由于微信编辑器对外部CSS支持有限，需要将关键样式内联到HTML元素上
  */
-export class StylesPlugin extends BaseProcessPlugin {
+export class Styles extends BaseProcess {
     getName(): string {
         return "样式处理插件";
     }

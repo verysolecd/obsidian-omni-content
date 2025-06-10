@@ -3,8 +3,8 @@
  * 用于验证remark扩展管理功能是否正常工作
  */
 
-import { ExtensionManager } from './markdown/extension-manager';
-import { MarkedParser } from './markdown/parser';
+import { ExtensionManager } from './remark-plugins/extension-manager';
+import { MarkedParser } from './remark-plugins/parser';
 import { logger } from './utils';
 
 /**

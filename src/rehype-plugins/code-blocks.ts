@@ -1,11 +1,11 @@
-import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
+import {BaseProcess} from "src/rehype-plugins/base-process";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
 /**
  * 代码块处理插件 - 处理微信公众号中的代码格式和行号显示
  */
-export class CodeBlocksPlugin extends BaseProcessPlugin {
+export class CodeBlocks extends BaseProcess {
     getName(): string {
         return "代码块处理插件";
     }

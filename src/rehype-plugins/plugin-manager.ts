@@ -1,4 +1,4 @@
-import { IProcessPlugin } from "src/plugins/base-process-plugin";
+import { IProcessPlugin } from "src/rehype-plugins/base-process";
 import { NMPSettings } from "src/settings";
 import { logger } from "src/utils";
 

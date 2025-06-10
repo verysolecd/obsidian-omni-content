@@ -1,11 +1,11 @@
-import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
+import {BaseProcess} from "src/rehype-plugins/base-process";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
 /**
  * 图片处理插件 - 处理微信公众号中的图片格式
  */
-export class ImagesPlugin extends BaseProcessPlugin {
+export class Images extends BaseProcess {
 	getName(): string {
 		return "图片处理插件";
 	}

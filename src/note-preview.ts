@@ -8,18 +8,18 @@ import {
 	WorkspaceLeaf,
 } from "obsidian";
 import { FRONT_MATTER_REGEX, VIEW_TYPE_NOTE_PREVIEW } from "src/constants";
-import { IProcessPlugin } from "src/plugins/base-process-plugin";
+import { IProcessPlugin } from "src/rehype-plugins/base-process";
 
 import AssetsManager from "./assets";
 import InlineCSS from "./inline-css";
-import { CardDataManager } from "./markdown/code";
-import { MDRendererCallback } from "./markdown/extension";
-import { ExtensionManager } from "./markdown/extension-manager";
-import type { Extension, ExtensionMetaConfig } from "./markdown/extension";
-import { LocalImageManager } from "./markdown/local-file";
-import { MarkedParser } from "./markdown/parser";
+import { CardDataManager } from "./remark-plugins/code";
+import { MDRendererCallback } from "./remark-plugins/extension";
+import { ExtensionManager } from "./remark-plugins/extension-manager";
+import type { Extension, ExtensionMetaConfig } from "./remark-plugins/extension";
+import { LocalImageManager } from "./remark-plugins/local-file";
+import { MarkedParser } from "./remark-plugins/parser";
 // 移除平台适配器导入，使用插件管理器替代
-import { initializePlugins, PluginManager } from "./plugins";
+import { initializePlugins, PluginManager } from "./rehype-plugins";
 import { NMPSettings } from "./settings";
 import TemplateManager from "./template-manager";
 import { logger, uevent } from "./utils";

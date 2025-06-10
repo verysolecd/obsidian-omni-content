@@ -1,11 +1,11 @@
-import {BaseProcessPlugin} from "src/plugins/base-process-plugin";
+import {BaseProcess} from "src/rehype-plugins/base-process";
 import {NMPSettings} from "src/settings";
 import {logger} from "src/utils";
 
 /**
  * 链接处理插件 - 根据设置将链接转换为脚注或其他格式
  */
-export class WechatLinkPlugin extends BaseProcessPlugin {
+export class WechatLink extends BaseProcess {
 	getName(): string {
 		return "微信链接处理插件";
 	}
