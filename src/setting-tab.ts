@@ -133,6 +133,17 @@ export class OmniContentSettingTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
+			.setName("启用微信代码格式化")
+			.setDesc("输出符合微信公众号编辑器格式的代码块")
+			.addToggle((toggle) => {
+				toggle.setValue(this.settings.enableWeixinCodeFormat);
+				toggle.onChange(async (value) => {
+					this.settings.enableWeixinCodeFormat = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
 			.setName("获取更多主题")
 			.addButton((button) => {
 				button.setButtonText("下载");

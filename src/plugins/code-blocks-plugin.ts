@@ -12,6 +12,12 @@ export class CodeBlocksPlugin extends BaseProcessPlugin {
 
     process(html: string, settings: NMPSettings): string {
         try {
+            // 如果启用了微信代码格式化，跳过此插件的处理
+            if (settings.enableWeixinCodeFormat) {
+                logger.debug("微信代码格式化已启用，跳过代码块处理插件");
+                return html;
+            }
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
 

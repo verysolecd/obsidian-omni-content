@@ -48,27 +48,27 @@ export class MarkedParser {
 		this.extensions.push(
 			new LocalFile(app, settings, assetsManager, callback)
 		);
-		this.extensions.push(
-			new CalloutRenderer(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new CodeHighlight(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new EmbedBlockMark(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new SVGIcon(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new LinkRenderer(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new FootnoteRenderer(app, settings, assetsManager, callback)
-		);
-		this.extensions.push(
-			new TextHighlight(app, settings, assetsManager, callback)
-		);
+		// this.extensions.push(
+		// 	new CalloutRenderer(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new CodeHighlight(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new EmbedBlockMark(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new SVGIcon(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new LinkRenderer(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new FootnoteRenderer(app, settings, assetsManager, callback)
+		// );
+		// this.extensions.push(
+		// 	new TextHighlight(app, settings, assetsManager, callback)
+		// );
 		this.extensions.push(
 			new CodeRenderer(app, settings, assetsManager, callback)
 		);

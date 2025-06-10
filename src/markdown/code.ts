@@ -2,6 +2,7 @@ import {toPng} from "html-to-image";
 import {Tokens} from "marked";
 import {MarkdownView, Notice} from "obsidian";
 import {wxUploadImage} from "../weixin-api";
+import {WeixinCodeFormatter} from "./weixin-code-formatter";
 import {GetCallout} from "./callouts";
 import {Extension} from "./extension";
 import {MathRendererQueue} from "./math";
@@ -86,8 +87,19 @@ export class CodeRenderer extends Extension {
 	}
 
 	codeRenderer(code: string, infostring: string | undefined): string {
+		console.log("codeRenderer", {code, infostring});
+
 		const lang = (infostring || "").match(/^\S*/)?.[0];
 		code = code.replace(/\n$/, "") + "\n";
+
+		// 如果启用了微信代码格式化，直接返回微信格式
+		if (this.settings.enableWeixinCodeFormat) {
+			if (lang) {
+				return WeixinCodeFormatter.formatCodeForWeixin(code, lang);
+			} else {
+				return WeixinCodeFormatter.formatPlainCodeForWeixin(code);
+			}
+		}
 
 		if (this.settings.lineNumber) {
 			const lines = code.split("\n");

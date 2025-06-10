@@ -1,4 +1,3 @@
-
 import {wxKeyInfo} from './weixin-api';
 import { logger } from './utils';
 import { PlatformType } from 'src/types';
@@ -27,6 +26,8 @@ interface SettingsData {
 	useCustomCss?: boolean;
 	/** 是否显示行号 */
 	lineNumber?: boolean;
+	/** 是否启用微信代码格式化 */
+	enableWeixinCodeFormat?: boolean;
 
 	// ===== 链接相关设置 =====
 	/** 链接样式 */
@@ -87,6 +88,7 @@ export class NMPSettings implements SettingsData {
 	linkDescriptionMode: LinkDescriptionMode = LinkDescriptionMode.Empty;
 	embedStyle: string = 'quote';
 	lineNumber: boolean = true;
+	enableWeixinCodeFormat: boolean = false;
 	authKey: string = '';
 	useCustomCss: boolean = false;
 	wxInfo: { name: string, appid: string, secret: string }[] = [];
