@@ -1,7 +1,7 @@
 {
 	"id": "omni-content",
 	"name": "OmniContent",
-	"version": "1.3.0",
+	"version": "0.2.0",
 	"minAppVersion": "1.4.5",
 	"description": "All-in-one content distribution platform for Obsidian. Publish content to WeChat, Zhihu, XiaoHongShu, Twitter and more, with perfect format preservation and rich customization options.",
 	"author": "Mark Shawn",
