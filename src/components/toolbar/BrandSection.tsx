@@ -1,4 +1,5 @@
 import React from "react";
+import packageJson from '../../../package.json';
 
 export const BrandSection: React.FC = () => {
   return (
@@ -96,7 +97,7 @@ export const BrandSection: React.FC = () => {
                   lineHeight: "1.4",
                 }}
               >
-                V0.3.0
+                V{packageJson.version}
               </div>
             </div>
           </div>
