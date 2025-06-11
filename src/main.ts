@@ -1,7 +1,7 @@
 import {App, Plugin, PluginManifest, WorkspaceLeaf} from "obsidian";
 import {VIEW_TYPE_NOTE_PREVIEW} from "src/constants";
 import AssetsManager from "./assets";
-import {NotePreview} from "./note-preview";
+import {NotePreviewReact} from "./note-preview-react";
 import {OmniContentSettingTab} from "./setting-tab";
 import {NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
@@ -32,7 +32,7 @@ export default class OmniContentPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
-			(leaf) => new NotePreview(leaf)
+			(leaf) => new NotePreviewReact(leaf)
 		);
 
 		const ribbonIconEl = this.addRibbonIcon('clipboard-paste', '复制到公众号', () => {

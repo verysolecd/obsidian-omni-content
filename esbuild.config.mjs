@@ -33,6 +33,7 @@ const context = await esbuild.context({
 		"@lezer/highlight",
 		"@lezer/lr",
 		...builtins],
+	jsx: "automatic",
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",

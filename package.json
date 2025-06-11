@@ -20,12 +20,14 @@
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"esbuild-plugin-copy": "^2.1.1",
-		"obsidian": "latest",
+		"obsidian": "^1.8.7",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
 		"@types/handlebars": "^4.1.0",
+		"@types/react": "^19.1.7",
+		"@types/react-dom": "^19.1.6",
 		"@zip.js/zip.js": "^2.7.43",
 		"colors": "^1.4.0",
 		"handlebars": "^4.7.8",
@@ -33,6 +35,8 @@
 		"html-to-image": "^1.11.11",
 		"marked": "^12.0.1",
 		"marked-highlight": "^2.1.3",
-		"mustache": "^4.2.0"
+		"mustache": "^4.2.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0"
 	}
 }
