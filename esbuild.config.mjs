@@ -39,21 +39,21 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "dist/main.js",
+	outfile: "main.js",
 	plugins: [
 		copy({
 			// 复制以下资源到 dist/assets 目录
 			assets: [
 				// 复制插件所需的其他文件到 dist 目录
-				{ from: ['./manifest.json'], to: ['./manifest.json'], outDir: './dist' },
-				{ from: ['./styles.css'], to: ['./styles.css'], outDir: './dist' },
+				{ from: ['./manifest.json'], to: ['./manifest.json'], outDir: '.' },
+				{ from: ['./styles.css'], to: ['./styles.css'], outDir: '.' },
 				
-				{ from: ['./themes/**/*'], to: ['./assets/themes'], outDir: './dist' },
-				{ from: ['./highlights/**/*'], to: ['./assets/highlights'], outDir: './dist' },
-				{ from: ['./templates/**/*'], to: ['./assets/templates'], outDir: './dist' },
-				{ from: ['./themes.json'], to: ['./assets/themes.json'], outDir: './dist' },
-				{ from: ['./highlights.json'], to: ['./assets/highlights.json'], outDir: './dist' },
-				{ from: ["./css-snippets/black-h2.css"], to: ["./assets/custom.css"], outDir: './dist' },
+				{ from: ['./themes/**/*'], to: ['./assets/themes'], outDir: '.' },
+				{ from: ['./highlights/**/*'], to: ['./assets/highlights'], outDir: '.' },
+				{ from: ['./templates/**/*'], to: ['./assets/templates'], outDir: '.' },
+				{ from: ['./themes.json'], to: ['./assets/themes.json'], outDir: '.' },
+				{ from: ['./highlights.json'], to: ['./assets/highlights.json'], outDir: '.' },
+				{ from: ["./css-snippets/black-h2.css"], to: ["./assets/custom.css"], outDir: '' },
 			],
 			verbose: false, // 输出复制操作的日志
 		}),

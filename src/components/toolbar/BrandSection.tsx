@@ -31,15 +31,7 @@ export const BrandSection: React.FC = () => {
           <div
             className="logo-container"
             style={{
-              width: "48px",
-              height: "48px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "linear-gradient(135deg, #6b46c1 0%, #4a6bf5 100%)",
-              borderRadius: "8px",
-              marginRight: "12px",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              
             }}
           >
             <div
@@ -50,7 +42,7 @@ export const BrandSection: React.FC = () => {
                 fontFamily: "'Arial Black', sans-serif",
               }}
             >
-              O
+
             </div>
           </div>
           <div
@@ -71,7 +63,6 @@ export const BrandSection: React.FC = () => {
                 textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
               }}
             >
-              LovePen
             </div>
             <div
               className="version-container"
@@ -116,7 +107,7 @@ export const BrandSection: React.FC = () => {
             boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
           }}
         >
-          手工川智能创作平台
+          键盘造车手
         </div>
       </div>
     </div>
