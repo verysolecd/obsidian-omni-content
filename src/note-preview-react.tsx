@@ -27,11 +27,13 @@ import {
 	wxBatchGetMaterial,
 	wxGetToken,
 	wxUploadImage,
+	wxAddDraft,
 } from "./weixin-api";
 import { NotePreviewComponent, ReactRenderer } from "./components/preview/NotePreviewComponent";
+import { MessageModal } from "./components/preview/MessageModal";
 
 export class NotePreviewReact extends ItemView implements MDRendererCallback {
-	container: Element;
+	container: HTMLElement;
 	settings: NMPSettings;
 	assetsManager: AssetsManager;
 	articleHTML: string;
@@ -40,6 +42,10 @@ export class NotePreviewReact extends ItemView implements MDRendererCallback {
 	markedParser: MarkedParser;
 	listeners: EventRef[];
 	reactRenderer: ReactRenderer;
+
+	showPublishModal: boolean = false;
+	isPublishing: boolean = false;
+	publishResult: string = "";
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -359,7 +365,7 @@ ${customCSS}`;
 	}
 
 	async uploadCover(data: Blob, filename: string, token: string) {
-		const res = await wxUploadImage(data, filename, token, "image");
+		const res = await wxUploadImage(data, filename, token);
 		if (res.media_id) {
 			return res.media_id;
 		}
@@ -375,22 +381,23 @@ ${customCSS}`;
 		return "";
 	}
 
-	async getToken() {
-		const res = await wxGetToken(
-			// this.settings.wxAppId,
-			// this.settings.wxSecret
-		);
-		if (res.status != 200) {
-			const data = res.json;
-			// 通过React组件显示消息
-			return "";
-		}
-		const token = res.json.token;
-		if (token === "") {
-			// 通过React组件显示消息
-		}
-		return token;
-	}
+	// async getToken() {
+	// 	const res = await wxGetToken();
+		
+	// 	// 检查是否有错误
+	// 	if (res.error) {
+	// 		// 通过React组件显示消息
+	// 		return "";
+	// 	}
+		
+	// 	// 正常情况下处理
+	// 	if (res.status === 200 && res.json && res.json.access_token) {
+	// 		return res.json.access_token;
+	// 	} else {
+	// 		// 通过React组件显示消息
+	// 		return "";
+	// 	}
+	// }
 
 
 	updateElementByID(id: string, html: string): void {
@@ -401,11 +408,42 @@ ${customCSS}`;
 	}
 
 	openDistributionModal(): void {
-		// todo: 在React组件中实现分发对话框
+		this.showPublishModal = true;
+		this.updateReactComponent();
+	}
+
+	async handlePublishToWeixinDraft() {
+		this.isPublishing = true;
+		this.publishResult = "";
+		this.updateReactComponent();
+		try {
+			// 构造草稿数据
+			const title = this.title || "无标题";
+			const content = this.articleHTML || "";
+			// 获取封面 media_id（可根据实际需求调整）
+			const token = this.settings.wxToken;
+			let thumb_media_id = await this.getDefaultCover(token);
+			if (!thumb_media_id) thumb_media_id = "";
+			const draft = {
+				title,
+				content,
+				thumb_media_id,
+			};
+			const res = await wxAddDraft(draft);
+			if (res.status === 200 && res.json && !res.json.errcode) {
+				this.publishResult = "上传草稿成功！";
+			} else {
+				this.publishResult = `上传失败：${res.json?.errmsg || res.statusText || '未知错误'}`;
+			}
+		} catch (e: any) {
+			this.publishResult = `上传异常：${e?.message || e}`;
+		}
+		this.isPublishing = false;
+		this.updateReactComponent();
 	}
 
 	async buildUI() {
-		this.container = this.containerEl.children[1];
+		this.container = this.containerEl.children[1] as HTMLElement;
 		this.container.empty();
 
 		// 渲染React组件
@@ -413,6 +451,24 @@ ${customCSS}`;
 	}
 
 	private updateReactComponent() {
+		const publishModal = this.showPublishModal && (
+			<MessageModal
+				isVisible={true}
+				title={this.isPublishing ? "正在上传草稿..." : (this.publishResult ? this.publishResult : "确定发布到公众号草稿箱吗？")}
+				showOkButton={!this.isPublishing}
+				onClose={() => {
+					if (this.isPublishing) return;
+					if (this.publishResult) {
+						this.showPublishModal = false;
+						this.publishResult = "";
+						this.updateReactComponent();
+					} else {
+						// 用户点击“确定”
+						this.handlePublishToWeixinDraft();
+					}
+				}}
+			/>
+		);
 		const component = (
 			<NotePreviewComponent
 				settings={this.settings}
@@ -471,13 +527,14 @@ ${customCSS}`;
 				onUpdateCSSVariables={() => {
 					this.updateCSSVariables();
 				}}
+				publishModal={publishModal}
 			/>
 		);
 
 		if (this.reactRenderer.root) {
 			this.reactRenderer.update(component);
 		} else {
-			this.reactRenderer.mount(this.container as HTMLElement, component);
+			this.reactRenderer.mount(this.container, component);
 		}
 	}
 

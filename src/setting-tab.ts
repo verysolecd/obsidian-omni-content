@@ -300,8 +300,15 @@ export class OmniContentSettingTab extends PluginSettingTab {
 				button.onClick(async () => {
 					const settings = NMPSettings.getInstance();
 					const result = await wxGetToken();
+
+					// 检查是否有错误
+					if (result.error) {
+						new Notice(result.error);
+						return;
+					}
+
 					if (result.status === 200) {
-						const data = await result.json();
+						const data = await result.json;
 						if (data.access_token) {
 							settings.wxToken = data.access_token;
 							await this.plugin.saveSettings();

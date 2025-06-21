@@ -21,11 +21,52 @@ export async function wxGetToken() {
 			throw new Error(`HTTP error! status: ${res.status}`);
 		}
 		
+		// 检查微信API返回的错误码
+		const data = res.json;
+		if (data.errcode) {
+			let errorMessage = `微信API错误: ${data.errcode} - ${data.errmsg}`;
+			
+			// 根据错误码提供更具体的错误信息
+			switch (data.errcode) {
+				case -1:
+					errorMessage = '系统繁忙，请稍后再试';
+					break;
+				case 40001:
+					errorMessage = 'AppSecret错误或不属于该公众号，请确认AppSecret的正确性';
+					break;
+				case 40002:
+					errorMessage = '请确保grant_type字段值为client_credential';
+					break;
+				case 40164:
+					errorMessage = '调用接口的IP地址不在白名单中，请在微信公众平台接口IP白名单中进行设置';
+					break;
+				case 40243:
+					errorMessage = 'AppSecret已被冻结，请登录微信公众平台解冻后再次调用';
+					break;
+				case 89503:
+				case 89501:
+					errorMessage = '此IP调用需要管理员确认，请联系公众号管理员';
+					break;
+				case 89506:
+					errorMessage = '24小时内该IP被管理员拒绝调用两次，24小时内不可再使用该IP调用';
+					break;
+				case 89507:
+					errorMessage = '1小时内该IP被管理员拒绝调用一次，1小时内不可再使用该IP调用';
+					break;
+			}
+			
+			console.error(errorMessage, data);
+			// 移除这行，让调用者决定如何显示错误
+			// new Notice(errorMessage);
+			return { error: errorMessage, data };
+		}
+		
 		return res;
 	} catch (error) {
 		console.error('获取微信Token失败:', error);
-		new Notice('获取微信Token失败，请检查网络连接和AppID/Secret配置');
-		return { error: '获取微信Token失败' };
+		// 移除这行，让调用者决定如何显示错误
+		// new Notice('获取微信Token失败，请检查网络连接和AppID/Secret配置');
+		return { error: '获取微信Token失败，请检查网络连接和AppID/Secret配置', details: error };
 	}
 }
 

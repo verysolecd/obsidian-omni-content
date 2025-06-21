@@ -19,6 +19,7 @@ interface NotePreviewComponentProps {
   onRenderArticle: () => void;
   onSaveSettings: () => void;
   onUpdateCSSVariables: () => void;
+  publishModal?: React.ReactNode; // 新增：父组件可传递弹窗内容
 }
 
 export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
@@ -36,6 +37,7 @@ export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
   onRenderArticle,
   onSaveSettings,
   onUpdateCSSVariables,
+  publishModal,
 }) => {
   const [isMessageVisible, setIsMessageVisible] = useState(false);
   const [messageTitle, setMessageTitle] = useState("");
@@ -201,6 +203,8 @@ export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
         showOkButton={showOkButton}
         onClose={closeMessage}
       />
+      {/* 新增：父组件传递的弹窗内容 */}
+      {publishModal}
     </div>
   );
 };
