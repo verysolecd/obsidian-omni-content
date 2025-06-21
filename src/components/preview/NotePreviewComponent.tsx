@@ -27,6 +27,7 @@ export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
   cssContent,
   onRefresh,
   onCopy,
+  onDistribute,
   onTemplateChange,
   onThemeChange,
   onHighlightChange,

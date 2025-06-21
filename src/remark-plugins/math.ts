@@ -108,9 +108,7 @@ export class MathRendererQueue {
 	}
 
 	render(token: Tokens.Generic, inline: boolean, type: string, callback: MDRendererCallback) {
-		if (!NMPSettings.getInstance().isAuthKeyVaild()) {
-			return '<span>注册码无效或已过期</span>';
-		}
+		
 
 		const id = this.generateId();
 		let svg = '渲染中';
