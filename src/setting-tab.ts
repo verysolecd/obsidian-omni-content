@@ -9,39 +9,18 @@ import { PlatformType } from "src/types";
 export class OmniContentSettingTab extends PluginSettingTab {
 	plugin: OmniContentPlugin;
 	wxInfo: string;
-	wxTextArea: TextAreaComponent | null;
 	settings: NMPSettings;
 
 	constructor(app: App, plugin: OmniContentPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.settings = NMPSettings.getInstance();
-		// 直接使用 wxName 和 wxAppId 初始化 wxInfo
-		this.wxInfo = this.settings.wxName && this.settings.wxAppId 
-			? `${this.settings.wxName}|${this.settings.wxAppId}|********\n` 
-			: "";
 	}
 
-	displayWXInfo(txt: string) {
-		this.wxTextArea?.setValue(txt);
-	}
-
-	async clear() {
-		this.settings.wxinfo = '';
-		await this.plugin.saveSettings();
-		this.wxInfo = "";
-		this.displayWXInfo("");
-	}
 
 	display() {
 		const {containerEl} = this;
-
 		containerEl.empty();
-
-		// 直接使用 wxName 和 wxAppId 更新 wxInfo
-		this.wxInfo = this.settings.wxName && this.settings.wxAppId 
-			? `${this.settings.wxName}|${this.settings.wxAppId}|********\n` 
-			: "";
 
 		new Setting(containerEl).setName("默认样式").addDropdown((dropdown) => {
 			const styles = this.plugin.assetsManager.themes;
@@ -268,31 +247,15 @@ export class OmniContentSettingTab extends PluginSettingTab {
 			cls: "setting-item-description"
 		});
 
-		// 加载现有配置
-		const distributionConfig = this.settings.distributionConfig || {};
-		if (!this.settings.distributionConfig) {
-			this.settings.distributionConfig = {};
-		}
+		
 
 		// 微信公众号平台配置
-		const wxConfig = distributionConfig[PlatformType.WECHAT] || {};
+		
 		const wxAuthSection = containerEl.createDiv({cls: "platform-auth-section"});
-		wxAuthSection.createEl("h3", {text: "微信公众号"});
-		wxAuthSection.createEl("p", {
-			text: "请输入微信公众号相关信息",
-			cls: "setting-item-description"
-		});
-
-		// 微信公众号名称输入框
-		new Setting(wxAuthSection)
-			.setName("微信公众号名称")
-			.addText(text => {
-				text.setValue(this.settings.wxName || '');
-				text.onChange(async (value) => {
-					this.settings.wxName = value;
-					await this.plugin.saveSettings();
-					logger.info("已更新微信公众号名称");
-				});
+			wxAuthSection.createEl("h3", {text: "微信公众号"});
+			wxAuthSection.createEl("p", {
+				text: "请输入微信公众号相关信息",
+				cls: "setting-item-description"
 			});
 
 		// 微信公众号 appid 输入框
@@ -319,20 +282,32 @@ export class OmniContentSettingTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(wxAuthSection)
-			.setName("启用微信公众号分发")
-			.addToggle(toggle => {
-				toggle.setValue(wxConfig.enabled || false);
-				toggle.onChange(async (value) => {
-					if (!distributionConfig[PlatformType.WECHAT]) {
-						distributionConfig[PlatformType.WECHAT] = {};
-					}
-					distributionConfig[PlatformType.WECHAT].enabled = value;
-					this.settings.distributionConfig = distributionConfig;
+		new Setting(containerEl)
+			.setName("测试和更新微信公众号Token")			
+			.addButton((button) => {
+				button.setIcon("refresh-ccw");
+				button.onClick(async () => {
+					await this.settings.wxSecret;  // 这里可以添加实际的更新逻辑
+					new Notice("刷新成功");
+				});
+			})
+			.addText(text => {
+				text.setValue(this.settings.wxSecret || '');
+				text.onChange(async (value) => {
+					this.settings.wxSecret = value;
 					await this.plugin.saveSettings();
-					logger.info("已更新微信公众号分发设置");
+					logger.info("已更新微信公众号 Secret");
 				});
 			});
 
-	}
+
+	
+};
+			
+
+
+
+
+
+
 }

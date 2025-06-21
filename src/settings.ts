@@ -1,4 +1,3 @@
-import {wxKeyInfo} from './weixin-api';
 import { logger } from './utils';
 import { PlatformType } from 'src/types';
 
@@ -111,7 +110,6 @@ export class NMPSettings implements SettingsData {
 	lastSelectedTemplate: string = "";
 	expireat: Date | null = null;
 	pluginsConfig: Record<string, Record<string, any>> = {};
-	wxinfo: string = '';
 
 	// 单例实例
 	private static instance: NMPSettings;

@@ -73,13 +73,11 @@ export class MarkedParser {
 		);
 		this.extensions.push(
 			new CodeRenderer(app, settings, assetsManager, callback)
-		);
-		if (settings.isAuthKeyVaild()) {
-			this.extensions.push(
+		);		
+		this.extensions.push(
 				new MathRenderer(app, settings, assetsManager, callback)
-			);
-		}
-		
+		);
+				
 		logger.debug(`初始化了 ${this.extensions.length} 个markdown扩展插件`);
 		
 		// 设置ExtensionManager实例

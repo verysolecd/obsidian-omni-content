@@ -377,9 +377,8 @@ ${customCSS}`;
 
 	async getToken() {
 		const res = await wxGetToken(
-			this.settings.authKey,
-			this.currentAppId,
-			this.getSecret() || ""
+			this.settings.wxAppId,
+			this.settings.wxSecret
 		);
 		if (res.status != 200) {
 			const data = res.json;
@@ -393,13 +392,6 @@ ${customCSS}`;
 		return token;
 	}
 
-	getSecret() {
-		for (const wx of this.settings.wxInfo) {
-			if (wx.appid === this.currentAppId) {
-				return wx.secret.replace("SECRET", "");
-			}
-		}
-	}
 
 	updateElementByID(id: string, html: string): void {
 		const el = document.getElementById(id);

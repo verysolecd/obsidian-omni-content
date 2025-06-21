@@ -1,10 +1,9 @@
 import {getBlobArrayBuffer, requestUrl, RequestUrlParam} from "obsidian";
 
 // 获取token
-export async function wxGetToken(authkey: string, appid: string, secret: string) {
+export async function wxGetToken(appid: string, secret: string) {
 	const url = 'https://obplugin.sunboshi.tech/wx/token';
 	const body = {
-		authkey,
 		appid,
 		secret
 	}
@@ -18,21 +17,6 @@ export async function wxGetToken(authkey: string, appid: string, secret: string)
 	return res;
 }
 
-export async function wxEncrypt(authkey: string, wechat: any[]) {
-	const url = 'https://obplugin.sunboshi.tech/wx/encrypt';
-	const body = JSON.stringify({
-		authkey,
-		wechat
-	});
-	const res = await requestUrl({
-		url: url,
-		method: 'POST',
-		throw: false,
-		contentType: 'application/json',
-		body: body
-	});
-	return res
-}
 
 export async function wxKeyInfo(authkey: string) {
 	const url = 'https://obplugin.sunboshi.tech/wx/info/' + authkey;

@@ -10,7 +10,7 @@ interface NotePreviewComponentProps {
   cssContent: string;
   onRefresh: () => void;
   onCopy: () => void;
-  onDistribute: () => void;
+  onDistribute: () => void; // 可选的分发函数
   onTemplateChange: (template: string) => void;
   onThemeChange: (theme: string) => void;
   onHighlightChange: (highlight: string) => void;
@@ -27,7 +27,6 @@ export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
   cssContent,
   onRefresh,
   onCopy,
-  onDistribute,
   onTemplateChange,
   onThemeChange,
   onHighlightChange,
