@@ -62,8 +62,12 @@ interface SettingsData {
 	// ===== 认证和外部服务 =====
 	/** 认证密钥 */
 	authKey?: string;
-	/** 微信公众号配置信息 */
-	wxInfo?: { name: string, appid: string, secret: string }[];
+	/** 微信公众号名称 */
+	wxName?: string;
+	/** 微信公众号 appid */
+	wxAppId?: string;
+	/** 微信公众号 secret */
+	wxSecret?: string;
 	/** 分发服务配置 */
 	distributionConfig?: DistributionConfig | null;
 	
@@ -91,7 +95,9 @@ export class NMPSettings implements SettingsData {
 	enableWeixinCodeFormat: boolean = false;
 	authKey: string = '';
 	useCustomCss: boolean = false;
-	wxInfo: { name: string, appid: string, secret: string }[] = [];
+	wxName: string = '';
+	wxAppId: string = '';
+	wxSecret: string = '';
 	math: string = 'latex';
 	useTemplate: boolean = false;
 	defaultTemplate: string = 'default';
@@ -105,6 +111,7 @@ export class NMPSettings implements SettingsData {
 	lastSelectedTemplate: string = "";
 	expireat: Date | null = null;
 	pluginsConfig: Record<string, Record<string, any>> = {};
+	wxinfo: string = '';
 
 	// 单例实例
 	private static instance: NMPSettings;
@@ -141,7 +148,6 @@ export class NMPSettings implements SettingsData {
 			}
 		});
 
-		this.getExpiredDate();
 		logger.info("返回设置: ", this);
 		return this;
 	}
@@ -169,19 +175,4 @@ export class NMPSettings implements SettingsData {
 		return NMPSettings.getInstance().getAllSettings();
 	}
 
-	// 获取过期日期
-	getExpiredDate(): void {
-		if (this.authKey.length === 0) return;
-		wxKeyInfo(this.authKey).then((res) => {
-			if (res.status === 200) {
-				this.expireat = new Date(res.json.expireat);
-			}
-		})
-	}
-
-	isAuthKeyVaild() {
-		if (this.authKey.length == 0) return false;
-		if (this.expireat == null) return false;
-		return this.expireat > new Date();
-	}
 }

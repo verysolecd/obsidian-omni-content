@@ -94,7 +94,7 @@ export const StyleSettings: React.FC<StyleSettingsProps> = ({
         <div className="toolbar-label">
           <svg
             width="16"
-            height="16"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -147,7 +147,7 @@ export const StyleSettings: React.FC<StyleSettingsProps> = ({
         <div className="toolbar-label">
           <svg
             width="16"
-            height="16"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -174,7 +174,7 @@ export const StyleSettings: React.FC<StyleSettingsProps> = ({
           <div
             className="color-picker-wrapper"
             style={{
-              opacity: settings.enableThemeColor ? "1" : "0.5",
+              opacity: settings.enableThemeColor ? "1" : "1",
             }}
           >
             <input

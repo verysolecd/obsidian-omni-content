@@ -97,7 +97,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               width: "100%",
               display: "flex",
               flexDirection: "column",
-              gap: "5px",
+              gap: "10px",
             }}
           >
             {/* 样式设置 */}
