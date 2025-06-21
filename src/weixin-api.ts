@@ -1,20 +1,32 @@
 import {getBlobArrayBuffer, requestUrl, RequestUrlParam} from "obsidian";
+import {NMPSettings	} from "./settings";
 
 // 获取token
-export async function wxGetToken(appid: string, secret: string) {
-	const url = 'https://obplugin.sunboshi.tech/wx/token';
-	const body = {
-		appid,
-		secret
+export async function wxGetToken() {
+	const settings = NMPSettings.getInstance();
+	const appid = settings.wxAppId;
+	const secret = settings.wxSecret;
+
+	// 直接调用微信官方API获取token
+	const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${secret}`;
+
+	try {
+		const res = await requestUrl({
+			url,
+			method: 'GET',
+			throw: false
+		});
+		
+		if (res.status !== 200) {
+			throw new Error(`HTTP error! status: ${res.status}`);
+		}
+		
+		return res;
+	} catch (error) {
+		console.error('获取微信Token失败:', error);
+		new Notice('获取微信Token失败，请检查网络连接和AppID/Secret配置');
+		return { error: '获取微信Token失败' };
 	}
-	const res = await requestUrl({
-		url,
-		method: 'POST',
-		throw: false,
-		contentType: 'application/json',
-		body: JSON.stringify(body)
-	});
-	return res;
 }
 
 
@@ -30,7 +42,9 @@ export async function wxKeyInfo(authkey: string) {
 }
 
 // 上传图片
-export async function wxUploadImage(data: Blob, filename: string, token: string, type?: string) {
+export async function wxUploadImage(data: Blob, filename: string, type?: string) {
+	const settings = NMPSettings.getInstance();
+	const token = settings.wxToken;
 	let url = '';
 	if (type == null || type === '') {
 		url = 'https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token=' + token;
@@ -85,7 +99,9 @@ export interface DraftArticle {
 	pic_crop_1_1?: string;
 }
 
-export async function wxAddDraft(token: string, data: DraftArticle) {
+export async function wxAddDraft(data: DraftArticle) {
+  const settings = NMPSettings.getInstance();
+  const token = settings.wxToken;
 	const url = 'https://api.weixin.qq.com/cgi-bin/draft/add?access_token=' + token;
 	const body = {
 		articles: [{

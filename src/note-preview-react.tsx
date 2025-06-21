@@ -377,8 +377,8 @@ ${customCSS}`;
 
 	async getToken() {
 		const res = await wxGetToken(
-			this.settings.wxAppId,
-			this.settings.wxSecret
+			// this.settings.wxAppId,
+			// this.settings.wxSecret
 		);
 		if (res.status != 200) {
 			const data = res.json;

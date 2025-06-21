@@ -5,6 +5,7 @@ import {LinkDescriptionMode, LinkFootnoteMode, NMPSettings} from "./settings";
 import TemplateManager from "./template-manager";
 import {logger} from "./utils";
 import { PlatformType } from "src/types";
+import {wxGetToken} from "./weixin-api";
 
 export class OmniContentSettingTab extends PluginSettingTab {
 	plugin: OmniContentPlugin;
@@ -114,6 +115,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
+
+	
 
 		new Setting(containerEl)
 			.setName("获取更多主题")
@@ -281,24 +284,39 @@ export class OmniContentSettingTab extends PluginSettingTab {
 					logger.info("已更新微信公众号 Secret");
 				});
 			});
-
-		new Setting(containerEl)
-			.setName("测试和更新微信公众号Token")			
-			.addButton((button) => {
-				button.setIcon("refresh-ccw");
-				button.onClick(async () => {
-					await this.settings.wxSecret;  // 这里可以添加实际的更新逻辑
-					new Notice("刷新成功");
+		// 微信公众号 token 输入框
+			new Setting(containerEl)
+			.setName("微信公众号Token")
+			.setDesc("当前获取的微信公众号访问令牌")
+			.addText((text) => {
+				text.setValue(this.settings.wxToken);
+				text.onChange(async (value) => {
+					this.settings.wxToken = value;
+					await this.plugin.saveSettings();
 				});
 			})
-			.addText(text => {
-				text.setValue(this.settings.wxSecret || '');
-				text.onChange(async (value) => {
-					this.settings.wxSecret = value;
-					await this.plugin.saveSettings();
-					logger.info("已更新微信公众号 Secret");
+			.addButton((button) => {
+				button.setButtonText("获取Token");
+				button.onClick(async () => {
+					const settings = NMPSettings.getInstance();
+					const result = await wxGetToken();
+					if (result.status === 200) {
+						const data = await result.json();
+						if (data.access_token) {
+							settings.wxToken = data.access_token;
+							await this.plugin.saveSettings();
+							text.setValue(settings.wxToken); // 更新 Token 输入框
+							new Notice("Token获取成功");
+						} else {
+							const errorMsg = `Token获取失败：${data.errmsg}（错误码：${data.errcode}）`;
+							new Notice(errorMsg);
+						}
+					} else {
+						new Notice("网络请求失败，请检查您的连接");
+					}
 				});
 			});
+
 
 
 	

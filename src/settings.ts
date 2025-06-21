@@ -67,6 +67,8 @@ interface SettingsData {
 	wxAppId?: string;
 	/** 微信公众号 secret */
 	wxSecret?: string;
+	/** 微信公众号 token */
+	wxToken?: string;
 	/** 分发服务配置 */
 	distributionConfig?: DistributionConfig | null;
 	
@@ -97,6 +99,7 @@ export class NMPSettings implements SettingsData {
 	wxName: string = '';
 	wxAppId: string = '';
 	wxSecret: string = '';
+	wxToken: string = '';
 	math: string = 'latex';
 	useTemplate: boolean = false;
 	defaultTemplate: string = 'default';
