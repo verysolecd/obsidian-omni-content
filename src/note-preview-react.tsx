@@ -33,7 +33,7 @@ import { NotePreviewComponent, ReactRenderer } from "./components/preview/NotePr
 import { MessageModal } from "./components/preview/MessageModal";
 
 export class NotePreviewReact extends ItemView implements MDRendererCallback {
-container: HTMLElement | null = null;
+	container: HTMLElement;
 	settings: NMPSettings;
 	assetsManager: AssetsManager;
 	articleHTML: string;
@@ -91,39 +91,17 @@ container: HTMLElement | null = null;
 		uevent("open");
 	}
 
-async onClose() {
-  // 清理所有监听器
-  this.listeners.forEach((listener) => this.workspace.offref(listener));
-  
-  // 清理所有状态
-  this.showPublishModal = false;
-  this.isPublishing = false;
-  this.publishResult = "";
-  
-  // 清理ReactRenderer
-  if (this.reactRenderer) {
-    this.reactRenderer.unmount();
-  }
-  
-  // 确保container引用也被清理
-  if (this.container) {
-    this.container.empty();
-    this.container = null;
-  }
-  
-  uevent("close");
-}
+	async onClose() {
+		this.listeners.forEach((listener) => this.workspace.offref(listener));
+		this.reactRenderer.unmount();
+		uevent("close");
+	}
 
-async update() {
-  // 如果组件已卸载，不执行更新
-  if (!this.container || !document.body.contains(this.container)) {
-    return;
-  }
-  
-  LocalImageManager.getInstance().cleanup();
-  CardDataManager.getInstance().cleanup();
-  await this.renderMarkdown();
-}
+	async update() {
+		LocalImageManager.getInstance().cleanup();
+		CardDataManager.getInstance().cleanup();
+		this.renderMarkdown();
+	}
 
 	errorContent(error: any) {
 		return (
@@ -185,57 +163,32 @@ async copyArticle() {
     }
 }
 
-public updateCSSVariables() {
-  // 在React组件中处理CSS变量更新
-  try {
-    if (!document || !document.body || !this.container) {
-      logger.debug("DOM或容器未准备好，跳过CSS更新");
-      return;
-    }
+	updateCSSVariables() {
+		// 在React组件中处理CSS变量更新
+		const noteContainer = document.querySelector(
+			".note-to-mp"
+		) as HTMLElement;
+		if (!noteContainer) {
+			console.log("找不到.note-to-mp容器，无法更新CSS变量");
+			return;
+		}
 
-    const noteContainer = document.querySelector(".note-to-mp") as HTMLElement | null;
-    if (!noteContainer) {
-      // 使用 requestAnimationFrame 确保在下一帧更新
-      requestAnimationFrame(() => {
-        const retryContainer = document.querySelector(".note-to-mp");
-        if (retryContainer instanceof HTMLElement) {
-          this.updateCSSVariablesForContainer(retryContainer);
-        } else {
-          logger.debug("重试后仍找不到.note-to-mp容器");
-        }
-      });
-      return;
-    }
+		if (this.settings.enableThemeColor) {
+			noteContainer.style.setProperty(
+				"--primary-color",
+				this.settings.themeColor || "#7852ee"
+			);
+			console.log(`应用自定义主题色：${this.settings.themeColor}`);
+		} else {
+			noteContainer.style.removeProperty("--primary-color");
+			console.log("恢复使用主题文件中的颜色");
+		}
 
-    this.updateCSSVariablesForContainer(noteContainer);
-  } catch (error) {
-    logger.error("更新CSS变量时出错:", error);
-  }
-}
-
-public updateCSSVariablesForContainer = (container: HTMLElement): void => {
-  try {
-    if (this.settings.enableThemeColor) {
-      container.style.setProperty(
-        "--primary-color",
-        this.settings.themeColor || "#7852ee"
-      );
-      logger.debug(`应用自定义主题色：${this.settings.themeColor}`);
-    } else {
-      container.style.removeProperty("--primary-color");
-      logger.debug("恢复使用主题文件中的颜色");
-    }
-
-    const listItems = container.querySelectorAll("li");
-    listItems.forEach((item) => {
-      if (item instanceof HTMLElement) {
-        item.style.display = "list-item";
-      }
-    });
-  } catch (error) {
-    logger.error("更新容器CSS变量时出错:", error);
-  }
-};
+		const listItems = noteContainer.querySelectorAll("li");
+		listItems.forEach((item) => {
+			(item as HTMLElement).style.display = "list-item";
+		});
+	}
 
 	wrapArticleContent(article: string): string {
 		let className = "note-to-mp";
@@ -444,126 +397,70 @@ ${customCSS}`;
 	}
 
 async handlePublishToWeixinDraft() {
-  this.isPublishing = true;
-  this.publishResult = "";
-  this.updateReactComponent();
-  
-  try {
-    // 检查 token 是否存在和有效
-    if (!this.settings.wxToken) {
-      throw new Error("请先在设置中配置微信公众号的 Token");
-    }
+this.isPublishing = true;
+this.publishResult = "";
+this.updateReactComponent();
+try {
+// 等待所有Mermaid图表渲染完成
+if (window.mermaidRenderPromises && window.mermaidRenderPromises.length > 0) {
+this.publishResult = "正在等待图表渲染完成...";
+this.updateReactComponent();
+await Promise.all(window.mermaidRenderPromises);
+window.mermaidRenderPromises = []; // 清空已完成的Promise
+}
 
-    // 尝试验证 token
-    const testRes = await wxBatchGetMaterial(this.settings.wxToken, "image");
-    if (testRes.errcode === 40001 || testRes.errcode === 40014) {
-      throw new Error("Token已过期，请重新获取");
-    } else if (testRes.errcode && testRes.errcode !== 0) {
-      throw new Error(`Token验证失败：${testRes.errmsg}`);
-    }
-    // 等待所有Mermaid图表渲染完成
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      if (!window.mermaidRenderPromises) {
-        // @ts-ignore
-        window.mermaidRenderPromises = [];
-      }
-      // @ts-ignore
-      if (window.mermaidRenderPromises.length > 0) {
-        this.publishResult = "正在等待图表渲染完成...";
-        this.updateReactComponent();
-        // @ts-ignore
-        await Promise.all(window.mermaidRenderPromises);
-        // @ts-ignore
-        window.mermaidRenderPromises = []; // 清空已完成的Promise
-      }
-    }
-
-    // 构造草稿数据
-    const title = this.title || "无标题";
-    const content = this.articleHTML || "";
-    // 获取封面 media_id（可根据实际需求调整）
-    const token = this.settings.wxToken;
-    let thumb_media_id = await this.getDefaultCover(token);
-    if (!thumb_media_id) thumb_media_id = "";
-    const draft = {
-      title,
-      content,
-      thumb_media_id,
-    };
+// 构造草稿数据
+const title = this.title || "无标题";
+const content = this.articleHTML || "";
+// 获取封面 media_id（可根据实际需求调整）
+const token = this.settings.wxToken;
+let thumb_media_id = await this.getDefaultCover(token);
+if (!thumb_media_id) thumb_media_id = "";
+const draft = {
+title,
+content,
+thumb_media_id,
+};
 const res = await wxAddDraft(draft);
-const json = await res.json;
-if (res.status === 200 && json && !json.errcode) {
-      this.publishResult = "上传草稿成功！";
-    } else {
-this.publishResult = `上传失败：${json?.errmsg || `HTTP错误 ${res.status}` || '未知错误'}`;
-    }
-  } catch (e: any) {
-    this.publishResult = `上传异常：${e?.message || e}`;
-  }
-  
-  this.isPublishing = false;
-  this.updateReactComponent();
+if (res.status === 200 && res.json && !res.json.errcode) {
+this.publishResult = "上传草稿成功！";
+} else {
+this.publishResult = `上传失败：${res.json?.errmsg || `HTTP错误 ${res.status}` || '未知错误'}`;
+}
+} catch (e: any) {
+this.publishResult = `上传异常：${e?.message || e}`;
+}
+this.isPublishing = false;
+this.updateReactComponent();
 }
 
-async buildUI() {
-  const containerEl = this.containerEl.children[1];
-  if (!containerEl) {
-    logger.error("无法找到容器元素");
-    return;
-  }
+	async buildUI() {
+		this.container = this.containerEl.children[1] as HTMLElement;
+		this.container.empty();
 
-  // 确保先清理旧的容器
-  if (this.container) {
-    this.container.empty();
-  }
+		// 渲染React组件
+		this.updateReactComponent();
+	}
 
-  this.container = containerEl as HTMLElement;
-  this.container.empty();
-
-  try {
-    // 渲染React组件
-    this.updateReactComponent();
-  } catch (error) {
-    logger.error("渲染React组件时出错:", error);
-  }
-}
-
-private updateReactComponent() {
-  // 如果组件已经卸载，不再更新
-  if (!this.container || !document.body.contains(this.container)) {
-    return;
-  }
-
-  const publishModal = this.showPublishModal && (
-    <MessageModal
-      isVisible={true}
-      title={this.isPublishing ? "正在上传草稿..." : (this.publishResult ? this.publishResult : "确定发布到公众号草稿箱吗？")}
-      showOkButton={!this.isPublishing}
-      onClose={() => {
-        if (this.isPublishing) return;
-        
-        // 处理结果展示和关闭
-        try {
-          if (this.publishResult) {
-            this.showPublishModal = false;
-            this.publishResult = "";
-            // 用 requestAnimationFrame 确保在下一帧更新
-            requestAnimationFrame(() => {
-              if (this.container && document.body.contains(this.container)) {
-                this.updateReactComponent();
-              }
-            });
-          } else {
-            // 用户点击"确定"
-            this.handlePublishToWeixinDraft();
-          }
-        } catch (error) {
-          logger.error("关闭发布对话框时出错:", error);
-        }
-      }}
-    />
-  );
+	private updateReactComponent() {
+		const publishModal = this.showPublishModal && (
+			<MessageModal
+				isVisible={true}
+				title={this.isPublishing ? "正在上传草稿..." : (this.publishResult ? this.publishResult : "确定发布到公众号草稿箱吗？")}
+				showOkButton={!this.isPublishing}
+				onClose={() => {
+					if (this.isPublishing) return;
+					if (this.publishResult) {
+						this.showPublishModal = false;
+						this.publishResult = "";
+						this.updateReactComponent();
+					} else {
+						// 用户点击“确定”
+						this.handlePublishToWeixinDraft();
+					}
+				}}
+			/>
+		);
 		const component = (
 			<NotePreviewComponent
 				settings={this.settings}

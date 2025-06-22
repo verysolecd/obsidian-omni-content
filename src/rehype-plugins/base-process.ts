@@ -24,10 +24,11 @@ interface PluginManager {
 /**
  * 插件配置接口 - 定义插件配置的基本结构
  */
-export interface PluginConfig extends Partial<NMPSettings> {
-    [key: string]: any;
-    // 基础设置
-    enabled?: boolean;
+export interface PluginConfig {
+	// 使用更缩窄的类型而非 any
+	[key: string]: string | number | boolean | null | undefined | string[] | number[] | Record<string, unknown>;
+	// 插件启用状态，默认为 true
+	enabled?: boolean;
 }
 
 /**
@@ -70,7 +71,7 @@ export interface IProcessPlugin {
 	 * @param settings 当前设置
 	 * @returns 处理后的HTML内容
 	 */
-process(html: string, settings: NMPSettings | PluginConfig): string;
+	process(html: string, settings: NMPSettings): string;
 
 	/**
 	 * 获取插件配置
@@ -274,7 +275,7 @@ export abstract class BaseProcess implements IProcessPlugin {
 	/**
 	 * 处理HTML内容，子类必须实现
 	 */
-abstract process(html: string, settings: NMPSettings | PluginConfig): string;
+	abstract process(html: string, settings: NMPSettings): string;
 	
 	/**
 	 * 检查插件是否启用

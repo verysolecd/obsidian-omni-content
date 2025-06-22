@@ -16,10 +16,10 @@ import {TextHighlight} from "./text-highlight";
 import { logger } from "src/utils";
 import { ExtensionManager } from "./extension-manager";
 
-const markedOptions = {
-gfm: true,
-breaks: true,
-mangle: false,   // 禁用自动检测并转换邮箱地址为链接
+const markedOptiones = {
+	gfm: true,
+	breaks: true,
+	mangle: false,   // 禁用自动检测并转换邮箱地址为链接
 };
 
 const customRenderer = {
@@ -126,34 +126,19 @@ export class MarkedParser {
 		return false;
 	}
 
-async buildMarked() {
-this.marked = new Marked();
-if (!this.marked) {
-  logger.error("Failed to create Marked instance");
-  return;
-}
-this.marked.use(markedOptions);
+	async buildMarked() {
+		this.marked = new Marked();
+		this.marked.use(markedOptiones);
 		
-// 只对启用的扩展应用marked扩展
-const enabledExtensions = this.getEnabledExtensions();
-logger.debug(`构建marked实例，使用 ${enabledExtensions.length}/${this.extensions.length} 个启用的扩展插件`);
-
-for (const ext of enabledExtensions) {
-  if (!ext) {
-    logger.warn("Found null extension, skipping");
-    continue;
-  }
-  try {
-    const extension = ext.markedExtension();
-    if (extension) {
-      this.marked.use(extension);
-      ext.marked = this.marked;
-      await ext.prepare();
-    }
-  } catch (error) {
-    logger.error(`Error applying extension ${ext.getName()}: ${error}`);
-  }
-}
+		// 只对启用的扩展应用marked扩展
+		const enabledExtensions = this.getEnabledExtensions();
+		logger.debug(`构建marked实例，使用 ${enabledExtensions.length}/${this.extensions.length} 个启用的扩展插件`);
+		
+		for (const ext of enabledExtensions) {
+			this.marked.use(ext.markedExtension());
+			ext.marked = this.marked;
+			await ext.prepare();
+		}
 		this.marked.use({renderer: customRenderer});
 	}
 
@@ -175,16 +160,9 @@ for (const ext of enabledExtensions) {
 		return result;
 	}
 
-async parse(content: string) {
-if (!this.marked) {
-  await this.buildMarked();
-  if (!this.marked) {
-    logger.error("Marked 解析器初始化失败");
-    return "Marked 解析器初始化失败";
-  }
-}
-try {
-  await this.prepare();
+	async parse(content: string) {
+		if (!this.marked) await this.buildMarked();
+		await this.prepare();
 
 		// 预处理 Markdown 内容，处理脚注定义
 		let processedContent = content;
@@ -193,19 +171,15 @@ try {
 			processedContent = footnoteRenderer.preprocessText(content);
 		}
 
-  // 解析处理后的内容
-  let html = await this.marked.parse(processedContent);
-  html = await this.postprocess(html);
+		// 解析处理后的内容
+		let html = await this.marked.parse(processedContent);
+		html = await this.postprocess(html);
 
-  // 如果有脚注处理器，在发布前确保脚注引用正确
-  if (footnoteRenderer) {
-    await footnoteRenderer.beforePublish();
-  }
+		// 如果有脚注处理器，在发布前确保脚注引用正确
+		if (footnoteRenderer) {
+			await footnoteRenderer.beforePublish();
+		}
 
-  return html;
-} catch (error) {
-  logger.error("解析Markdown内容时出错:", error);
-  return `<div class="error-message">解析Markdown内容时出错: ${error.message}</div>`;
-}
+		return html;
 	}
 }

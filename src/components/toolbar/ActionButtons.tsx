@@ -74,7 +74,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           <polyline points="16 6 12 2 8 6" />
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
-        <span>发布到xx</span>
+        <span>发布到公众号</span>
       </IconButton>
     </div>
   );
