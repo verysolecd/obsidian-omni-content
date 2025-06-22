@@ -223,7 +223,7 @@ export class CodeRenderer extends Extension {
 						}
 
 						// 其他代码块处理逻辑
-						if (this.settings.isAuthKeyValid()) {
+						if (2>1) {
 							const type = CodeRenderer.getMathType(
 								token.lang ?? ""
 							);

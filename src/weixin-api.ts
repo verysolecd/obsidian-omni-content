@@ -56,8 +56,6 @@ export async function wxGetToken() {
 			}
 			
 			console.error(errorMessage, data);
-			// 移除这行，让调用者决定如何显示错误
-			// new Notice(errorMessage);
 			return { error: errorMessage, data };
 		}
 		
@@ -71,16 +69,16 @@ export async function wxGetToken() {
 }
 
 
-export async function wxKeyInfo(authkey: string) {
-	const url = 'https://obplugin.sunboshi.tech/wx/info/' + authkey;
-	const res = await requestUrl({
-		url: url,
-		method: 'GET',
-		throw: false,
-		contentType: 'application/json',
-	});
-	return res
-}
+// export async function wxKeyInfo(authkey: string) {
+// 	const url = 'https://obplugin.sunboshi.tech/wx/info/' + authkey;
+// 	const res = await requestUrl({
+// 		url: url,
+// 		method: 'GET',
+// 		throw: false,
+// 		contentType: 'application/json',
+// 	});
+// 	return res
+// }
 
 // 上传图片
 export async function wxUploadImage(data: Blob, filename: string, type?: string) {

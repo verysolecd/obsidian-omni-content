@@ -97,6 +97,7 @@ export default class TemplateManager {
 		}
 
 		// 使用 Handlebars 渲染模板
+		
 
 		// 在传递数据时，要确保 content 不会被 meta 中的同名属性覆盖
 		const templateData = {
