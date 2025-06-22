@@ -99,7 +99,7 @@ export default class TemplateManager {
 		// 使用 Handlebars 渲染模板
 		
 
-		// 在传递数据时，要确保 content 不会被 meta 中的同名属性覆盖
+		// 在传递数据时，要确保 content 不会被 meta 中的nmp同名属性覆盖
 		const templateData = {
 			...meta,  // 先展开 meta
 			content   // 再设置 content，优先级更高
