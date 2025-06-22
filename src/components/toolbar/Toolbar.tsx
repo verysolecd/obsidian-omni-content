@@ -133,7 +133,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                       const extensionName = extension.getName();
                       return (
                         <ExtensionAccordion
-                          key={extensionName}
+                          key={`remark-${extensionName}`}
                           extension={extension}
                           extensionName={extensionName}
                           expandedSections={settings.expandedAccordionSections}
@@ -164,7 +164,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                       const pluginName = plugin.getName();
                       return (
                         <PluginAccordion
-                          key={pluginName}
+                          key={`rehype-${pluginName}`}
                           plugin={plugin}
                           pluginName={pluginName}
                           expandedSections={settings.expandedAccordionSections}

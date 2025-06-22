@@ -1,4 +1,4 @@
-import {App, FileSystemAdapter, Notice, PluginSettingTab, Setting, TextAreaComponent,} from "obsidian";
+import {App, FileSystemAdapter, Notice, PluginSettingTab, Setting, TextAreaComponent, TextComponent} from "obsidian";
 import OmniContentPlugin from "./main";
 import {cleanMathCache} from "./remark-plugins/math";
 import {LinkDescriptionMode, LinkFootnoteMode, NMPSettings} from "./settings";
@@ -273,7 +273,8 @@ export class OmniContentSettingTab extends PluginSettingTab {
 				});
 			});
 
-		// 微信公众号 secret 输入框
+	
+	// 微信公众号 secret 输入框
 		new Setting(wxAuthSection)
 			.setName("微信公众号 Secret")
 			.addText(text => {
@@ -284,55 +285,57 @@ export class OmniContentSettingTab extends PluginSettingTab {
 					logger.info("已更新微信公众号 Secret");
 				});
 			});
-		// 微信公众号 token 输入框
-			new Setting(containerEl)
-			.setName("微信公众号Token")
-			.setDesc("当前获取的微信公众号访问令牌")
-			.addText((text) => {
-				text.setValue(this.settings.wxToken);
-				text.onChange(async (value) => {
-					this.settings.wxToken = value;
-					await this.plugin.saveSettings();
-				});
-			})
-			.addButton((button) => {
-				button.setButtonText("获取Token");
-				button.onClick(async () => {
-					const settings = NMPSettings.getInstance();
-					const result = await wxGetToken();
-
-					// 检查是否有错误
-					if (result.error) {
-						new Notice(result.error);
-						return;
-					}
-
-					if (result.status === 200) {
-						const data = await result.json;
-						if (data.access_token) {
-							settings.wxToken = data.access_token;
-							await this.plugin.saveSettings();
-							text.setValue(settings.wxToken); // 更新 Token 输入框
-							new Notice("Token获取成功");
-						} else {
-							const errorMsg = `Token获取失败：${data.errmsg}（错误码：${data.errcode}）`;
-							new Notice(errorMsg);
-						}
-					} else {
-						new Notice("网络请求失败，请检查您的连接");
-					}
-				});
-			});
 
 
 
 	
-};
-			
+	let wxTokenTextComponent: TextComponent | null = null;
+new Setting(containerEl)
+    .setName("微信公众号Token")
+    .setDesc("当前获取的微信公众号访问令牌")
+    .addText((text) => {
+        text.setValue(this.settings.wxToken);
+        text.onChange(async (value) => {
+            this.settings.wxToken = value;
+            await this.plugin.saveSettings();
+        });
+        wxTokenTextComponent = text;  // 保存文本组件引用
+    })
+    .addButton((button) => {
+        button.setButtonText("获取Token");
+        button.onClick(async () => {
+            const settings = NMPSettings.getInstance();
 
+            try {
+                const result = await wxGetToken();
 
+                // 检查是否有错误
+                if ("error" in result) {
+                    new Notice(result.error);
+                    return;
+                }
 
+                // 解析响应数据
+                const data = await result.json;
+                
+                if (data.access_token) {
+                    settings.wxToken = data.access_token;
+                    await this.plugin.saveSettings();
 
-
-
+                    // 更新Token输入框
+                    if (wxTokenTextComponent) {
+                        wxTokenTextComponent.setValue(settings.wxToken);
+                    }
+                    new Notice("Token获取成功");
+                } else {
+                    const errorMsg = `Token获取失败：${data.errmsg}（错误码：${data.errcode}）`;
+                    new Notice(errorMsg);
+                }
+            } catch (error) {
+                console.error("获取 Token 出错:", error);
+                new Notice("发生未知错误，请查看控制台日志");
+            }
+        });
+    });
+}
 }

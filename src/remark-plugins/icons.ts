@@ -22,8 +22,8 @@ export class SVGIcon extends Extension {
 			width = items[0];
 			height = items[0];
 		}
-		width = this.isNumeric(width) ? width + 'px' : width;
-		height = this.isNumeric(height) ? height + 'px' : height;
+width = this.isNumeric(width) ? width + 'px' : (width === 'auto' ? '1em' : width);
+height = this.isNumeric(height) ? height + 'px' : (height === 'auto' ? '1em' : height);
 		return {width, height};
 	}
 

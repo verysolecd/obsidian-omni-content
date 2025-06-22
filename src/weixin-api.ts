@@ -3,26 +3,37 @@ import {NMPSettings	} from "./settings";
 
 // 获取token
 export async function wxGetToken() {
-	const settings = NMPSettings.getInstance();
-	const appid = settings.wxAppId;
-	const secret = settings.wxSecret;
+const settings = NMPSettings.getInstance();
+const appid = settings.wxAppId;
+const secret = settings.wxSecret;
 
-	// 直接调用微信官方API获取token
-	const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${secret}`;
+// 检查必要参数
+if (!appid || !secret) {
+    return { error: '请先配置微信公众号的AppID和Secret' };
+}
 
-	try {
+// 直接调用微信官方API获取token
+const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${secret}`;
+
+try {
 		const res = await requestUrl({
 			url,
 			method: 'GET',
 			throw: false
 		});
 		
-		if (res.status !== 200) {
-			throw new Error(`HTTP error! status: ${res.status}`);
-		}
-		
-		// 检查微信API返回的错误码
-		const data = res.json;
+if (res.status !== 200) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+}
+
+// 检查微信API返回的错误码
+let data;
+try {
+    data = await res.json;
+} catch (e) {
+    console.error('解析返回数据失败:', e);
+    return { error: '解析返回数据失败，请检查网络连接' };
+}
 		if (data.errcode) {
 			let errorMessage = `微信API错误: ${data.errcode} - ${data.errmsg}`;
 			
