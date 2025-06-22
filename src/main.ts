@@ -29,7 +29,6 @@ export default class OmniContentPlugin extends Plugin {
 		templateManager.setup(this.app);
 		await templateManager.loadTemplates();
 
-
 		this.registerView(
 			VIEW_TYPE_NOTE_PREVIEW,
 			(leaf) => new NotePreviewReact(leaf)
