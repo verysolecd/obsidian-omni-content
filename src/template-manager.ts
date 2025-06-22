@@ -90,7 +90,7 @@ export default class TemplateManager {
 
 		// 确保 meta 中有 epigraph，默认为 ["这篇文章写地贼累！"]
 		if (!meta.epigraph) {
-			meta.epigraph = ["这篇文章写地贼累！"];
+			meta.epigraph = ["沮丧吗？无非就是一个小布尔乔亚的无病呻吟，留恋它就是一种高度近视！"];
 		} else if (!Array.isArray(meta.epigraph)) {
 			// 如果 epigraph 不是数组，转换为数组
 			meta.epigraph = [meta.epigraph];

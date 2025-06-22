@@ -93,3 +93,7 @@ export default class OmniContentPlugin extends Plugin {
 		if (leaf) workspace.revealLeaf(leaf);
 	}
 }
+
+
+
+
