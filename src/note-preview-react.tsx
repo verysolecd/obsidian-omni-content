@@ -122,6 +122,26 @@ export class NotePreviewReact extends ItemView implements MDRendererCallback {
 		if (window.mermaidRenderPromises && window.mermaidRenderPromises.length > 0) {
 			await Promise.all(window.mermaidRenderPromises);
 		}
+		
+		// 处理 Mermaid 图表渲染结果
+		if (this.articleHTML && document.getElementById('article-section')) {
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = this.articleHTML;
+			const mermaidElements = document.querySelectorAll('.note-mermaid svg');
+			const mermaidContainers = tempDiv.querySelectorAll('.mermaid');
+			
+			mermaidContainers.forEach((container, index) => {
+				const svg = mermaidElements[index];
+				if (svg) {
+					container.innerHTML = svg.outerHTML;
+					container.classList.remove('mermaid');
+					container.classList.add('note-mermaid-rendered');
+				}
+			});
+			
+			this.articleHTML = tempDiv.innerHTML;
+		}
+		
 		this.isRendering = false; // 渲染完成，设置状态为 false
 		this.updateReactComponent();
 	}

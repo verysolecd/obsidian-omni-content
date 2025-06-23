@@ -80,7 +80,7 @@ export const MessageModal: React.FC<MessageModalProps> = ({
             className="msg-cancel-btn"
             style={{
               padding: "8px 16px",
-              backgroundColor: "var(--background-modifier-error)",
+              backgroundColor: "var(--interactive-accent)",
               color: "var(--text-on-accent)",
               border: "none",
               borderRadius: "4px",
