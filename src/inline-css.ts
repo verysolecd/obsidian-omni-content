@@ -82,7 +82,7 @@ section .ad-quote {
   justify-content: center;
   align-items: center;
   margin:20px 0px;
-  max-width: 300% !important;
+  max-width: 360% !important;   /* 原来是300% */
 }
 
 /* --------------------------------------- */
