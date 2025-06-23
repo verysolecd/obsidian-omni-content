@@ -5,6 +5,10 @@ interface MessageModalProps {
   title: string;
   showOkButton: boolean;
   onClose: () => void;
+  // 新增取消按钮回调和显示控制属性
+  showCancelButton?: boolean; 
+  onCancel?: () => void; 
+  children?: React.ReactNode;
 }
 
 export const MessageModal: React.FC<MessageModalProps> = ({
@@ -12,6 +16,9 @@ export const MessageModal: React.FC<MessageModalProps> = ({
   title,
   showOkButton,
   onClose,
+  showCancelButton = false, // 默认不显示取消按钮
+  onCancel,
+  children
 }) => {
   if (!isVisible) return null;
 
@@ -44,7 +51,7 @@ export const MessageModal: React.FC<MessageModalProps> = ({
         <div
           className="msg-title"
           style={{
-            marginBottom: showOkButton ? "16px" : "0",
+            marginBottom: showOkButton || showCancelButton ? "16px" : "0",
             fontSize: "16px",
             fontWeight: "500",
           }}
@@ -61,10 +68,27 @@ export const MessageModal: React.FC<MessageModalProps> = ({
               border: "none",
               borderRadius: "4px",
               cursor: "pointer",
+              marginRight: showCancelButton ? "10px" : "0"
             }}
             onClick={onClose}
           >
             确定
+          </button>
+        )}
+        {showCancelButton && (
+          <button
+            className="msg-cancel-btn"
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "var(--background-modifier-error)",
+              color: "var(--text-on-accent)",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            onClick={onCancel}
+          >
+            取消
           </button>
         )}
       </div>

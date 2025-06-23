@@ -116,52 +116,91 @@ export class NotePreviewReact extends ItemView implements MDRendererCallback {
 	}
 
 	async renderMarkdown() {
+		this.isRendering = true; // 开始渲染，设置状态为 true
 		this.articleHTML = await this.getArticleContent();
+		// 等待所有 Mermaid 图表首次渲染完成
+		if (window.mermaidRenderPromises && window.mermaidRenderPromises.length > 0) {
+			await Promise.all(window.mermaidRenderPromises);
+		}
+		this.isRendering = false; // 渲染完成，设置状态为 false
 		this.updateReactComponent();
 	}
 
-	async renderArticleOnly() {
-		this.markedParser.buildMarked();
-		this.articleHTML = await this.getArticleContent();
+	async handlePublishToWeixinDraft() {
+		if (this.isRendering) return; // 渲染期间不允许发布
+
+		this.isPublishing = true;
+		this.publishResult = "";
 		this.updateReactComponent();
-		logger.debug("仅渲染文章内容，跳过工具栏更新");
+
+		try {
+			// 直接使用已渲染的 HTML 内容
+			const title = this.title || "无标题";
+			const content = this.articleHTML || "";
+
+			// 获取封面 media_id（可根据实际需求调整）
+			const token = this.settings.wxToken;
+			let thumb_media_id = await this.getDefaultCover(token);
+			if (!thumb_media_id) thumb_media_id = "";
+
+			const draft = {
+				title,
+				content,
+				thumb_media_id,
+			};
+
+			const res = await wxAddDraft(draft);
+
+			if (res.status === 200 && res.json && !res.json.errcode) {
+				this.publishResult = "上传草稿成功！";
+			} else {
+				this.publishResult = `上传失败：${res.json?.errmsg || `HTTP错误 ${res.status}` || '未知错误'}`;
+			}
+		} catch (e: any) {
+			this.publishResult = `上传异常：${e?.message || e}`;
+		}
+
+		this.isPublishing = false;
+		this.updateReactComponent();
 	}
 
-async copyArticle() {
-    try {
-        // 获取所有已渲染的mermaid图表
-        const mermaidElements = document.querySelectorAll('.note-mermaid svg');
-        const content = await this.getArticleContent();
-        
-        // 创建一个临时容器来处理内容
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        
-        // 找到所有mermaid容器
-        const mermaidContainers = tempDiv.querySelectorAll('.mermaid');
-        
-        // 用实际渲染的SVG替换mermaid语法
-        mermaidContainers.forEach((container, index) => {
-            const svg = mermaidElements[index];
-            if (svg) {
-                container.innerHTML = svg.outerHTML;
-                container.classList.remove('mermaid'); // 移除mermaid类，防止重复渲染
-            }
-        });
+	async copyArticle() {
+		if (this.isRendering) return; // 渲染期间不允许复制
 
-        // 复制处理后的内容到剪贴板
-        await navigator.clipboard.write([
-            new ClipboardItem({
-                "text/html": new Blob([tempDiv.innerHTML], { type: "text/html" }),
-            }),
-        ]);
+		try {
+			// 获取所有已渲染的 mermaid 图表
+			const mermaidElements = document.querySelectorAll('.note-mermaid svg');
+			const content = this.articleHTML;
 
-        new Notice(`已复制到剪贴板！`);
-    } catch (error) {
-        console.error("复制内容时出错:", error);
-        new Notice("复制失败，请查看控制台获取详细错误信息");
-    }
-}
+			// 创建一个临时容器来处理内容
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+
+			// 找到所有 mermaid 容器
+			const mermaidContainers = tempDiv.querySelectorAll('.mermaid');
+
+			// 用实际渲染的 SVG 替换 mermaid 语法
+			mermaidContainers.forEach((container, index) => {
+				const svg = mermaidElements[index];
+				if (svg) {
+					container.innerHTML = svg.outerHTML;
+					container.classList.remove('mermaid'); // 移除 mermaid 类，防止重复渲染
+				}
+			});
+
+			// 复制处理后的内容到剪贴板
+			await navigator.clipboard.write([
+				new ClipboardItem({
+					"text/html": new Blob([tempDiv.innerHTML], { type: "text/html" }),
+				}),
+			]);
+
+			new Notice(`已复制到剪贴板！`);
+		} catch (error) {
+			console.error("复制内容时出错:", error);
+			new Notice("复制失败，请查看控制台获取详细错误信息");
+		}
+	}
 
 	updateCSSVariables() {
 		// 在React组件中处理CSS变量更新
@@ -396,44 +435,6 @@ ${customCSS}`;
 		this.updateReactComponent();
 	}
 
-async handlePublishToWeixinDraft() {
-this.isPublishing = true;
-this.publishResult = "";
-this.updateReactComponent();
-try {
-// 等待所有Mermaid图表渲染完成
-if (window.mermaidRenderPromises && window.mermaidRenderPromises.length > 0) {
-this.publishResult = "正在等待图表渲染完成...";
-this.updateReactComponent();
-await Promise.all(window.mermaidRenderPromises);
-window.mermaidRenderPromises = []; // 清空已完成的Promise
-}
-
-// 构造草稿数据
-const title = this.title || "无标题";
-const content = this.articleHTML || "";
-// 获取封面 media_id（可根据实际需求调整）
-const token = this.settings.wxToken;
-let thumb_media_id = await this.getDefaultCover(token);
-if (!thumb_media_id) thumb_media_id = "";
-const draft = {
-title,
-content,
-thumb_media_id,
-};
-const res = await wxAddDraft(draft);
-if (res.status === 200 && res.json && !res.json.errcode) {
-this.publishResult = "上传草稿成功！";
-} else {
-this.publishResult = `上传失败：${res.json?.errmsg || `HTTP错误 ${res.status}` || '未知错误'}`;
-}
-} catch (e: any) {
-this.publishResult = `上传异常：${e?.message || e}`;
-}
-this.isPublishing = false;
-this.updateReactComponent();
-}
-
 	async buildUI() {
 		this.container = this.containerEl.children[1] as HTMLElement;
 		this.container.empty();
@@ -459,6 +460,12 @@ this.updateReactComponent();
 						this.handlePublishToWeixinDraft();
 					}
 				}}
+				// 显示取消按钮
+				showCancelButton={!this.isPublishing} 
+				onCancel={() => {
+					this.showPublishModal = false;
+					this.updateReactComponent();
+				}}
 			/>
 		);
 		const component = (
@@ -466,6 +473,7 @@ this.updateReactComponent();
 				settings={this.settings}
 				articleHTML={this.articleHTML || ""}
 				cssContent={this.getCSS()}
+				isRendering={this.isRendering} // 传递渲染状态
 				onRefresh={async () => {
 					await this.renderMarkdown();
 					uevent("refresh");
@@ -538,4 +546,10 @@ this.updateReactComponent();
 			plugin.saveSettings();
 		}
 	}
+}
+export function registerExtension(
+	extension: Extension,
+	meta: ExtensionMetaConfig
+): void {
+	ExtensionManager.getInstance().registerExtension(extension, meta);
 }
