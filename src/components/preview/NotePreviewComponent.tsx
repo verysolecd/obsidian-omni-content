@@ -20,7 +20,6 @@ interface NotePreviewComponentProps {
   onSaveSettings: () => void;
   onUpdateCSSVariables: () => void;
   publishModal?: React.ReactNode; // 新增：父组件可传递弹窗内容
-  isRendering: boolean;
 }
 
 export const NotePreviewComponent: React.FC<NotePreviewComponentProps> = ({
