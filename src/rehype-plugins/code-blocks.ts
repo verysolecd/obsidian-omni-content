@@ -32,7 +32,7 @@ export class CardDataManager {
 		this.cardData.clear();
 	}
 
-	public restoreCard(html: string) {
+	public restoreCard(html: string): string {
 		for (const [key, value] of this.cardData.entries()) {
 			const exp = `<section[^>]*\\sdata-id="${key}"[^>]*>(.*?)<\\/section>`;
 			const regex = new RegExp(exp, "gs");
@@ -85,8 +85,8 @@ export class CodeBlocks extends BaseProcess {
             if (src.startsWith("http")) continue;
             const blob = CodeBlocks.srcToBlob(img.getAttribute("src")!);
             const name = img.id + ".png";
-            const res = await wxUploadImage(blob, name, token);
-            if (res.errcode != 0) {
+            const res = await wxUploadImage(blob, name, 'image', token);
+            if (res.errcode !== 0) {
                 const msg = `上传图片失败: ${res.errcode} ${res.errmsg}`;
                 new Notice(msg);
                 console.error(msg);
@@ -246,8 +246,12 @@ export class CodeBlocks extends BaseProcess {
                 const pre = codeBlock.parentElement;
                 if (!pre) return;
 
+                // 移除语言标识和复制按钮
+                const languageElements = pre.querySelectorAll(".language-label, .copy-button, .code-language, .language-selector");
+                languageElements.forEach(el => el.remove());
+
                 // 首先检查是否已经有高亮标记
-                const hasHighlight = codeBlock.classList.contains('hljs') || 
+                let hasHighlight = codeBlock.classList.contains('hljs') || 
                                     codeBlock.innerHTML.includes('<span class="hljs-') ||
                                     codeBlock.innerHTML.includes('class="hljs-');
                 
@@ -258,6 +262,13 @@ export class CodeBlocks extends BaseProcess {
                 pre.style.overflow = "auto";
                 pre.style.fontSize = "14px";
                 pre.style.lineHeight = "1.5";
+
+                // 初始化语法高亮
+                const codeElement = codeBlock as HTMLElement;
+                if (window.hljs && !hasHighlight) {
+                    window.hljs.highlightElement(codeElement);
+                    hasHighlight = true; // 更新高亮状态
+                }
 
                 if (hasHighlight) {
                     // 如果有高亮，应用基础样式并转换高亮为内联样式

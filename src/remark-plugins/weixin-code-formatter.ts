@@ -103,8 +103,7 @@ export class WeixinCodeFormatter {
      * 简化版本，用于纯文本代码块
      */
     public static formatPlainCodeForWeixin(code: string): string {
-        const cleanCode = code.replace(/\n$/, '');
-        
+        const cleanCode = code.replace(/\n$/, '');        
         const lines = cleanCode.split('\n');
         const codeElements = lines.map(line => {
             if (line.trim() === '') {
