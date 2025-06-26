@@ -14,6 +14,7 @@ export class Images extends BaseProcess {
 		// 微信公众号图片需要特定处理
 		// 1. 添加data-src属性
 		// 2. 确保图片有正确的样式和对齐方式
+		// 3. 处理base64图片数据
 		try {
 			const parser = new DOMParser();
 			const doc = parser.parseFromString(html, "text/html");
@@ -26,6 +27,11 @@ export class Images extends BaseProcess {
 				if (src) {
 					// 设置data-src属性，微信编辑器需要
 					img.setAttribute("data-src", src);
+
+					// 如果是base64图片，保留原始数据
+					if (src.startsWith('data:image')) {
+						img.setAttribute('data-base64', src);
+					}
 
 					// 设置图片默认样式
 					if (!img.hasAttribute("style")) {

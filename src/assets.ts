@@ -172,7 +172,7 @@ export default class AssetsManager {
 
 	getThemeURL() {
 		const version = this.manifest.version;
-		return `https://github.com/sunbooshi/note-to-mp/releases/download/1.1.3/assets.zip`;
+		return `https://github.com/sunbooshi/note-to-mp/releases/download/1.2.0/assets.zip`;
 	}
 
 	async downloadThemes() {

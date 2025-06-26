@@ -154,21 +154,72 @@ export class NotePreviewReact extends ItemView implements MDRendererCallback {
 		this.updateReactComponent();
 
 		try {
-			// 直接使用已渲染的 HTML 内容
-			const title = this.title || "无标题";
-			const content = this.articleHTML || "";
-
-			// 获取封面 media_id（可根据实际需求调整）
+			// 获取token
 			const token = this.settings.wxToken;
+			if (!token) {
+				throw new Error("请先获取微信Token");
+			}
+
+			// 创建临时容器处理内容
+			const tempDiv = document.createElement('div');
+			tempDiv.innerHTML = this.articleHTML || "";
+
+			// 处理所有图片
+			const images = tempDiv.querySelectorAll('img');
+			for (const img of images) {
+				const src = img.getAttribute('src');
+				const base64Data = img.getAttribute('data-base64');
+				
+				// 如果是base64图片或本地图片，需要上传到微信
+				if (base64Data || (src && !src.startsWith('http'))) {
+					const imgData = base64Data || src;
+					if (imgData && imgData.startsWith('data:image')) {
+						// 将base64转换为Blob
+						const base64 = imgData.split(',')[1];
+						const byteCharacters = atob(base64);
+						const byteNumbers = new Array(byteCharacters.length);
+						for (let i = 0; i < byteCharacters.length; i++) {
+							byteNumbers[i] = byteCharacters.charCodeAt(i);
+						}
+						const byteArray = new Uint8Array(byteNumbers);
+						const blob = new Blob([byteArray], { type: 'image/png' });
+
+						// 上传图片到微信
+						const filename = `image_${Date.now()}.png`;
+						// 增加上传类型区分和URL处理
+					const uploadType = src?.includes('mermaid') ? 'image' : undefined;
+					const uploadResult = await wxUploadImage(blob, filename, uploadType);
+					
+					if (uploadResult.errcode !== 0) {
+						console.error('微信图片上传失败详情:', {
+							filename,
+							size: blob.size,
+							error: uploadResult
+						});
+						throw new Error(`上传图片失败：${uploadResult.errmsg}`);
+					}
+
+					// 根据接口返回类型处理URL
+					const finalUrl = uploadResult.url || `https://mmbiz.qpic.cn/mmbiz_png/${uploadResult.media_id}/640?wx_fmt=png`;
+					img.setAttribute('src', finalUrl);
+					img.setAttribute('data-src', finalUrl);
+					img.removeAttribute('data-base64');  // 移除临时数据
+					}
+				}
+			}
+
+			// 获取封面 media_id
 			let thumb_media_id = await this.getDefaultCover(token);
 			if (!thumb_media_id) thumb_media_id = "";
 
+			// 准备草稿数据
 			const draft = {
-				title,
-				content,
+				title: this.title || "无标题",
+				content: tempDiv.innerHTML,
 				thumb_media_id,
 			};
 
+			// 发布草稿
 			const res = await wxAddDraft(draft);
 
 			if (res.status === 200 && res.json && !res.json.errcode) {
@@ -206,6 +257,36 @@ export class NotePreviewReact extends ItemView implements MDRendererCallback {
 					container.innerHTML = svg.outerHTML;
 					container.classList.remove('mermaid'); // 移除 mermaid 类，防止重复渲染
 				}
+			});
+
+			// 多重格式剪贴板处理
+			const images = tempDiv.querySelectorAll('img');
+			const blobData = {
+				'text/html': new Blob([tempDiv.innerHTML], { type: 'text/html' }),
+				'text/plain': new Blob([tempDiv.textContent || ''], { type: 'text/plain' })
+			};
+
+			// 添加图片原始数据到剪贴板
+			images.forEach((img, index) => {
+				const base64 = img.getAttribute('data-base64') || img.src;
+				if (base64.startsWith('data:')) {
+					const match = base64.match(/data:(image\/\w+);base64,(.*)/);
+					if (match) {
+						const [_, mimeType, data] = match;
+						const byteCharacters = atob(data);
+						const byteNumbers = new Array(byteCharacters.length);
+						for (let i = 0; i < byteCharacters.length; i++) {
+							byteNumbers[i] = byteCharacters.charCodeAt(i);
+						}
+						const byteArray = new Uint8Array(byteNumbers);
+						blobData[`image/${mimeType}-${index}`] = new Blob([byteArray], { type: mimeType });
+					}
+				}
+			});
+
+			// 写入多格式数据
+			const clipboardItems = Object.entries(blobData).map(([type, blob]) => {
+				return new ClipboardItem({ [type]: blob });
 			});
 
 			// 复制处理后的内容到剪贴板
